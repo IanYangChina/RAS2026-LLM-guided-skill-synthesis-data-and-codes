@@ -1,0 +1,124 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach
+  parameters:
+    approach_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  subtask_id: reach_contact
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: contact
+  parameters:
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 5.0
+      range:
+      - 2.0
+      - 10.0
+      type: scalar
+    contact_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  subtask_id: reach_contact
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.005
+  termination: force_exceeded
+  type: contact
+- control: admittance_control
+  generator: linear_cartesian
+  id: push
+  parameters:
+    push_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.45
+      range:
+      - 0.1
+      - 0.5
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  retries:
+    max_attempts: 2
+    strategy: reduce_speed
+  subtask_id: push_complete
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.45
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: time_limit
+  type: push
+skill: push_to_goal
+subtasks:
+- anchor: object
+  id: reach_contact
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: push_complete
+  metric: distance
+  target_entity: object
+  weight: 0.7

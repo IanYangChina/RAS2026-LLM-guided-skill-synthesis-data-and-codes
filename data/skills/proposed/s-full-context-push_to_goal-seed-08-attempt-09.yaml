@@ -1,0 +1,145 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: arc_cartesian
+  id: approach_above
+  parameters:
+    approach_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.025
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.2
+      range:
+      - 0.05
+      - 0.5
+      type: scalar
+    y_offset_approach:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.0
+      range:
+      - 0.0
+      - 0.06
+      type: scalar
+  subtask_id: pre_contact
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: descend_after_check
+    on_failure: continue
+    predicate: pose_within_tolerance
+    threshold: 0.03
+    when: after_phase
+  id: descend_contact
+  parameters:
+    descend_tolerance:
+      binds_to:
+      - mode: replace
+        path: guards.descend_after_check.threshold
+      default: 0.03
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+    speed_descend:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.03
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    y_offset_descend:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.0
+      range:
+      - 0.0
+      - 0.04
+      type: scalar
+  subtask_id: pre_contact
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: force_exceeded
+  type: descend
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: push_safety
+    on_failure: abort
+    predicate: force_below
+    threshold: 20.0
+    when: during_phase
+  id: push_to_goal
+  parameters:
+    force_threshold_push:
+      binds_to:
+      - mode: replace
+        path: guards.push_safety.threshold
+      default: 20.0
+      range:
+      - 10.0
+      - 25.0
+      type: scalar
+    speed_push:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.15
+      range:
+      - 0.02
+      - 0.3
+      type: scalar
+  subtask_id: push_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: pose_tolerance
+  type: push
+skill: push_to_goal
+subtasks:
+- anchor: object
+  id: pre_contact
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  target_entity: tcp
+  weight: 0.3
+- id: push_goal
+  metric: goal_progress
+  target_entity: object
+  weight: 0.7

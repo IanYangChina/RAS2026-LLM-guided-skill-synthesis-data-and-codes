@@ -1,0 +1,157 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: approach_guard
+    on_failure: abort
+    predicate: contact_detected
+    threshold: 0.0
+    when: during_phase
+  id: approach_high
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+    approach_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.015
+      range:
+      - 0.005
+      - 0.03
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    strategy: reduce_speed
+  subtask_id: approach_high
+  target:
+    anchor: task_goal
+    entity: null
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  guards: []
+  id: descend_to_goal
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+    descend_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.01
+      range:
+      - 0.005
+      - 0.02
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    strategy: reduce_speed
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    entity: null
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: descend
+- control: position_control
+  generator: null
+  guards:
+  - args: {}
+    id: align_force_guard
+    on_failure: abort
+    predicate: force_below
+    threshold: 5.0
+    when: during_phase
+  id: fine_align
+  parameters:
+    align_duration:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 0.5
+      range:
+      - 0.1
+      - 1.0
+      type: scalar
+  retries:
+    max_attempts: 0
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    strategy: repeat
+  target:
+    anchor: task_goal
+    entity: null
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: time_limit
+  type: align
+skill: obstacle_reach
+skill_type: arm
+subtasks:
+- anchor: goal
+  id: approach_high
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.2
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: reach_goal
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.7

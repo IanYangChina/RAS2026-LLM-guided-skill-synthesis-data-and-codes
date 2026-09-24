@@ -1,0 +1,243 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_peg
+  parameters:
+    speed_approach:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.12
+      range:
+      - 0.05
+      - 0.25
+      type: scalar
+  subtask_id: approach
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  end_effector_action: force_grasp
+  guards:
+  - args: {}
+    id: force_contact
+    on_failure: abort
+    predicate: force_below
+    threshold: 35.0
+    when: during_phase
+  id: grasp_peg
+  parameters:
+    grip_force:
+      binds_to:
+      - mode: replace
+        path: guards.force_contact.threshold
+      default: 25.0
+      range:
+      - 10.0
+      - 35.0
+      type: scalar
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: grasp_success
+  type: grasp
+- control: position_control
+  generator: linear_cartesian
+  id: approach_socket
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+    orientation:
+      align_with: world_z
+      axis:
+      - 0
+      - 0
+      - 1
+      mode: align_axis
+      tolerance: 0.15
+    parameters:
+      speed_socket_approach:
+        binds_to:
+        - mode: replace
+          path: generator.speed
+        default: 0.1
+        range:
+        - 0.04
+        - 0.2
+        type: scalar
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: align_socket
+  parameters:
+    speed_align:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.06
+      range:
+      - 0.02
+      - 0.12
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.015
+    orientation:
+      align_with: world_z
+      axis:
+      - 0
+      - 0
+      - 1
+      mode: align_axis
+      tolerance: 0.08
+    source: yaml
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: align
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: contact_entry
+  parameters:
+    probe_force:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 6.0
+      range:
+      - 2.0
+      - 12.0
+      type: scalar
+    probe_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.03
+      range:
+      - 0.01
+      - 0.06
+      type: scalar
+  subtask_id: contact
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - -0.005
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: force_exceeded
+  type: contact
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: force_limit
+    on_failure: abort
+    predicate: force_below
+    threshold: 30.0
+    when: during_phase
+  id: insert_down
+  parameters:
+    insert_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.04
+      range:
+      - 0.02
+      - 0.06
+      type: scalar
+    insert_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.035
+      range:
+      - 0.01
+      - 0.08
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.005
+    - 0.005
+    - 0.0
+    strategy: offset_target
+  subtask_id: insert
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: channel_axis
+      distance: 0.04
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0
+      - 0
+      - 1
+      mode: align_axis
+      tolerance: 0.15
+    source: yaml
+    tolerance: 0.015
+  termination: pose_tolerance
+  type: insert
+- control: position_control
+  generator: linear_cartesian
+  id: retract_up
+  parameters:
+    retract_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.12
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.08
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: retract
+skill: peg_insert
+skill_type: arm_gripper

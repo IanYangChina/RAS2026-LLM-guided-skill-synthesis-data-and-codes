@@ -1,0 +1,94 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_up
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.15
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+    tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.01
+      - 0.04
+      type: scalar
+  subtask_id: reach_high
+  target:
+    anchor: fixture
+    offset:
+    - 0.0
+    - 0.0
+    - 0.08
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - id: goal_check
+    on_failure: retry
+    predicate: pose_within_tolerance
+    threshold: 0.02
+    when: after_phase
+  id: descend_to_goal
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+    tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 1
+    strategy: repeat
+  subtask_id: reach_goal
+  target:
+    anchor: fixture
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: pose_tolerance
+  type: descend
+skill: obstacle_reach
+skill_type: arm_gripper
+subtasks:
+- anchor: fixture
+  id: reach_high
+  offset:
+  - 0.0
+  - 0.0
+  - 0.08
+  target_entity: tcp
+  weight: 0.3
+- anchor: fixture
+  id: reach_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.7

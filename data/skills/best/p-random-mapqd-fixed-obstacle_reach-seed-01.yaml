@@ -1,0 +1,18 @@
+skill: obstacle_reach
+phases:
+- id: rotate_1
+  type: rotate
+  generator: arc_cartesian
+  control: impedance_control
+  termination: time_limit
+- id: align_1
+  type: align
+  generator: impedance_motion
+  control: position_control
+  termination: contact_detected
+  parameters:
+    lateral_offset_x:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01

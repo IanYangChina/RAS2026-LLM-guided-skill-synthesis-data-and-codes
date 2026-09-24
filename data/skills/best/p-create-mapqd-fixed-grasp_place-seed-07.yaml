@@ -1,0 +1,91 @@
+skill: grasp_place
+dsl_version: 2
+skill_type: arm_gripper
+phases:
+- id: approach_1
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  subtask_id: approach_1
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  subtask_id: descend_1
+- id: grasp_1
+  type: grasp
+  control: position_control
+  termination: grasp_success
+  end_effector_action: force_grasp
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  subtask_id: grasp_1
+- id: transport_arc
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: placement_surface
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    arc_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+  subtask_id: transport_arc
+- id: release_1
+  type: release
+  control: position_control
+  termination: time_limit
+  end_effector_action: open
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  subtask_id: release_1

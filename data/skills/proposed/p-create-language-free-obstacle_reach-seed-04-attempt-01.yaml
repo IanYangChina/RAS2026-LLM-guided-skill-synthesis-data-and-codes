@@ -1,0 +1,95 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    motion_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.02
+      - 0.5
+      type: scalar
+  subtask_id: above_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.17
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_1
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.02
+      - 0.3
+      type: scalar
+  subtask_id: goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.02
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: descend
+- control: position_control
+  generator: linear_cartesian
+  id: push_1
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.02
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+  subtask_id: goal
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: world_z
+      distance: 0.02
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: push
+skill: obstacle_reach
+subtasks:
+- id: above_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.17
+  weight: 0.3
+- id: goal
+  weight: 0.7

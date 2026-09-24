@@ -1,0 +1,174 @@
+skill: peg_channel
+dsl_version: 2
+subtasks:
+- id: approach_pre_contact
+  anchor: object
+  offset:
+  - 0.0
+  - 0.03
+  - 0.1
+  weight: 0.2
+- id: push_insertion
+  target_entity: object
+  metric: goal_progress
+  weight: 0.8
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.03
+    - 0.03
+    - 0.1
+    tolerance: 0.02
+    orientation:
+      mode: none
+  parameters:
+    lateral_x_offset:
+      type: scalar
+      range:
+      - -0.05
+      - 0.05
+      default: 0.03
+      binds_to:
+      - path: target.offset.x
+        mode: replace
+  subtask_id: approach_pre_contact
+- id: rotate_1
+  type: rotate
+  generator: joint_interpolation
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.03
+    - 0.03
+    - 0.1
+    tolerance: 0.02
+    orientation:
+      mode: align_axis
+      axis:
+      - 1.0
+      - 0.0
+      - 0.0
+      align_with: channel_axis
+      tolerance: 0.05
+  parameters:
+    lateral_x_offset:
+      type: scalar
+      range:
+      - -0.05
+      - 0.05
+      default: 0.03
+      binds_to:
+      - path: target.offset.x
+        mode: replace
+  subtask_id: approach_pre_contact
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.03
+    - 0.03
+    - 0.0
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_force_threshold:
+      type: scalar
+      range:
+      - 5.0
+      - 30.0
+      default: 15.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    descend_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.03
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    lateral_x_offset:
+      type: scalar
+      range:
+      - -0.05
+      - 0.05
+      default: 0.03
+      binds_to:
+      - path: target.offset.x
+        mode: replace
+  subtask_id: approach_pre_contact
+- id: push_1
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.03
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    lateral_x_offset:
+      type: scalar
+      range:
+      - -0.05
+      - 0.05
+      default: 0.03
+      binds_to:
+      - path: target.offset.x
+        mode: replace
+    push_retry_x_offset:
+      type: scalar
+      range:
+      - -0.02
+      - 0.02
+      default: 0.01
+      binds_to:
+      - path: retry.offset.x
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.15
+      default: 0.06
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: contact_retry
+    when: during_phase
+    predicate: contact_detected
+    threshold: 0.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  subtask_id: push_insertion

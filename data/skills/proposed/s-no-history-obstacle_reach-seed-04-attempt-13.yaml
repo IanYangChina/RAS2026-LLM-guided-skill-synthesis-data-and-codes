@@ -1,0 +1,138 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: lift_to_clearance
+  parameters:
+    lift_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.2
+      range:
+      - 0.15
+      - 0.3
+      type: scalar
+    lift_max_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 600
+      range:
+      - 300.0
+      - 1500.0
+      type: scalar
+    lift_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.12
+      range:
+      - 0.05
+      - 0.4
+      type: scalar
+  subtask_id: clearance
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.03
+  termination: time_limit
+  type: lift
+- control: position_control
+  generator: arc_cartesian
+  id: arc_to_goal
+  parameters:
+    arc_height:
+      binds_to:
+      - mode: replace
+        path: generator.arc_height
+      default: 0.3
+      range:
+      - 0.1
+      - 0.5
+      type: scalar
+    arc_max_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 1000
+      range:
+      - 500.0
+      - 2000.0
+      type: scalar
+    arc_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.12
+      range:
+      - 0.05
+      - 0.4
+      type: scalar
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: time_limit
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_to_goal
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.15
+      type: scalar
+    descend_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.01
+      range:
+      - 0.005
+      - 0.02
+      type: scalar
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: descend
+skill: obstacle_reach
+skill_type: arm_gripper
+subtasks:
+- anchor: fixture
+  id: clearance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.35
+  weight: 0.3
+- id: reach_goal
+  metric: goal_progress
+  weight: 0.7

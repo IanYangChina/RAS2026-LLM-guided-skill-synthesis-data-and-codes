@@ -1,0 +1,149 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: arc_cartesian
+  id: lift_1
+  parameters:
+    lift_arc_height:
+      binds_to:
+      - mode: replace
+        path: generator.arc_height
+      default: 0.35
+      range:
+      - 0.2
+      - 0.5
+      type: scalar
+    lift_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.25
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+    lift_z_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.3
+      range:
+      - 0.2
+      - 0.4
+      type: scalar
+  subtask_id: reach_lift
+  target:
+    anchor: body
+    entity: obstacle_block
+    offset:
+    - 0.0
+    - 0.0
+    - 0.3
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: translate_1
+  parameters:
+    above_z_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.25
+      range:
+      - 0.15
+      - 0.35
+      type: scalar
+    translate_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.4
+      range:
+      - 0.2
+      - 0.5
+      type: scalar
+    translate_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.03
+      range:
+      - 0.02
+      - 0.05
+      type: scalar
+  subtask_id: reach_above_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.25
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.03
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_1
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.2
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+    descend_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.015
+      range:
+      - 0.008
+      - 0.02
+      type: scalar
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.015
+  termination: pose_tolerance
+  type: descend
+skill: obstacle_reach
+subtasks:
+- anchor: fixture
+  id: reach_lift
+  offset:
+  - 0.0
+  - 0.0
+  - 0.3
+  weight: 0.15
+- anchor: goal
+  id: reach_above_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.25
+  weight: 0.25
+- anchor: goal
+  id: reach_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  weight: 0.6

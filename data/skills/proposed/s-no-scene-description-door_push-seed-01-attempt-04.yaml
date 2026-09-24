@@ -1,0 +1,159 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    contact_offset_x:
+      binds_to:
+      - mode: replace
+        path: target.offset.x
+      default: -0.38
+      range:
+      - -0.5
+      - -0.2
+      type: scalar
+    contact_offset_y:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: -0.01
+      range:
+      - -0.1
+      - 0.1
+      type: scalar
+    contact_offset_z_above:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.05
+      range:
+      - 0.02
+      - 0.08
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.2
+      range:
+      - 0.05
+      - 0.5
+      type: scalar
+  retries:
+    max_attempts: 1
+    strategy: repeat
+  subtask_id: reach_door
+  target:
+    anchor: body
+    entity: door_panel
+    offset:
+    - contact_offset_x
+    - contact_offset_y
+    - contact_offset_z_above
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: push_1
+  parameters:
+    contact_offset_x:
+      binds_to:
+      - mode: replace
+        path: target.offset.x
+      default: -0.38
+      range:
+      - -0.5
+      - -0.2
+      type: scalar
+    contact_offset_y:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: -0.01
+      range:
+      - -0.1
+      - 0.1
+      type: scalar
+    contact_offset_z_surface:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.0
+      range:
+      - -0.02
+      - 0.02
+      type: scalar
+    force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 25.0
+      range:
+      - 10.0
+      - 40.0
+      type: scalar
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.3
+      range:
+      - 0.1
+      - 0.6
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  retries:
+    max_attempts: 2
+    strategy: repeat
+  subtask_id: hinge_progress
+  target:
+    anchor: body
+    entity: door_panel
+    offset:
+    - contact_offset_x
+    - contact_offset_y
+    - contact_offset_z_surface
+    offset_along_axis:
+      axis: world_x
+      distance: push_distance
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: force_exceeded
+  type: push
+skill: door_push
+subtasks:
+- anchor: object
+  id: reach_door
+  metric: distance
+  offset:
+  - 0.12
+  - 0.19
+  - 0.33
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: hinge_progress
+  metric: hinge_angle
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: hinge
+  weight: 1.0

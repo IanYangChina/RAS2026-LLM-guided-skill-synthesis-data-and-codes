@@ -1,0 +1,119 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: lift
+  parameters:
+    lift_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.23
+      range:
+      - 0.15
+      - 0.35
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.2
+      range:
+      - 0.05
+      - 0.5
+      type: scalar
+  subtask_id: reach_high
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.23
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: forward
+  parameters:
+    lift_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.23
+      range:
+      - 0.15
+      - 0.35
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.2
+      range:
+      - 0.05
+      - 0.5
+      type: scalar
+  subtask_id: reach_high
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.23
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.03
+  termination: pose_tolerance
+  type: push
+- control: position_control
+  generator: linear_cartesian
+  id: descend
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.2
+      range:
+      - 0.05
+      - 0.5
+      type: scalar
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.015
+  termination: pose_tolerance
+  type: approach
+skill: obstacle_reach
+skill_type: arm_gripper
+subtasks:
+- anchor: goal
+  id: reach_high
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.23
+  target_entity: tcp
+  weight: 0.2
+- anchor: goal
+  id: reach_goal
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.8

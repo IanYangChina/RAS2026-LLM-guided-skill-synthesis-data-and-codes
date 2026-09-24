@@ -1,0 +1,22 @@
+skill: peg_insert
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: rotate_1
+  type: rotate
+  generator: impedance_motion
+  control: admittance_control
+  termination: time_limit
+- id: align_1
+  type: align
+  generator: impedance_motion
+  control: position_control
+  termination: pose_tolerance
+- id: push_1
+  type: push
+  generator: impedance_motion
+  control: impedance_control
+  termination: pose_tolerance

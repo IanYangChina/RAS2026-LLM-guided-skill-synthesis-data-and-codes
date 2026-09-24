@@ -1,0 +1,126 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: arc_cartesian
+  id: approach_side
+  parameters:
+    approach_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.17
+      range:
+      - 0.12
+      - 0.25
+      type: scalar
+    approach_max_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 1.2
+      range:
+      - 0.5
+      - 2.0
+      type: scalar
+    arc_height:
+      binds_to:
+      - mode: replace
+        path: generator.arc_height
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.18
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+      tolerance: 0.5
+    source: yaml
+    tolerance: 0.03
+  termination: time_limit
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_goal
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.03
+      - 0.2
+      type: scalar
+    descend_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.012
+      range:
+      - 0.005
+      - 0.015
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+      tolerance: 0.5
+    source: yaml
+    tolerance: 0.012
+  termination: pose_tolerance
+  type: descend
+- control: position_control
+  generator: linear_cartesian
+  id: fine_position
+  parameters:
+    fine_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+    fine_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.005
+      range:
+      - 0.002
+      - 0.008
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+      tolerance: 0.5
+    source: yaml
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: push
+skill: obstacle_reach

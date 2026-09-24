@@ -1,0 +1,122 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  orientation:
+    mode: none
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.005
+      - 0.03
+      type: scalar
+  subtask_id: approach
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0
+    - 0.04
+    - 0
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: contact_1
+  orientation:
+    mode: none
+  parameters:
+    force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 15
+      range:
+      - 5
+      - 35
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.03
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 2
+    strategy: reduce_speed
+  subtask_id: contact
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0
+    - 0.02
+    - 0
+  termination: force_exceeded
+  type: contact
+- control: impedance_control
+  generator: impedance_motion
+  guards:
+  - args: {}
+    id: force_safe
+    on_failure: abort
+    predicate: force_below
+    threshold: 40
+    when: during_phase
+  id: push_1
+  orientation:
+    mode: none
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.03
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+    tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.005
+      - 0.03
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0
+    - 0.005
+    - 0
+    strategy: offset_target
+  subtask_id: push
+  target:
+    anchor: task_goal
+    entity: channel_exit
+    offset:
+    - 0
+    - 0
+    - 0
+  termination: pose_tolerance
+  type: push
+skill: peg_channel

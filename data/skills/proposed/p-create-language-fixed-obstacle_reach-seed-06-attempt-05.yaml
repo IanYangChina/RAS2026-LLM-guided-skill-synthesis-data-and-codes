@@ -1,0 +1,135 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    approach_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.2
+      range:
+      - 0.15
+      - 0.3
+      type: scalar
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.2
+      range:
+      - 0.1
+      - 0.3
+      type: scalar
+    approach_tol:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+    lateral_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.2
+      range:
+      - 0.16
+      - 0.3
+      type: scalar
+  target:
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.2
+    - 0.2
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_1
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.2
+      range:
+      - 0.1
+      - 0.3
+      type: scalar
+    descend_tol:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+    lateral_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.2
+      range:
+      - 0.16
+      - 0.3
+      type: scalar
+  target:
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.2
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: descend
+- control: position_control
+  generator: linear_cartesian
+  id: lateral_move
+  parameters:
+    lateral_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.2
+      range:
+      - 0.1
+      - 0.3
+      type: scalar
+    lateral_tol:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  target:
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: align
+skill: obstacle_reach

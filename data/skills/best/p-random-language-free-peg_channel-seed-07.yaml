@@ -1,0 +1,137 @@
+skill: peg_channel
+dsl_version: 2
+skill_type: arm_gripper
+subtasks:
+- id: approach_peg
+  anchor: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.2
+  weight: 0.2
+- id: align_to_peg
+  anchor: object
+  offset:
+  - 0.0
+  - 0.03
+  - 0.0
+  weight: 0.3
+- id: push_through_channel
+  offset:
+  - 0.0
+  - -0.04
+  - 0.0
+  weight: 0.5
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: approach_peg
+- id: move_behind_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.03
+    - 0.2
+    orientation:
+      mode: keep_current
+  parameters:
+    align_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: align_to_peg
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.03
+    - 0.0
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: align_to_peg
+- id: push_1
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - -0.04
+    - 0.0
+    orientation:
+      mode: keep_current
+  parameters:
+    push_max_time:
+      type: scalar
+      range:
+      - 2.0
+      - 10.0
+      default: 6.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.03
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: push_through_channel

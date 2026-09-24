@@ -1,0 +1,24 @@
+skill: obstacle_reach
+phases:
+- id: approach_1
+  type: approach
+  generator: arc_cartesian
+  control: force_threshold_switch
+  termination: contact_lost
+  parameters:
+    reach_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: contact_lost
+  parameters:
+    depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1

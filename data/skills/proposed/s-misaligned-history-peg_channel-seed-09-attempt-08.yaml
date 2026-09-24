@@ -1,0 +1,182 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_peg
+  orientation:
+    mode: keep_current
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: scale
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+    approach_y_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+    approach_z_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.05
+      range:
+      - 0.03
+      - 0.08
+      type: scalar
+  retries:
+    max_attempts: 1
+    strategy: reduce_speed
+  subtask_id: reach_pre_contact
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.02
+    - 0.05
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: contact_lost
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 1.0
+    when: after_phase
+  id: contact_peg
+  parameters:
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 15.0
+      range:
+      - 5.0
+      - 30.0
+      type: scalar
+    contact_speed:
+      binds_to:
+      - mode: scale
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+    descend_y_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.005
+    - 0.0
+    strategy: offset_target
+  subtask_id: reach_pre_contact
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.02
+    - 0.0
+    source: yaml
+  termination: force_exceeded
+  type: descend
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - args:
+      axis: channel_axis
+      object: peg
+      threshold: 0.1
+    id: object_moved
+    on_failure: abort
+    predicate: object_progress
+    threshold: 0.02
+    when: after_phase
+  id: push_through_channel
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.16
+      range:
+      - 0.12
+      - 0.2
+      type: scalar
+    push_max_duration:
+      binds_to:
+      - mode: scale
+        path: termination.time_limit
+      default: 5.0
+      range:
+      - 2.0
+      - 10.0
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: scale
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: reach_goal
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: channel_axis
+      distance: 0.16
+      mode: add_to_offset
+      sign: positive
+    source: yaml
+  termination: time_limit
+  type: push
+skill: peg_channel
+skill_type: arm_gripper
+subtasks:
+- anchor: object
+  id: reach_pre_contact
+  offset:
+  - 0.0
+  - 0.02
+  - 0.05
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: reach_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.7

@@ -1,0 +1,12 @@
+skill: obstacle_reach
+phases:
+- id: rotate_1
+  type: rotate
+  generator: arc_cartesian
+  control: force_threshold_switch
+  termination: contact_lost
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: admittance_control
+  termination: grasp_success

@@ -1,0 +1,135 @@
+skill: obstacle_reach
+dsl_version: 2
+subtasks:
+- id: reach_high
+  offset:
+  - 0.0
+  - 0.0
+  - 0.4
+  weight: 0.3
+- id: align_above
+  offset:
+  - 0.0
+  - 0.0
+  - 0.4
+  weight: 0.2
+- id: reach_goal
+  weight: 0.5
+phases:
+- id: approach_high
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.4
+    tolerance: 0.015
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_height:
+      type: scalar
+      range:
+      - 0.2
+      - 0.5
+      default: 0.4
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.5
+      default: 0.2
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  retries:
+    max_attempts: 2
+    strategy: reduce_speed
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  subtask_id: reach_high
+- id: align_over_goal
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.4
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    align_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.5
+      default: 0.15
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.005
+    - 0.005
+    - 0.0
+  subtask_id: align_above
+- id: descend_to_goal
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.005
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_tolerance:
+      type: scalar
+      range:
+      - 0.002
+      - 0.015
+      default: 0.005
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    descent_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.002
+    - 0.002
+    - 0.002
+  subtask_id: reach_goal

@@ -1,0 +1,123 @@
+skill: obstacle_reach
+dsl_version: 2
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.25
+    tolerance: 0.06
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_height:
+      type: scalar
+      range:
+      - 0.15
+      - 0.35
+      default: 0.25
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    approach_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.3
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    approach_tolerance:
+      type: scalar
+      range:
+      - 0.04
+      - 0.12
+      default: 0.08
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.03
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_fine_z:
+      type: scalar
+      range:
+      - -0.01
+      - 0.02
+      default: 0.0
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    descend_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.15
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    descend_tolerance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.05
+      default: 0.03
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+- id: fine_align
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    fine_align_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    fine_align_tolerance:
+      type: scalar
+      range:
+      - 0.008
+      - 0.015
+      default: 0.01
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace

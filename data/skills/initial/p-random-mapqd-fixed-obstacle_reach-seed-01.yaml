@@ -1,0 +1,35 @@
+skill: obstacle_reach
+phases:
+- id: rotate_1
+  type: rotate
+  generator: arc_cartesian
+  control: impedance_control
+  termination: time_limit
+  parameters:
+    yaw_angle:
+      type: angle
+      range:
+      - 0.1
+      - 1.57
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    lateral_offset_x:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+- id: push_1
+  type: push
+  generator: impedance_motion
+  control: position_control
+  termination: time_limit
+  parameters:
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1

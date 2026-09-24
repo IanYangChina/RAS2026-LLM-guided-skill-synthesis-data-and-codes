@@ -1,0 +1,245 @@
+skill: push_to_goal
+dsl_version: 2
+subtasks:
+- id: reach_pre_contact
+  anchor: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  weight: 0.3
+- id: contact_object
+  anchor: object
+  weight: 0.3
+- id: push_to_goal
+  target_entity: object
+  metric: goal_progress
+  weight: 0.4
+- id: final_adjust
+  target_entity: object
+  metric: goal_progress
+  weight: 0.2
+phases:
+- id: approach_1
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    tolerance: 0.03
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.08
+      - 0.25
+      default: 0.15
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    approach_tolerance:
+      type: scalar
+      range:
+      - 0.01
+      - 0.08
+      default: 0.03
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.04
+      - 0.12
+      default: 0.07
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  subtask_id: reach_pre_contact
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.05
+      axis: task_goal_direction
+      mode: add_to_offset
+      sign: negative
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_force_thresh:
+      type: scalar
+      range:
+      - 1.0
+      - 6.0
+      default: 3.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    descend_offset:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+      default: 0.07
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    descend_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.04
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.005
+  subtask_id: contact_object
+- id: push_1
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 1.5
+      axis: task_goal_direction
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+  parameters:
+    push_scale:
+      type: scalar
+      range:
+      - 0.8
+      - 3.5
+      default: 1.8
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    push_time:
+      type: scalar
+      range:
+      - 3.0
+      - 12.0
+      default: 6.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+  guards:
+  - id: contact_maintained
+    when: during_phase
+    predicate: contact_detected
+    threshold: 0.0
+    on_failure: retry
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.005
+    - 0.0
+  subtask_id: push_to_goal
+- id: adjust_1
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.2
+      axis: task_goal_direction
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+  parameters:
+    adjust_scale:
+      type: scalar
+      range:
+      - 0.1
+      - 0.5
+      default: 0.2
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    adjust_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.08
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    adjust_time:
+      type: scalar
+      range:
+      - 0.5
+      - 2.0
+      default: 1.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.005
+    - 0.0
+  subtask_id: final_adjust

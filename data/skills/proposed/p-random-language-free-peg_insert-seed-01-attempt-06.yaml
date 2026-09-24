@@ -1,0 +1,157 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: entry_reached
+    on_failure: retry
+    predicate: pose_within_tolerance
+    threshold: 0.01
+    when: after_phase
+  id: approach_entry
+  parameters:
+    lateral_x:
+      binds_to:
+      - mode: add
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.015
+      - 0.015
+      type: scalar
+    lateral_y:
+      binds_to:
+      - mode: add
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.015
+      - 0.015
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - 0.0
+    - 0.005
+    strategy: offset_target
+  subtask_id: reach_entry
+  target:
+    anchor: fixture
+    offset:
+    - 0.0
+    - 0.0
+    - 0.055
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: impedance_control
+  generator: impedance_motion
+  guards:
+  - args: {}
+    id: excessive_force
+    on_failure: abort
+    predicate: force_below
+    threshold: 40.0
+    when: during_phase
+  id: insert_down
+  parameters:
+    force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 25.0
+      range:
+      - 10.0
+      - 35.0
+      type: scalar
+    insertion_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.05
+      range:
+      - 0.02
+      - 0.06
+      type: scalar
+  subtask_id: insertion_depth
+  target:
+    anchor: fixture
+    offset:
+    - 0.0
+    - 0.0
+    - 0.055
+    offset_along_axis:
+      axis: channel_axis
+      distance: 0.05
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+  termination: force_exceeded
+  type: insert
+- control: position_control
+  generator: linear_cartesian
+  id: retract_up
+  parameters:
+    retract_lateral_x:
+      binds_to:
+      - mode: add
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.01
+      - 0.01
+      type: scalar
+    retract_lateral_y:
+      binds_to:
+      - mode: add
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.01
+      - 0.01
+      type: scalar
+  target:
+    anchor: fixture
+    offset:
+    - 0.0
+    - 0.0
+    - 0.08
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: retract
+skill: peg_insert
+subtasks:
+- anchor: fixture
+  id: reach_entry
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.055
+  target_entity: tcp
+  weight: 0.3
+- anchor: fixture
+  id: insertion_depth
+  metric: goal_progress
+  offset:
+  - 0.0
+  - 0.0
+  - -0.03
+  target_entity: tcp
+  weight: 0.7

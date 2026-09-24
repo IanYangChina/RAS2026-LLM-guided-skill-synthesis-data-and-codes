@@ -1,0 +1,28 @@
+skill: push_to_goal
+phases:
+- id: retract_1
+  type: retract
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    param_0:
+      type: scalar
+      range:
+      - -0.4840375488179902
+      - -0.010233175501421998
+    retract_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+- id: pull_1
+  type: pull
+  generator: linear_cartesian
+  control: impedance_control
+  termination: force_exceeded

@@ -1,0 +1,105 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_object
+  orientation:
+    mode: keep_current
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+    approach_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+  subtask_id: reach_approach
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: push_to_goal
+  orientation:
+    mode: keep_current
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.16
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+    push_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+  subtask_id: push_to_goal
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.025
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.16
+      mode: add_to_offset
+      sign: positive
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: push
+skill: push_to_goal
+skill_type: arm
+subtasks:
+- anchor: object
+  id: reach_approach
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: push_to_goal
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.025
+  target_entity: tcp
+  weight: 0.7

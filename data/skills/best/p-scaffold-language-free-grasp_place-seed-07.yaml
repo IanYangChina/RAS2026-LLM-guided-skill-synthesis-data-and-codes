@@ -1,0 +1,202 @@
+skill: grasp_place
+dsl_version: 2
+skill_type: arm_gripper
+subtasks:
+- id: pre_grasp
+  anchor: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  weight: 0.15
+- id: grasp_contact
+  anchor: object
+  weight: 0.15
+- id: lift_clearance
+  anchor: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.15
+  weight: 0.15
+- id: transport_to_goal
+  weight: 0.15
+- id: place_at_goal
+  weight: 0.4
+phases:
+- id: approach_1
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    arc_height:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: pre_grasp
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.08
+      default: 0.04
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: grasp_contact
+- id: grasp_1
+  type: grasp
+  control: position_control
+  termination: time_limit
+  end_effector_action: force_grasp
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  parameters:
+    max_time:
+      type: scalar
+      range:
+      - 0.5
+      - 2.0
+      default: 1.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+  subtask_id: grasp_contact
+- id: lift_1
+  type: lift
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: lift_clearance
+- id: transport_1
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: place_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    arc_height:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: transport_to_goal
+- id: descend_goal
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: place_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.08
+      default: 0.03
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: place_at_goal

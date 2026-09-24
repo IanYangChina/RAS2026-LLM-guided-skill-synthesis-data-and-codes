@@ -1,0 +1,34 @@
+skill: grasp_place
+phases:
+- id: retract_1
+  type: retract
+  generator: impedance_motion
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    retract_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  parameters:
+    depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: pull_1
+  type: pull
+  generator: arc_cartesian
+  control: admittance_control
+  termination: time_limit
+- id: rotate_2
+  type: rotate
+  generator: arc_cartesian
+  control: impedance_control
+  termination: pose_tolerance

@@ -1,0 +1,116 @@
+skill: peg_channel
+dsl_version: 2
+subtasks:
+- id: approach_peg
+  anchor: object
+  offset:
+  - 0.0
+  - 0.04
+  - 0.1
+  weight: 0.2
+- id: contact_peg
+  anchor: object
+  offset:
+  - 0.0
+  - 0.04
+  - 0.02
+  weight: 0.3
+- id: insert_peg
+  offset:
+  - 0.0
+  - 0.0
+  - 0.02
+  weight: 0.5
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.04
+    - 0.1
+    tolerance: 0.01
+    orientation:
+      mode: none
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.5
+      default: 0.2
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: approach_peg
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.04
+    - 0.02
+    orientation:
+      mode: none
+  parameters:
+    descend_force_threshold:
+      type: scalar
+      range:
+      - 1.0
+      - 15.0
+      default: 5.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+  subtask_id: contact_peg
+- id: push_1
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.02
+    tolerance: 0.01
+    orientation:
+      mode: none
+  parameters:
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.2
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    push_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.02
+      default: 0.01
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  guards:
+  - id: force_guard
+    when: during_phase
+    predicate: force_below
+    threshold: 40.0
+    on_failure: abort
+  subtask_id: insert_peg

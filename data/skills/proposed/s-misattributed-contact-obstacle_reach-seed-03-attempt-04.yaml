@@ -1,0 +1,149 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - id: obstacle_clear
+    on_failure: abort
+    predicate: force_below
+    threshold: 5.0
+    when: during_phase
+  id: approach_over_obstacle
+  parameters:
+    approach_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.25
+      range:
+      - 0.15
+      - 0.35
+      type: scalar
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.3
+      range:
+      - 0.1
+      - 0.5
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.01
+    - 0.0
+    strategy: offset_target
+  subtask_id: clear_obstacle
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.06
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - id: contact_low
+    on_failure: abort
+    predicate: force_below
+    threshold: 5.0
+    when: during_phase
+  id: descend_to_goal
+  parameters:
+    descent_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.15
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+    descent_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.025
+      range:
+      - 0.008
+      - 0.04
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.0
+    - 0.005
+    strategy: offset_target
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.03
+  termination: pose_tolerance
+  type: descend
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - id: force_low
+    on_failure: abort
+    predicate: force_below
+    threshold: 5.0
+    when: during_phase
+  id: final_approach_to_goal
+  parameters:
+    final_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.2
+      type: scalar
+    final_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.01
+      range:
+      - 0.005
+      - 0.02
+      type: scalar
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+skill: obstacle_reach
+subtasks:
+- anchor: object
+  id: clear_obstacle
+  offset:
+  - 0.0
+  - 0.0
+  - 0.2
+  weight: 0.3
+- id: reach_goal
+  weight: 0.7

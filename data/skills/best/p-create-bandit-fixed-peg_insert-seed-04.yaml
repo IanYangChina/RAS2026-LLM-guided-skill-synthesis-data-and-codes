@@ -1,0 +1,70 @@
+skill: peg_insert
+dsl_version: 2
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.09
+    tolerance: 0.005
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: world_z
+      tolerance: 0.05
+  subtask_id: approach
+- id: contact_1
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.07
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: world_z
+      tolerance: 0.05
+  subtask_id: contact
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.12
+    tolerance: 0.005
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: world_z
+      tolerance: 0.05

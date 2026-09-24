@@ -1,0 +1,102 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: arc_cartesian
+  id: approach_arc
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.01
+      - 0.2
+      type: scalar
+    arc_height:
+      binds_to:
+      - mode: replace
+        path: generator.arc_height
+      default: 0.35
+      range:
+      - 0.2
+      - 0.5
+      type: scalar
+  subtask_id: clear_obstacle
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.25
+    - 0.5
+    source: yaml
+    tolerance: 0.04
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: align_lateral
+  parameters:
+    align_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.01
+      - 0.2
+      type: scalar
+  subtask_id: final_reach
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.5
+    source: yaml
+    tolerance: 0.03
+  termination: pose_tolerance
+  type: align
+- control: position_control
+  generator: linear_cartesian
+  id: descend_goal
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.2
+      type: scalar
+    descend_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.01
+      - 0.03
+      type: scalar
+  subtask_id: final_reach
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+    tolerance: 0.025
+  termination: pose_tolerance
+  type: descend
+skill: obstacle_reach
+subtasks:
+- id: clear_obstacle
+  offset:
+  - 0.0
+  - 0.25
+  - 0.5
+  weight: 0.3
+- id: final_reach
+  weight: 0.7

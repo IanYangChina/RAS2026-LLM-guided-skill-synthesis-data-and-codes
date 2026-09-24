@@ -1,0 +1,110 @@
+dsl_version: 2
+phases:
+- control: force_threshold_switch
+  generator: linear_cartesian
+  guards:
+  - id: contact_guard
+    on_failure: abort
+    predicate: contact_detected
+    threshold: 0.5
+    when: during_phase
+  id: approach_1
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 3.0
+      range:
+      - 1.0
+      - 10.0
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.0
+    - -0.005
+    strategy: offset_target
+  subtask_id: contact_object
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: force_exceeded
+  type: approach
+- control: impedance_control
+  generator: linear_cartesian
+  id: push_1
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.4
+      range:
+      - 0.1
+      - 0.8
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: move_to_goal
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.4
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: time_limit
+  type: push
+skill: push_to_goal
+subtasks:
+- anchor: object
+  id: contact_object
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: move_to_goal
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: object
+  weight: 0.7

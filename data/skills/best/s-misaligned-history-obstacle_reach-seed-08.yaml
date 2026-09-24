@@ -1,0 +1,43 @@
+skill: obstacle_reach
+dsl_version: 2
+subtasks:
+- id: reach_goal
+phases:
+- id: arc_over_obstacle_to_goal
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: none
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.5
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.4
+      default: 0.2
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  subtask_id: reach_goal

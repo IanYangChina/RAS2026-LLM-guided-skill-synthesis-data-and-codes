@@ -1,0 +1,167 @@
+skill: door_push
+dsl_version: 2
+skill_type: arm_gripper
+subtasks:
+- id: pre_contact
+  anchor: fixture
+  offset:
+  - -0.4
+  - -0.02
+  - 0.35
+  weight: 0.3
+- id: push_task
+  anchor: fixture
+  target_entity: hinge
+  metric: hinge_angle
+  weight: 0.7
+phases:
+- id: approach_handle
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: door_panel
+    offset:
+    - -0.4
+    - -0.02
+    - 0.6
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: world_z
+      tolerance: 0.1
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.25
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: pre_contact
+- id: descend_contact
+  type: descend
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: fixture
+    entity: door_panel
+    offset:
+    - -0.4
+    - -0.02
+    - 0.35
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: world_z
+      tolerance: 0.1
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.03
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    force_threshold:
+      type: scalar
+      range:
+      - 2.0
+      - 15.0
+      default: 5.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+  guards:
+  - id: contact_guard
+    when: during_phase
+    predicate: contact_detected
+    threshold: 1.0
+    on_failure: retry
+  retries:
+    max_attempts: 1
+    strategy: reduce_speed
+  subtask_id: pre_contact
+- id: push_door
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.25
+      axis: world_y
+      mode: replace_offset_projection
+      sign: negative
+  parameters:
+    max_time:
+      type: scalar
+      range:
+      - 2.0
+      - 12.0
+      default: 6.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    push_distance:
+      type: scalar
+      range:
+      - 0.1
+      - 0.5
+      default: 0.25
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    push_retry_y:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: retry.offset.y
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.15
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: contact_monitor
+    when: during_phase
+    predicate: contact_detected
+    threshold: 1.0
+    on_failure: retry
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  subtask_id: push_task

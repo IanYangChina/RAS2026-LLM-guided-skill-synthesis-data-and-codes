@@ -1,0 +1,140 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_obj
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  subtask_id: reach_object
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: contact_side
+  parameters:
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 5.0
+      range:
+      - 2.0
+      - 15.0
+      type: scalar
+    contact_offset_x:
+      binds_to:
+      - mode: replace
+        path: target.offset.x
+      default: -0.03
+      range:
+      - -0.06
+      - 0.06
+      type: scalar
+    contact_offset_y:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: -0.03
+      range:
+      - -0.06
+      - 0.06
+      type: scalar
+    contact_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: reach_object
+  target:
+    anchor: task_object
+    offset:
+    - -0.03
+    - -0.03
+    - 0.025
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination:
+    force_threshold: 5.0
+  type: contact
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: force_guard
+    on_failure: abort
+    predicate: force_below
+    threshold: 25.0
+    when: during_phase
+  id: push_to_goal
+  parameters:
+    force_limit:
+      binds_to:
+      - mode: replace
+        path: guards.force_guard.threshold
+      default: 25.0
+      range:
+      - 10.0
+      - 30.0
+      type: scalar
+  subtask_id: push_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.15
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination:
+    max_time: 2.0
+  type: push
+skill: push_to_goal
+skill_type: arm
+subtasks:
+- anchor: object
+  id: reach_object
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.05
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: push_goal
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: object
+  weight: 0.7

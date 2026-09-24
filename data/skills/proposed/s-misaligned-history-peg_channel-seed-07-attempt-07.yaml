@@ -1,0 +1,155 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  guards: []
+  id: approach_1
+  orientation:
+    mode: none
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: add
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  retries: []
+  subtask_id: reach_pre_push
+  target:
+    anchor: task_object
+    offset:
+    - 0
+    - 0.02
+    - 0.1
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  guards: []
+  id: descend_1
+  orientation:
+    mode: none
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: add
+        path: generator.speed
+      default: 0.03
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  retries: []
+  subtask_id: reach_pre_push
+  target:
+    anchor: task_object
+    offset:
+    - 0
+    - 0.02
+    - 0.04
+    source: yaml
+  termination: pose_tolerance
+  type: descend
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: force_limit
+    on_failure: abort
+    predicate: force_below
+    threshold: 40.0
+    when: during_phase
+  - args: {}
+    id: progress_check
+    on_failure: continue
+    predicate: object_progress
+    threshold: 0.95
+    when: during_phase
+  id: push_1
+  orientation:
+    align_with: channel_axis
+    axis:
+    - 0
+    - 0
+    - 1
+    mode: align_axis
+    tolerance: 0.1
+  parameters:
+    push_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 20.0
+      range:
+      - 5.0
+      - 40.0
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: add
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    retry_offset_x:
+      binds_to:
+      - mode: add
+        path: retry.offset.x
+      default: 0.0
+      range:
+      - -0.005
+      - 0.005
+      type: scalar
+    retry_offset_y:
+      binds_to:
+      - mode: add
+        path: retry.offset.y
+      default: 0.0
+      range:
+      - -0.005
+      - 0.005
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    strategy: offset_target
+  subtask_id: push_to_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0
+    - 0
+    - 0
+    source: yaml
+  termination: force_exceeded
+  type: push
+skill: peg_channel
+skill_type: arm
+subtasks:
+- anchor: object
+  id: reach_pre_push
+  metric: distance
+  offset:
+  - 0
+  - 0.02
+  - 0.04
+  target_entity: tcp
+  weight: 0.4
+- anchor: goal
+  id: push_to_goal
+  metric: goal_progress
+  offset:
+  - 0
+  - 0
+  - 0
+  target_entity: tcp
+  weight: 0.6

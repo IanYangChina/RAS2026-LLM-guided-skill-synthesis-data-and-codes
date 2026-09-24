@@ -1,0 +1,61 @@
+skill: peg_channel
+skill_type: arm_gripper
+phases:
+- id: descend_1
+  type: descend
+  generator: arc_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+- id: insert_1
+  type: insert
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  parameters:
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.15
+    insertion_force:
+      type: scalar
+      range:
+      - 1.0
+      - 20.0
+    param_0:
+      type: scalar
+      range:
+      - -0.7413195559626315
+      - 0.5364659769450415
+- id: grasp_1
+  type: grasp
+  control: position_control
+  termination: time_limit
+  end_effector_action: force_grasp
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: force_control
+  termination: pose_tolerance
+  parameters:
+    lateral_offset_x:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+    lateral_offset_y:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01

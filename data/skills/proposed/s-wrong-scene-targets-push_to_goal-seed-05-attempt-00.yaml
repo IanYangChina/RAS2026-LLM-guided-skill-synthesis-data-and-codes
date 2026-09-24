@@ -1,0 +1,78 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  target:
+    anchor: world
+    offset:
+    - 0.45
+    - -0.2
+    - 0.05
+    orientation:
+      mode: none
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_1
+  subtask_id: behind_object
+  target:
+    anchor: world
+    offset:
+    - 0.45
+    - -0.2
+    - 0.025
+    orientation:
+      mode: none
+  termination: pose_tolerance
+  type: descend
+- control: position_control
+  generator: linear_cartesian
+  id: push_1
+  parameters:
+    push_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.25
+      range:
+      - 0.1
+      - 0.35
+      type: scalar
+  subtask_id: push_to_goal
+  target:
+    anchor: world
+    offset:
+    - 0.45
+    - -0.2
+    - 0.025
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.25
+      mode: add_to_offset
+    orientation:
+      mode: none
+  termination: pose_tolerance
+  type: push
+skill: push_to_goal
+skill_type: arm
+subtasks:
+- anchor: object
+  id: behind_object
+  metric: distance
+  offset:
+  - -0.05
+  - -0.05
+  - 0.025
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: push_to_goal
+  metric: goal_progress
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: object
+  weight: 0.7

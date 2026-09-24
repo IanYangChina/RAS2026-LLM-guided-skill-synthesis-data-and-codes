@@ -1,0 +1,138 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: arc_cartesian
+  id: approach_clearance
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+    arc_height:
+      binds_to:
+      - mode: add
+        path: generator.arc_height
+      default: 0.12
+      range:
+      - 0.05
+      - 0.25
+      type: scalar
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  subtask_id: clear_obstacle
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.3
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.05
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_to_goal
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.03
+      - 0.2
+      type: scalar
+    descend_z_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: -0.02
+      range:
+      - -0.03
+      - 0.0
+      type: scalar
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - -0.02
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: descend
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - id: fine_tolerance_guard
+    on_failure: retry
+    predicate: pose_within_tolerance
+    threshold: 0.01
+    when: after_phase
+  id: fine_adjust
+  parameters:
+    fine_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+    fine_z_correction:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.0
+      range:
+      - -0.01
+      - 0.01
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - 0.0
+    - -0.002
+    strategy: offset_target
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+skill: obstacle_reach
+skill_type: arm_gripper
+subtasks:
+- anchor: fixture
+  id: clear_obstacle
+  offset:
+  - 0.0
+  - 0.0
+  - 0.3
+  weight: 0.3
+- id: reach_goal
+  weight: 0.7

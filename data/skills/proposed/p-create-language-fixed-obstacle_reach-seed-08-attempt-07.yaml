@@ -1,0 +1,99 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    approach_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.25
+      range:
+      - 0.15
+      - 0.4
+      type: scalar
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.5
+      range:
+      - 0.3
+      - 1.0
+      type: scalar
+  target:
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.03
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: align_xy
+  parameters:
+    align_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.2
+      range:
+      - 0.1
+      - 0.4
+      type: scalar
+    align_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.5
+      range:
+      - 0.3
+      - 1.0
+      type: scalar
+  target:
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: align
+- control: position_control
+  generator: linear_cartesian
+  id: descend_1
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.5
+      range:
+      - 0.3
+      - 1.0
+      type: scalar
+  target:
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.025
+  termination: pose_tolerance
+  type: descend
+skill: obstacle_reach

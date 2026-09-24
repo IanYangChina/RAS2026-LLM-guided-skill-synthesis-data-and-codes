@@ -1,0 +1,22 @@
+skill: grasp_place
+phases:
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: align_2
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: pull_1
+  type: pull
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: admittance_control
+  termination: contact_detected

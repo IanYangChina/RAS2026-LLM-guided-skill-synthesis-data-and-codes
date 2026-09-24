@@ -1,0 +1,191 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_socket
+  parameters:
+    approach_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.1
+      range:
+      - 0.08
+      - 0.14
+      type: scalar
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.06
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+    approach_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.012
+      range:
+      - 0.005
+      - 0.02
+      type: scalar
+  subtask_id: approach_entry
+  target:
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    orientation:
+      align_with: insertion_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.06
+    source: yaml
+    tolerance: 0.012
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: align_before_insert
+  parameters:
+    align_x:
+      binds_to:
+      - mode: replace
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.025
+      - 0.025
+      type: scalar
+    align_y:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.025
+      - 0.025
+      type: scalar
+    lateral_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.08
+      range:
+      - 0.07
+      - 0.1
+      type: scalar
+    lateral_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.008
+      range:
+      - 0.003
+      - 0.015
+      type: scalar
+  subtask_id: approach_entry
+  target:
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.08
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.008
+  termination: pose_tolerance
+  type: approach
+- control: impedance_control
+  generator: linear_cartesian
+  id: insert_peg
+  parameters:
+    force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 15.0
+      range:
+      - 5.0
+      - 30.0
+      type: scalar
+    insert_base_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.09
+      range:
+      - 0.07
+      - 0.1
+      type: scalar
+    insert_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.05
+      range:
+      - 0.03
+      - 0.06
+      type: scalar
+    insert_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.005
+    - 0.005
+    - 0.0
+    strategy: offset_target
+  subtask_id: reach_goal
+  target:
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.09
+    offset_along_axis:
+      axis: channel_axis
+      distance: 0.05
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      align_with: insertion_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.04
+    source: yaml
+    tolerance: 0.02
+  termination: force_exceeded
+  type: push
+skill: peg_insert
+subtasks:
+- anchor: fixture
+  id: approach_entry
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  weight: 0.3
+- id: reach_goal
+  target_entity: object
+  weight: 0.7

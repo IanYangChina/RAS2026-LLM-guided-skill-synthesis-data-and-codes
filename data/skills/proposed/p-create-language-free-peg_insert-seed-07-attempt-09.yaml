@@ -1,0 +1,195 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    approach_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.025
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  subtask_id: approach_target
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.12
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_1
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+    descend_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.008
+      range:
+      - 0.003
+      - 0.02
+      type: scalar
+  subtask_id: insertion_target
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.055
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+    source: yaml
+  termination: pose_tolerance
+  type: descend
+- control: force_threshold_switch
+  generator: impedance_motion
+  guards:
+  - args: {}
+    id: force_limit_check
+    on_failure: retry
+    predicate: force_below
+    threshold: 40.0
+    when: during_phase
+  id: insert_1
+  parameters:
+    insertion_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.05
+      range:
+      - 0.04
+      - 0.06
+      type: scalar
+    insertion_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 30.0
+      range:
+      - 5.0
+      - 40.0
+      type: scalar
+    insertion_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.01
+      range:
+      - 0.005
+      - 0.03
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.01
+    - 0.01
+    - 0.0
+    strategy: offset_target
+  subtask_id: insertion_target
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.055
+    offset_along_axis:
+      axis: channel_axis
+      distance: 0.05
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+    source: yaml
+  termination: force_exceeded
+  type: insert
+- control: position_control
+  generator: linear_cartesian
+  id: retract_1
+  parameters:
+    retract_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    retract_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.025
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: retract
+skill: peg_insert
+subtasks:
+- anchor: goal
+  id: approach_target
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.12
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: insertion_target
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.08
+  target_entity: tcp
+  weight: 0.7

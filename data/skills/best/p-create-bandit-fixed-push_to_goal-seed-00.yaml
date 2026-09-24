@@ -1,0 +1,66 @@
+skill: push_to_goal
+dsl_version: 2
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0.0
+    - 0.08
+    - 0.0
+    orientation:
+      mode: keep_current
+  subtask_id: approach
+- id: contact_1
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0.0
+    - 0.03
+    - 0.0
+    orientation:
+      mode: keep_current
+  parameters:
+    contact_force:
+      type: scalar
+      range:
+      - 2.8999999999999995
+      - 18.1
+      default: 5.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+  subtask_id: contact
+- id: push_1
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.03
+    - 0.0
+    offset_along_axis:
+      distance: 0.15
+      axis: task_goal_direction
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+  subtask_id: push

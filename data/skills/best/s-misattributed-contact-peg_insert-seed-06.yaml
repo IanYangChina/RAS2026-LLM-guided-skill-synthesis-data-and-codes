@@ -1,0 +1,168 @@
+skill: peg_insert
+dsl_version: 2
+subtasks:
+- id: approach_entry
+  anchor: fixture
+  offset:
+  - 0.0
+  - 0.0
+  - 0.055
+  weight: 0.3
+- id: insertion_complete
+  target_entity: object
+  weight: 0.7
+phases:
+- id: approach_above_hole
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.055
+    tolerance: 0.02
+    orientation:
+      mode: none
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+  subtask_id: approach_entry
+- id: align_over_hole
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.055
+    tolerance: 0.01
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+      tolerance: 0.05
+  parameters:
+    lateral_offset_x:
+      type: scalar
+      range:
+      - -0.02
+      - 0.02
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: add
+    lateral_offset_y:
+      type: scalar
+      range:
+      - -0.02
+      - 0.02
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: add
+  subtask_id: approach_entry
+- id: descend_to_standoff
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.045
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: approach_entry
+- id: insert_peg
+  type: insert
+  generator: impedance_motion
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.04
+    tolerance: 0.015
+    orientation:
+      mode: keep_current
+  parameters:
+    insert_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.03
+      default: 0.015
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    insert_z_offset:
+      type: scalar
+      range:
+      - 0.02
+      - 0.06
+      default: 0.04
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+  guards:
+  - id: insertion_force_guard
+    when: during_phase
+    predicate: force_below
+    threshold: 35.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.003
+    - 0.0
+  subtask_id: insertion_complete

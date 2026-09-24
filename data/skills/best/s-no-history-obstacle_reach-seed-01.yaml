@@ -1,0 +1,110 @@
+skill: obstacle_reach
+dsl_version: 2
+subtasks:
+- id: reach_above
+  offset:
+  - 0.0
+  - 0.0
+  - 0.2
+  weight: 0.3
+- id: reach_goal
+  weight: 0.7
+phases:
+- id: arc_over
+  type: approach
+  generator: arc_cartesian
+  control: impedance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    arc_height:
+      type: scalar
+      range:
+      - 0.12
+      - 0.35
+      default: 0.2
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    max_time:
+      type: scalar
+      range:
+      - 0.5
+      - 2.0
+      default: 1.5
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.1
+      - 0.5
+      default: 0.3
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: collision_check
+    when: during_phase
+    predicate: force_below
+    threshold: 5.0
+    on_failure: abort
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+  subtask_id: reach_above
+- id: descend_to_goal
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    z_offset:
+      type: scalar
+      range:
+      - -0.02
+      - 0.0
+      default: -0.005
+      binds_to:
+      - path: target.offset.z
+        mode: add
+  guards:
+  - id: descend_collision
+    when: during_phase
+    predicate: force_below
+    threshold: 5.0
+    on_failure: abort
+  subtask_id: reach_goal

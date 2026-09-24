@@ -1,0 +1,220 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: arc_cartesian
+  id: approach_1
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: approach_object
+  target:
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_1
+  parameters:
+    depth:
+      binds_to:
+      - mode: add
+        path: target.offset.z
+      default: 0.04
+      range:
+      - 0.01
+      - 0.08
+      type: scalar
+  subtask_id: grasp_object
+  target:
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: descend
+- control: position_control
+  end_effector_action: force_grasp
+  generator: null
+  id: grasp_1
+  parameters:
+    grip_force:
+      binds_to:
+      - mode: replace
+        path: termination.grasp_force_threshold
+      default: 20.0
+      range:
+      - 5.0
+      - 30.0
+      type: scalar
+  subtask_id: grasp_object
+  target:
+    anchor: current_tcp
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: grasp_success
+  type: grasp
+- control: position_control
+  generator: linear_cartesian
+  id: lift_1
+  parameters:
+    lift_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.12
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  subtask_id: lift_object
+  target:
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.12
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: lift
+- control: position_control
+  generator: linear_cartesian
+  id: transport_1
+  parameters:
+    transport_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.06
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+  subtask_id: approach_goal
+  target:
+    anchor: task_goal
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: place_1
+  parameters:
+    place_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.02
+      range:
+      - -0.02
+      - 0.05
+      type: scalar
+  subtask_id: place_object
+  target:
+    anchor: task_goal
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: descend
+- control: position_control
+  end_effector_action: open
+  generator: null
+  id: release_1
+  subtask_id: place_object
+  target:
+    anchor: current_tcp
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: pose_tolerance
+  type: release
+skill: grasp_place
+skill_type: arm_gripper
+subtasks:
+- anchor: object
+  id: approach_object
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  target_entity: tcp
+  weight: 0.2
+- anchor: object
+  id: grasp_object
+  metric: contact
+  target_entity: tcp
+  weight: 0.1
+- anchor: object
+  id: lift_object
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.12
+  target_entity: tcp
+  weight: 0.2
+- anchor: goal
+  id: approach_goal
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  target_entity: tcp
+  weight: 0.2
+- anchor: goal
+  id: place_object
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.3

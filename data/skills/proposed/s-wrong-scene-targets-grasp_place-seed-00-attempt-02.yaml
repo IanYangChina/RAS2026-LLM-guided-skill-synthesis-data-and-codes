@@ -1,0 +1,210 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_obj
+  orientation:
+    align_with: world_z
+    axis:
+    - 0.0
+    - 0.0
+    - -1.0
+    mode: align_axis
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.02
+      - 0.2
+      type: scalar
+  subtask_id: approach_grasp
+  target:
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: contact_guard
+    on_failure: continue
+    predicate: contact_detected
+    threshold: 1.0
+    when: during_phase
+  id: descend_grasp
+  orientation:
+    mode: keep_current
+  parameters:
+    descend_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 2.0
+      range:
+      - 0.5
+      - 5.0
+      type: scalar
+  subtask_id: approach_grasp
+  target:
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: force_exceeded
+  type: descend
+- control: impedance_control
+  end_effector_action: force_grasp
+  generator: null
+  guards:
+  - args: {}
+    id: grasp_check
+    on_failure: retry
+    predicate: bilateral_grasp
+    threshold: 0.5
+    when: after_phase
+  id: grasp_action
+  orientation:
+    mode: keep_current
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.0
+    - 0.005
+    strategy: offset_target
+  subtask_id: approach_grasp
+  target:
+    anchor: current_tcp
+    source: yaml
+  termination: grasp_success
+  type: grasp
+- control: position_control
+  generator: linear_cartesian
+  id: lift_after_grasp
+  orientation:
+    mode: keep_current
+  parameters:
+    lift_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+  subtask_id: approach_grasp
+  target:
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    source: yaml
+  termination: pose_tolerance
+  type: lift
+- control: position_control
+  generator: linear_cartesian
+  id: transport_to_goal
+  orientation:
+    mode: keep_current
+  parameters:
+    transport_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.02
+      - 0.2
+      type: scalar
+  subtask_id: place_goal
+  target:
+    anchor: task_goal
+    entity: placement_surface
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: impedance_control
+  generator: linear_cartesian
+  id: descend_place_on_goal
+  orientation:
+    mode: keep_current
+  parameters:
+    place_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 2.0
+      range:
+      - 0.5
+      - 10.0
+      type: scalar
+  subtask_id: place_goal
+  target:
+    anchor: task_goal
+    entity: placement_surface
+    offset:
+    - 0.0
+    - 0.0
+    - 0.03
+    source: yaml
+  termination: force_exceeded
+  type: descend
+- control: position_control
+  end_effector_action: open
+  generator: null
+  id: release_object
+  orientation:
+    mode: keep_current
+  parameters:
+    release_duration:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 0.5
+      range:
+      - 0.1
+      - 1.0
+      type: scalar
+  subtask_id: place_goal
+  target:
+    anchor: current_tcp
+    source: yaml
+  termination: time_limit
+  type: release
+skill: grasp_place
+subtasks:
+- anchor: object
+  id: approach_grasp
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  target_entity: tcp
+  weight: 0.2
+- anchor: goal
+  id: place_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.03
+  target_entity: tcp
+  weight: 0.8

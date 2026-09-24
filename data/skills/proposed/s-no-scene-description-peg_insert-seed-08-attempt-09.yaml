@@ -1,0 +1,155 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_above
+  parameters:
+    approach_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.2
+      range:
+      - 0.15
+      - 0.3
+      type: scalar
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    approach_tol:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.01
+      range:
+      - 0.005
+      - 0.02
+      type: scalar
+  subtask_id: reach_above_socket
+  target:
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    orientation:
+      align_with: world_z
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - id: force_limit_guard
+    on_failure: retry
+    predicate: force_below
+    threshold: 50.0
+    when: during_phase
+  id: insert_peg
+  parameters:
+    force_limit:
+      binds_to:
+      - mode: replace
+        path: guards.force_limit_guard.threshold
+      default: 50.0
+      range:
+      - 30.0
+      - 70.0
+      type: scalar
+    insert_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.07
+      range:
+      - 0.05
+      - 0.12
+      type: scalar
+    insert_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.01
+      range:
+      - 0.005
+      - 0.03
+      type: scalar
+    insert_tol:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.01
+      - 0.03
+      type: scalar
+    retry_offset_x:
+      binds_to:
+      - mode: replace
+        path: retry.offset.x
+      default: 0.008
+      range:
+      - 0.003
+      - 0.015
+      type: scalar
+    retry_offset_y:
+      binds_to:
+      - mode: replace
+        path: retry.offset.y
+      default: 0.008
+      range:
+      - 0.003
+      - 0.015
+      type: scalar
+  retries:
+    max_attempts: 3
+    offset:
+    - 0.008
+    - 0.008
+    - 0.0
+    strategy: offset_target
+  subtask_id: insertion_depth
+  target:
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: world_z
+      distance: 0.07
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: insert
+skill: peg_insert
+subtasks:
+- anchor: fixture
+  id: reach_above_socket
+  offset:
+  - 0.0
+  - 0.0
+  - 0.2
+  weight: 0.3
+- id: insertion_depth
+  metric: goal_progress
+  target_entity: object
+  weight: 0.7

@@ -1,0 +1,197 @@
+dsl_version: 2
+phases:
+- control: impedance_control
+  generator: linear_cartesian
+  id: approach_handle
+  parameters:
+    approach_x_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.x
+      default: 0.1
+      range:
+      - 0.0
+      - 0.2
+      type: scalar
+    approach_z_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  retries:
+    max_attempts: 1
+    strategy: repeat
+  subtask_id: approach_handle
+  target:
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.1
+    - 0.0
+    - 0.1
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: admittance_control
+  generator: linear_cartesian
+  id: descend_to_handle
+  parameters:
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 20.0
+      range:
+      - 5.0
+      - 30.0
+      type: scalar
+  retries:
+    max_attempts: 3
+    offset:
+    - 0.0
+    - 0.0
+    - -0.01
+    strategy: offset_target
+  subtask_id: approach_handle
+  target:
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.015
+  termination: pose_tolerance
+  type: contact
+- control: admittance_control
+  generator: linear_cartesian
+  guards:
+  - id: force_guard
+    on_failure: retry
+    predicate: force_below
+    threshold: 35.0
+    when: during_phase
+  id: push_door
+  parameters:
+    force_guard_threshold:
+      binds_to:
+      - mode: replace
+        path: guards.force_guard.threshold
+      default: 25.0
+      range:
+      - 10.0
+      - 30.0
+      type: scalar
+    max_push_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 5.0
+      range:
+      - 0.5
+      - 15.0
+      type: scalar
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.15
+      range:
+      - 0.0
+      - 0.5
+      type: scalar
+    push_retry_y_offset:
+      binds_to:
+      - mode: replace
+        path: retry.offset.y
+      default: -0.02
+      range:
+      - -0.05
+      - 0.05
+      type: scalar
+    push_retry_z_offset:
+      binds_to:
+      - mode: replace
+        path: retry.offset.z
+      default: 0.0
+      range:
+      - -0.03
+      - 0.03
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+    push_y_offset:
+      binds_to:
+      - mode: add
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.1
+      - 0.1
+      type: scalar
+    push_z_offset:
+      binds_to:
+      - mode: add
+        path: target.offset.z
+      default: 0.0
+      range:
+      - -0.05
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - -0.02
+    - 0.0
+    strategy: offset_target
+  subtask_id: open_door
+  target:
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: world_x
+      distance: 0.15
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.05
+  termination: time_limit
+  type: push
+skill: door_push
+subtasks:
+- anchor: fixture
+  id: approach_handle
+  offset:
+  - -0.4
+  - -0.02
+  - 0.35
+  weight: 0.3
+- anchor: fixture
+  id: open_door
+  metric: hinge_angle
+  target_entity: hinge
+  weight: 0.7

@@ -1,0 +1,105 @@
+skill: push_to_goal
+dsl_version: 2
+phases:
+- id: approach
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0.0
+    - 0.08
+    - 0.0
+    orientation:
+      mode: keep_current
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: approach
+- id: contact
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0.0
+    - 0.03
+    - 0.0
+    orientation:
+      mode: keep_current
+  parameters:
+    contact_force:
+      type: scalar
+      range:
+      - 1.0
+      - 20.0
+      default: 5.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: contact
+- id: push
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.03
+    - 0.0
+    orientation:
+      mode: keep_current
+  parameters:
+    push_depth:
+      type: scalar
+      range:
+      - 0.0
+      - 0.1
+      default: 0.03
+      binds_to:
+      - path: target.offset.y
+        mode: add
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.04
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: force_limit
+    when: during_phase
+    predicate: force_below
+    threshold: 25.0
+    on_failure: abort
+  subtask_id: push

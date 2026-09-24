@@ -1,0 +1,125 @@
+skill: push_to_goal
+dsl_version: 2
+phases:
+- id: approach_1
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0.0
+    - 0.08
+    - 0.0
+    tolerance: 0.01
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: approach
+- id: contact_1
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0.0
+    - 0.03
+    - 0.0
+    tolerance: 0.01
+  parameters:
+    force_threshold:
+      type: scalar
+      range:
+      - 1.0
+      - 10.0
+      default: 5.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: contact
+- id: push_1
+  type: push
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.2
+      axis: task_goal_direction
+      mode: add_to_offset
+      sign: positive
+    tolerance: 0.02
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.1
+      - 0.3
+      default: 0.2
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.04
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: push
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    tolerance: 0.01
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace

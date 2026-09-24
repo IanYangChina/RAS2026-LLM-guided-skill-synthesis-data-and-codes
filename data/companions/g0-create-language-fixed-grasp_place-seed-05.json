@@ -1,0 +1,1612 @@
+{
+  "optimization_metrics": {
+    "LAMBDA": 0.05,
+    "canonical_task_score": 0.32286877413961296,
+    "complexity_penalty": 0.12,
+    "composite_formula_version": "paper-release",
+    "composite_score": 0.2684817500263735,
+    "episode_task_state": [
+      {
+        "actual_goal_position": [
+          0.6015325561042142,
+          0.17858013800881417,
+          0.10808960535724846
+        ],
+        "episode_index": 0,
+        "goal_position": [
+          0.6015325561042142,
+          0.17858013800881417,
+          0.10808960535724846
+        ],
+        "hinge_angle": null,
+        "object_initial_position": [
+          0.530500292374538,
+          0.030794078973649372,
+          0.03
+        ]
+      },
+      {
+        "actual_goal_position": [
+          0.6015325561042142,
+          0.17858013800881417,
+          0.10808960535724846
+        ],
+        "episode_index": 1,
+        "goal_position": [
+          0.6015325561042142,
+          0.17858013800881417,
+          0.10808960535724846
+        ],
+        "hinge_angle": null,
+        "object_initial_position": [
+          0.530500292374538,
+          0.030794078973649372,
+          0.03
+        ]
+      },
+      {
+        "actual_goal_position": [
+          0.6015325561042142,
+          0.17858013800881417,
+          0.10808960535724846
+        ],
+        "episode_index": 2,
+        "goal_position": [
+          0.6015325561042142,
+          0.17858013800881417,
+          0.10808960535724846
+        ],
+        "hinge_angle": null,
+        "object_initial_position": [
+          0.530500292374538,
+          0.030794078973649372,
+          0.03
+        ]
+      }
+    ],
+    "fitness_score": 0.3884817500263735,
+    "force_compliance": 1.0,
+    "mean_phase_displacement": 0.0841424942323832,
+    "metrics_version": "paper-release",
+    "optimisation_signal_source": "fixed_subtasks",
+    "optimiser_diagnostics": {
+      "K_basin_runs": 3.0,
+      "best_fitness_score": 0.3884817500263735,
+      "best_score": 0.2684817500263735,
+      "best_task_score": 0.32286877413961296,
+      "budget_accounting": {
+        "allocated_candidate_evaluations": 198,
+        "basin_runs": [
+          {
+            "allocated_candidate_evaluations": 66,
+            "consumed_candidate_evaluations": 1,
+            "run_index": 0,
+            "stop_reason": "no_parameters"
+          },
+          {
+            "allocated_candidate_evaluations": 66,
+            "consumed_candidate_evaluations": 1,
+            "run_index": 1,
+            "stop_reason": "no_parameters"
+          },
+          {
+            "allocated_candidate_evaluations": 66,
+            "consumed_candidate_evaluations": 1,
+            "run_index": 2,
+            "stop_reason": "no_parameters"
+          }
+        ],
+        "consumed_candidate_evaluations": 3,
+        "requested_candidate_evaluations": 200,
+        "unallocated_candidate_evaluations": 2,
+        "unconsumed_allocated_candidate_evaluations": 195
+      },
+      "canonical_task_score": 0.32286877413961296,
+      "final_sigma_mean": 0.0,
+      "k_run_variance": 0.003815572680899612,
+      "median_score": 0.2849964900772755,
+      "n_generations_mean": 0.0,
+      "params_at_lower_bound": [],
+      "params_at_upper_bound": [],
+      "randomised_config_count": 3,
+      "robust_composite_score": 0.2684817500263735,
+      "robust_fitness_score": 0.3884817500263735,
+      "robust_task_score": 0.32286877413961296,
+      "search_fitness_score": 0.3884817500263735,
+      "stagnated": false,
+      "stop_reason": "no_parameters"
+    },
+    "optimiser_fitness_components": {
+      "canonical_task_score": 0.32286877413961296,
+      "formula": "0.25*grasp_proximity + 0.25*lift + 0.50*object_target_proximity",
+      "grasp_place_fitness": 0.3884817500263735
+    },
+    "phase_completion_rate": 0.8333333333333334,
+    "posthoc_diagnostics": {
+      "configuration_bank_sha256": "181fdad61feb8a6d3dd6561c82dc2730a5598964bf30fa08b43615687239c379",
+      "randomised_config_count": 3,
+      "randomised_config_results": [
+        {
+          "allocated_candidate_evaluations": 66,
+          "best_composite_score": 0.3345130503493528,
+          "best_fitness_score": 0.4545130503493528,
+          "best_params": {},
+          "best_task_score": 0.4557267013159116,
+          "configuration_bank_sha256": "181fdad61feb8a6d3dd6561c82dc2730a5598964bf30fa08b43615687239c379",
+          "configuration_index": 0,
+          "configuration_seed": 5,
+          "configuration_sha256": "eed1fc17ff57094d5189888f0dc8540ea7c165c4c73333e7487a550c7ded377e",
+          "consumed_candidate_evaluations": 1,
+          "episode_task_state": [
+            {
+              "actual_goal_position": [
+                0.6015325561042142,
+                0.17858013800881417,
+                0.10808960535724846
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.6015325561042142,
+                0.17858013800881417,
+                0.10808960535724846
+              ],
+              "hinge_angle": null,
+              "object_initial_position": [
+                0.530500292374538,
+                0.030794078973649372,
+                0.03
+              ]
+            },
+            {
+              "actual_goal_position": [
+                0.6015325561042142,
+                0.17858013800881417,
+                0.10808960535724846
+              ],
+              "episode_index": 1,
+              "goal_position": [
+                0.6015325561042142,
+                0.17858013800881417,
+                0.10808960535724846
+              ],
+              "hinge_angle": null,
+              "object_initial_position": [
+                0.530500292374538,
+                0.030794078973649372,
+                0.03
+              ]
+            },
+            {
+              "actual_goal_position": [
+                0.6015325561042142,
+                0.17858013800881417,
+                0.10808960535724846
+              ],
+              "episode_index": 2,
+              "goal_position": [
+                0.6015325561042142,
+                0.17858013800881417,
+                0.10808960535724846
+              ],
+              "hinge_angle": null,
+              "object_initial_position": [
+                0.530500292374538,
+                0.030794078973649372,
+                0.03
+              ]
+            }
+          ],
+          "randomisation_debug": {
+            "body_deltas": {
+              "13": [
+                0.0015325561042141972,
+                -0.02141986199118584,
+                0.008089605357248463
+              ]
+            },
+            "qpos_delta": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.030500292374537996,
+              0.030794078973649372,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scene_frozen": true
+          },
+          "randomised_task_state": {
+            "actual_goal_position": [
+              0.6015325561042142,
+              0.17858013800881417,
+              0.10808960535724846
+            ],
+            "episode_index": 0,
+            "goal_position": [
+              0.6015325561042142,
+              0.17858013800881417,
+              0.10808960535724846
+            ],
+            "hinge_angle": null,
+            "object_initial_position": [
+              0.530500292374538,
+              0.030794078973649372,
+              0.03
+            ]
+          },
+          "realized_scene": {
+            "anchors": [
+              {
+                "name": "object",
+                "value": [
+                  0.530500292374538,
+                  0.030794078973649372,
+                  0.03
+                ]
+              },
+              {
+                "name": "goal",
+                "value": [
+                  0.6015325561042142,
+                  0.17858013800881417,
+                  0.10808960535724847
+                ]
+              }
+            ],
+            "axes": [],
+            "fixture_states": [],
+            "fixtures": [],
+            "limits": [
+              {
+                "name": "goal_tolerance_m",
+                "value": 0.02
+              },
+              {
+                "name": "force_limit_n",
+                "value": 20.0
+              },
+              {
+                "name": "force_scale_n",
+                "value": 5.0
+              }
+            ],
+            "object_starts": [
+              {
+                "name": "grasp_target",
+                "orientation": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "position": [
+                  0.530500292374538,
+                  0.030794078973649372,
+                  0.03
+                ]
+              }
+            ],
+            "obstacles": [],
+            "schema_version": "paper-release",
+            "targets": [
+              {
+                "name": "place_target",
+                "orientation": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "position": [
+                  0.6015325561042142,
+                  0.17858013800881417,
+                  0.10808960535724847
+                ]
+              }
+            ],
+            "task_name": "grasp_place"
+          },
+          "realized_scene_sha256": "ca83b0c5488ee900ee32f323a4fc38ffcc2f5381fd3d2b180044b561c962382d",
+          "representative_task_state": {
+            "actual_goal_position": [
+              0.6015325561042142,
+              0.17858013800881417,
+              0.10808960535724846
+            ],
+            "episode_index": 0,
+            "goal_position": [
+              0.6015325561042142,
+              0.17858013800881417,
+              0.10808960535724846
+            ],
+            "hinge_angle": null,
+            "object_initial_position": [
+              0.530500292374538,
+              0.030794078973649372,
+              0.03
+            ]
+          },
+          "run_index": 0,
+          "seed": 5,
+          "stop_reason": "no_parameters"
+        },
+        {
+          "allocated_candidate_evaluations": 66,
+          "best_composite_score": 0.18593570965249195,
+          "best_fitness_score": 0.30593570965249195,
+          "best_params": {},
+          "best_task_score": 0.15697296294036092,
+          "configuration_bank_sha256": "181fdad61feb8a6d3dd6561c82dc2730a5598964bf30fa08b43615687239c379",
+          "configuration_index": 1,
+          "configuration_seed": 6,
+          "configuration_sha256": "5dcdc1a4e2a8d4c3bb30f9ac92fb306bea0b16a8f449f4d02b0333754e50f910",
+          "consumed_candidate_evaluations": 1,
+          "episode_task_state": [
+            {
+              "actual_goal_position": [
+                0.5869067239795378,
+                0.18744967655878825,
+                0.24811674852797
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.5869067239795378,
+                0.18744967655878825,
+                0.24811674852797
+              ],
+              "hinge_angle": null,
+              "object_initial_position": [
+                0.5038164351471943,
+                -0.015672913018666156,
+                0.03
+              ]
+            },
+            {
+              "actual_goal_position": [
+                0.5869067239795378,
+                0.18744967655878825,
+                0.24811674852797
+              ],
+              "episode_index": 1,
+              "goal_position": [
+                0.5869067239795378,
+                0.18744967655878825,
+                0.24811674852797
+              ],
+              "hinge_angle": null,
+              "object_initial_position": [
+                0.5038164351471943,
+                -0.015672913018666156,
+                0.03
+              ]
+            },
+            {
+              "actual_goal_position": [
+                0.5869067239795378,
+                0.18744967655878825,
+                0.24811674852797
+              ],
+              "episode_index": 2,
+              "goal_position": [
+                0.5869067239795378,
+                0.18744967655878825,
+                0.24811674852797
+              ],
+              "hinge_angle": null,
+              "object_initial_position": [
+                0.5038164351471943,
+                -0.015672913018666156,
+                0.03
+              ]
+            }
+          ],
+          "randomisation_debug": {
+            "body_deltas": {
+              "13": [
+                -0.013093276020462175,
+                -0.012550323441211764,
+                0.14811674852797
+              ]
+            },
+            "qpos_delta": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.003816435147194319,
+              -0.015672913018666156,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scene_frozen": true
+          },
+          "randomised_task_state": {
+            "actual_goal_position": [
+              0.5869067239795378,
+              0.18744967655878825,
+              0.24811674852797
+            ],
+            "episode_index": 0,
+            "goal_position": [
+              0.5869067239795378,
+              0.18744967655878825,
+              0.24811674852797
+            ],
+            "hinge_angle": null,
+            "object_initial_position": [
+              0.5038164351471943,
+              -0.015672913018666156,
+              0.03
+            ]
+          },
+          "realized_scene": {
+            "anchors": [
+              {
+                "name": "object",
+                "value": [
+                  0.5038164351471943,
+                  -0.015672913018666156,
+                  0.03
+                ]
+              },
+              {
+                "name": "goal",
+                "value": [
+                  0.5869067239795378,
+                  0.18744967655878825,
+                  0.24811674852797
+                ]
+              }
+            ],
+            "axes": [],
+            "fixture_states": [],
+            "fixtures": [],
+            "limits": [
+              {
+                "name": "goal_tolerance_m",
+                "value": 0.02
+              },
+              {
+                "name": "force_limit_n",
+                "value": 20.0
+              },
+              {
+                "name": "force_scale_n",
+                "value": 5.0
+              }
+            ],
+            "object_starts": [
+              {
+                "name": "grasp_target",
+                "orientation": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "position": [
+                  0.5038164351471943,
+                  -0.015672913018666156,
+                  0.03
+                ]
+              }
+            ],
+            "obstacles": [],
+            "schema_version": "paper-release",
+            "targets": [
+              {
+                "name": "place_target",
+                "orientation": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "position": [
+                  0.5869067239795378,
+                  0.18744967655878825,
+                  0.24811674852797
+                ]
+              }
+            ],
+            "task_name": "grasp_place"
+          },
+          "realized_scene_sha256": "584133b5261cffac0dd4282704ff39e97bf4d452e60b02507679bbdea5a4de22",
+          "representative_task_state": {
+            "actual_goal_position": [
+              0.5869067239795378,
+              0.18744967655878825,
+              0.24811674852797
+            ],
+            "episode_index": 0,
+            "goal_position": [
+              0.5869067239795378,
+              0.18744967655878825,
+              0.24811674852797
+            ],
+            "hinge_angle": null,
+            "object_initial_position": [
+              0.5038164351471943,
+              -0.015672913018666156,
+              0.03
+            ]
+          },
+          "run_index": 1,
+          "seed": 6,
+          "stop_reason": "no_parameters"
+        },
+        {
+          "allocated_candidate_evaluations": 66,
+          "best_composite_score": 0.2849964900772755,
+          "best_fitness_score": 0.4049964900772755,
+          "best_params": {},
+          "best_task_score": 0.3559066581625662,
+          "configuration_bank_sha256": "181fdad61feb8a6d3dd6561c82dc2730a5598964bf30fa08b43615687239c379",
+          "configuration_index": 2,
+          "configuration_seed": 7,
+          "configuration_sha256": "53da4dc33bcb1151bde99c46f4ec5d44dda63d23acc62ec623c12d4d0fb32574",
+          "consumed_candidate_evaluations": 1,
+          "episode_task_state": [
+            {
+              "actual_goal_position": [
+                0.6275685690245193,
+                0.17252071899905919,
+                0.14502494273668382
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.6275685690245193,
+                0.17252071899905919,
+                0.14502494273668382
+              ],
+              "hinge_angle": null,
+              "object_initial_position": [
+                0.5125095466604667,
+                0.039721380096957554,
+                0.03
+              ]
+            },
+            {
+              "actual_goal_position": [
+                0.6275685690245193,
+                0.17252071899905919,
+                0.14502494273668382
+              ],
+              "episode_index": 1,
+              "goal_position": [
+                0.6275685690245193,
+                0.17252071899905919,
+                0.14502494273668382
+              ],
+              "hinge_angle": null,
+              "object_initial_position": [
+                0.5125095466604667,
+                0.039721380096957554,
+                0.03
+              ]
+            },
+            {
+              "actual_goal_position": [
+                0.6275685690245193,
+                0.17252071899905919,
+                0.14502494273668382
+              ],
+              "episode_index": 2,
+              "goal_position": [
+                0.6275685690245193,
+                0.17252071899905919,
+                0.14502494273668382
+              ],
+              "hinge_angle": null,
+              "object_initial_position": [
+                0.5125095466604667,
+                0.039721380096957554,
+                0.03
+              ]
+            }
+          ],
+          "randomisation_debug": {
+            "body_deltas": {
+              "13": [
+                0.02756856902451936,
+                -0.027479281000940815,
+                0.045024942736683816
+              ]
+            },
+            "qpos_delta": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.012509546660466664,
+              0.039721380096957554,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scene_frozen": true
+          },
+          "randomised_task_state": {
+            "actual_goal_position": [
+              0.6275685690245193,
+              0.17252071899905919,
+              0.14502494273668382
+            ],
+            "episode_index": 0,
+            "goal_position": [
+              0.6275685690245193,
+              0.17252071899905919,
+              0.14502494273668382
+            ],
+            "hinge_angle": null,
+            "object_initial_position": [
+              0.5125095466604667,
+              0.039721380096957554,
+              0.03
+            ]
+          },
+          "realized_scene": {
+            "anchors": [
+              {
+                "name": "object",
+                "value": [
+                  0.5125095466604667,
+                  0.039721380096957554,
+                  0.03
+                ]
+              },
+              {
+                "name": "goal",
+                "value": [
+                  0.6275685690245193,
+                  0.17252071899905919,
+                  0.14502494273668382
+                ]
+              }
+            ],
+            "axes": [],
+            "fixture_states": [],
+            "fixtures": [],
+            "limits": [
+              {
+                "name": "goal_tolerance_m",
+                "value": 0.02
+              },
+              {
+                "name": "force_limit_n",
+                "value": 20.0
+              },
+              {
+                "name": "force_scale_n",
+                "value": 5.0
+              }
+            ],
+            "object_starts": [
+              {
+                "name": "grasp_target",
+                "orientation": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "position": [
+                  0.5125095466604667,
+                  0.039721380096957554,
+                  0.03
+                ]
+              }
+            ],
+            "obstacles": [],
+            "schema_version": "paper-release",
+            "targets": [
+              {
+                "name": "place_target",
+                "orientation": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "position": [
+                  0.6275685690245193,
+                  0.17252071899905919,
+                  0.14502494273668382
+                ]
+              }
+            ],
+            "task_name": "grasp_place"
+          },
+          "realized_scene_sha256": "8a4edc50bf1a337961423afe5cdf858aa28147f944f8fcd30a2ce1adc75d1bd6",
+          "representative_task_state": {
+            "actual_goal_position": [
+              0.6275685690245193,
+              0.17252071899905919,
+              0.14502494273668382
+            ],
+            "episode_index": 0,
+            "goal_position": [
+              0.6275685690245193,
+              0.17252071899905919,
+              0.14502494273668382
+            ],
+            "hinge_angle": null,
+            "object_initial_position": [
+              0.5125095466604667,
+              0.039721380096957554,
+              0.03
+            ]
+          },
+          "run_index": 2,
+          "seed": 7,
+          "stop_reason": "no_parameters"
+        }
+      ]
+    },
+    "randomised_task_state": {
+      "actual_goal_position": [
+        0.6015325561042142,
+        0.17858013800881417,
+        0.10808960535724846
+      ],
+      "episode_index": 0,
+      "goal_position": [
+        0.6015325561042142,
+        0.17858013800881417,
+        0.10808960535724846
+      ],
+      "hinge_angle": null,
+      "object_initial_position": [
+        0.530500292374538,
+        0.030794078973649372,
+        0.03
+      ]
+    },
+    "safety_diagnostics": {
+      "force_compliance": 1.0,
+      "force_limit": 20.0,
+      "max_peak_contact_force": 1.1715724091923594,
+      "mean_peak_contact_force": 1.1715724091923594
+    },
+    "search_fitness_score": 0.3884817500263735,
+    "skill_parameter_optimisation_scores": {
+      "K_basin_runs": 3.0,
+      "best_fitness_score": 0.3884817500263735,
+      "best_score": 0.2684817500263735,
+      "best_task_score": 0.32286877413961296,
+      "budget_accounting": {
+        "allocated_candidate_evaluations": 198,
+        "basin_runs": [
+          {
+            "allocated_candidate_evaluations": 66,
+            "consumed_candidate_evaluations": 1,
+            "run_index": 0,
+            "stop_reason": "no_parameters"
+          },
+          {
+            "allocated_candidate_evaluations": 66,
+            "consumed_candidate_evaluations": 1,
+            "run_index": 1,
+            "stop_reason": "no_parameters"
+          },
+          {
+            "allocated_candidate_evaluations": 66,
+            "consumed_candidate_evaluations": 1,
+            "run_index": 2,
+            "stop_reason": "no_parameters"
+          }
+        ],
+        "consumed_candidate_evaluations": 3,
+        "requested_candidate_evaluations": 200,
+        "unallocated_candidate_evaluations": 2,
+        "unconsumed_allocated_candidate_evaluations": 195
+      },
+      "canonical_task_score": 0.32286877413961296,
+      "final_sigma_mean": 0.0,
+      "k_run_variance": 0.003815572680899612,
+      "median_score": 0.2849964900772755,
+      "n_generations_mean": 0.0,
+      "params_at_lower_bound": [],
+      "params_at_upper_bound": [],
+      "randomised_config_count": 3,
+      "robust_composite_score": 0.2684817500263735,
+      "robust_fitness_score": 0.3884817500263735,
+      "robust_task_score": 0.32286877413961296,
+      "search_fitness_score": 0.3884817500263735,
+      "stagnated": false,
+      "stop_reason": "no_parameters"
+    },
+    "task_score": 0.32286877413961296,
+    "task_score_components": {
+      "formula": "final_object_to_realised_3d_target",
+      "goal_tolerance_m": 0.02,
+      "object_target_proximity": 0.32286877413961296
+    },
+    "task_subscores": {
+      "grasp_place_fitness": 0.3884817500263735,
+      "grasp_success_rate": 1.0,
+      "lift_clearance": 0.0,
+      "phase_breakdown.approach_1_score": 0.8204630783768979,
+      "phase_breakdown.descend_1_score": 0.766051602911889,
+      "phase_breakdown.grasp_1_score": 1.0,
+      "phase_breakdown.release_1_score": 0.15121614616112747,
+      "phase_breakdown.transport_arc_score": 0.16570358303320978,
+      "phase_score": 0.38144770680246837,
+      "place_accuracy": 0.0,
+      "terminal_score": 0.32286877413961296,
+      "transport_retention": 1.0
+    },
+    "termination_diagnostics": {
+      "mean_phase_displacement": 0.08289198217479966,
+      "phase_completion_rate": 0.8333333333333334,
+      "termination_fidelity": 0.0
+    },
+    "termination_fidelity": 0.0
+  },
+  "optimizer_diagnostics": {
+    "best_fitness_score": 0.3884817500263735,
+    "best_score": 0.2684817500263735,
+    "best_task_score": 0.32286877413961296,
+    "budget_accounting": {
+      "allocated_candidate_evaluations": 198,
+      "basin_runs": [
+        {
+          "allocated_candidate_evaluations": 66,
+          "consumed_candidate_evaluations": 1,
+          "run_index": 0,
+          "stop_reason": "no_parameters"
+        },
+        {
+          "allocated_candidate_evaluations": 66,
+          "consumed_candidate_evaluations": 1,
+          "run_index": 1,
+          "stop_reason": "no_parameters"
+        },
+        {
+          "allocated_candidate_evaluations": 66,
+          "consumed_candidate_evaluations": 1,
+          "run_index": 2,
+          "stop_reason": "no_parameters"
+        }
+      ],
+      "consumed_candidate_evaluations": 3,
+      "requested_candidate_evaluations": 200,
+      "unallocated_candidate_evaluations": 2,
+      "unconsumed_allocated_candidate_evaluations": 195
+    },
+    "canonical_task_score": 0.32286877413961296,
+    "final_sigma_mean": 0.0,
+    "k_run_variance": 0.003815572680899612,
+    "median_score": 0.2849964900772755,
+    "n_generations_mean": 0.0,
+    "params_at_lower_bound": [],
+    "params_at_upper_bound": [],
+    "posthoc_diagnostics": {
+      "configuration_bank_sha256": "181fdad61feb8a6d3dd6561c82dc2730a5598964bf30fa08b43615687239c379",
+      "randomised_config_count": 3,
+      "randomised_config_results": [
+        {
+          "allocated_candidate_evaluations": 66,
+          "best_composite_score": 0.3345130503493528,
+          "best_fitness_score": 0.4545130503493528,
+          "best_params": {},
+          "best_task_score": 0.4557267013159116,
+          "configuration_bank_sha256": "181fdad61feb8a6d3dd6561c82dc2730a5598964bf30fa08b43615687239c379",
+          "configuration_index": 0,
+          "configuration_seed": 5,
+          "configuration_sha256": "eed1fc17ff57094d5189888f0dc8540ea7c165c4c73333e7487a550c7ded377e",
+          "consumed_candidate_evaluations": 1,
+          "episode_task_state": [
+            {
+              "actual_goal_position": [
+                0.6015325561042142,
+                0.17858013800881417,
+                0.10808960535724846
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.6015325561042142,
+                0.17858013800881417,
+                0.10808960535724846
+              ],
+              "hinge_angle": null,
+              "object_initial_position": [
+                0.530500292374538,
+                0.030794078973649372,
+                0.03
+              ]
+            },
+            {
+              "actual_goal_position": [
+                0.6015325561042142,
+                0.17858013800881417,
+                0.10808960535724846
+              ],
+              "episode_index": 1,
+              "goal_position": [
+                0.6015325561042142,
+                0.17858013800881417,
+                0.10808960535724846
+              ],
+              "hinge_angle": null,
+              "object_initial_position": [
+                0.530500292374538,
+                0.030794078973649372,
+                0.03
+              ]
+            },
+            {
+              "actual_goal_position": [
+                0.6015325561042142,
+                0.17858013800881417,
+                0.10808960535724846
+              ],
+              "episode_index": 2,
+              "goal_position": [
+                0.6015325561042142,
+                0.17858013800881417,
+                0.10808960535724846
+              ],
+              "hinge_angle": null,
+              "object_initial_position": [
+                0.530500292374538,
+                0.030794078973649372,
+                0.03
+              ]
+            }
+          ],
+          "randomisation_debug": {
+            "body_deltas": {
+              "13": [
+                0.0015325561042141972,
+                -0.02141986199118584,
+                0.008089605357248463
+              ]
+            },
+            "qpos_delta": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.030500292374537996,
+              0.030794078973649372,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scene_frozen": true
+          },
+          "randomised_task_state": {
+            "actual_goal_position": [
+              0.6015325561042142,
+              0.17858013800881417,
+              0.10808960535724846
+            ],
+            "episode_index": 0,
+            "goal_position": [
+              0.6015325561042142,
+              0.17858013800881417,
+              0.10808960535724846
+            ],
+            "hinge_angle": null,
+            "object_initial_position": [
+              0.530500292374538,
+              0.030794078973649372,
+              0.03
+            ]
+          },
+          "realized_scene": {
+            "anchors": [
+              {
+                "name": "object",
+                "value": [
+                  0.530500292374538,
+                  0.030794078973649372,
+                  0.03
+                ]
+              },
+              {
+                "name": "goal",
+                "value": [
+                  0.6015325561042142,
+                  0.17858013800881417,
+                  0.10808960535724847
+                ]
+              }
+            ],
+            "axes": [],
+            "fixture_states": [],
+            "fixtures": [],
+            "limits": [
+              {
+                "name": "goal_tolerance_m",
+                "value": 0.02
+              },
+              {
+                "name": "force_limit_n",
+                "value": 20.0
+              },
+              {
+                "name": "force_scale_n",
+                "value": 5.0
+              }
+            ],
+            "object_starts": [
+              {
+                "name": "grasp_target",
+                "orientation": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "position": [
+                  0.530500292374538,
+                  0.030794078973649372,
+                  0.03
+                ]
+              }
+            ],
+            "obstacles": [],
+            "schema_version": "paper-release",
+            "targets": [
+              {
+                "name": "place_target",
+                "orientation": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "position": [
+                  0.6015325561042142,
+                  0.17858013800881417,
+                  0.10808960535724847
+                ]
+              }
+            ],
+            "task_name": "grasp_place"
+          },
+          "realized_scene_sha256": "ca83b0c5488ee900ee32f323a4fc38ffcc2f5381fd3d2b180044b561c962382d",
+          "representative_task_state": {
+            "actual_goal_position": [
+              0.6015325561042142,
+              0.17858013800881417,
+              0.10808960535724846
+            ],
+            "episode_index": 0,
+            "goal_position": [
+              0.6015325561042142,
+              0.17858013800881417,
+              0.10808960535724846
+            ],
+            "hinge_angle": null,
+            "object_initial_position": [
+              0.530500292374538,
+              0.030794078973649372,
+              0.03
+            ]
+          },
+          "run_index": 0,
+          "seed": 5,
+          "stop_reason": "no_parameters"
+        },
+        {
+          "allocated_candidate_evaluations": 66,
+          "best_composite_score": 0.18593570965249195,
+          "best_fitness_score": 0.30593570965249195,
+          "best_params": {},
+          "best_task_score": 0.15697296294036092,
+          "configuration_bank_sha256": "181fdad61feb8a6d3dd6561c82dc2730a5598964bf30fa08b43615687239c379",
+          "configuration_index": 1,
+          "configuration_seed": 6,
+          "configuration_sha256": "5dcdc1a4e2a8d4c3bb30f9ac92fb306bea0b16a8f449f4d02b0333754e50f910",
+          "consumed_candidate_evaluations": 1,
+          "episode_task_state": [
+            {
+              "actual_goal_position": [
+                0.5869067239795378,
+                0.18744967655878825,
+                0.24811674852797
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.5869067239795378,
+                0.18744967655878825,
+                0.24811674852797
+              ],
+              "hinge_angle": null,
+              "object_initial_position": [
+                0.5038164351471943,
+                -0.015672913018666156,
+                0.03
+              ]
+            },
+            {
+              "actual_goal_position": [
+                0.5869067239795378,
+                0.18744967655878825,
+                0.24811674852797
+              ],
+              "episode_index": 1,
+              "goal_position": [
+                0.5869067239795378,
+                0.18744967655878825,
+                0.24811674852797
+              ],
+              "hinge_angle": null,
+              "object_initial_position": [
+                0.5038164351471943,
+                -0.015672913018666156,
+                0.03
+              ]
+            },
+            {
+              "actual_goal_position": [
+                0.5869067239795378,
+                0.18744967655878825,
+                0.24811674852797
+              ],
+              "episode_index": 2,
+              "goal_position": [
+                0.5869067239795378,
+                0.18744967655878825,
+                0.24811674852797
+              ],
+              "hinge_angle": null,
+              "object_initial_position": [
+                0.5038164351471943,
+                -0.015672913018666156,
+                0.03
+              ]
+            }
+          ],
+          "randomisation_debug": {
+            "body_deltas": {
+              "13": [
+                -0.013093276020462175,
+                -0.012550323441211764,
+                0.14811674852797
+              ]
+            },
+            "qpos_delta": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.003816435147194319,
+              -0.015672913018666156,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scene_frozen": true
+          },
+          "randomised_task_state": {
+            "actual_goal_position": [
+              0.5869067239795378,
+              0.18744967655878825,
+              0.24811674852797
+            ],
+            "episode_index": 0,
+            "goal_position": [
+              0.5869067239795378,
+              0.18744967655878825,
+              0.24811674852797
+            ],
+            "hinge_angle": null,
+            "object_initial_position": [
+              0.5038164351471943,
+              -0.015672913018666156,
+              0.03
+            ]
+          },
+          "realized_scene": {
+            "anchors": [
+              {
+                "name": "object",
+                "value": [
+                  0.5038164351471943,
+                  -0.015672913018666156,
+                  0.03
+                ]
+              },
+              {
+                "name": "goal",
+                "value": [
+                  0.5869067239795378,
+                  0.18744967655878825,
+                  0.24811674852797
+                ]
+              }
+            ],
+            "axes": [],
+            "fixture_states": [],
+            "fixtures": [],
+            "limits": [
+              {
+                "name": "goal_tolerance_m",
+                "value": 0.02
+              },
+              {
+                "name": "force_limit_n",
+                "value": 20.0
+              },
+              {
+                "name": "force_scale_n",
+                "value": 5.0
+              }
+            ],
+            "object_starts": [
+              {
+                "name": "grasp_target",
+                "orientation": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "position": [
+                  0.5038164351471943,
+                  -0.015672913018666156,
+                  0.03
+                ]
+              }
+            ],
+            "obstacles": [],
+            "schema_version": "paper-release",
+            "targets": [
+              {
+                "name": "place_target",
+                "orientation": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "position": [
+                  0.5869067239795378,
+                  0.18744967655878825,
+                  0.24811674852797
+                ]
+              }
+            ],
+            "task_name": "grasp_place"
+          },
+          "realized_scene_sha256": "584133b5261cffac0dd4282704ff39e97bf4d452e60b02507679bbdea5a4de22",
+          "representative_task_state": {
+            "actual_goal_position": [
+              0.5869067239795378,
+              0.18744967655878825,
+              0.24811674852797
+            ],
+            "episode_index": 0,
+            "goal_position": [
+              0.5869067239795378,
+              0.18744967655878825,
+              0.24811674852797
+            ],
+            "hinge_angle": null,
+            "object_initial_position": [
+              0.5038164351471943,
+              -0.015672913018666156,
+              0.03
+            ]
+          },
+          "run_index": 1,
+          "seed": 6,
+          "stop_reason": "no_parameters"
+        },
+        {
+          "allocated_candidate_evaluations": 66,
+          "best_composite_score": 0.2849964900772755,
+          "best_fitness_score": 0.4049964900772755,
+          "best_params": {},
+          "best_task_score": 0.3559066581625662,
+          "configuration_bank_sha256": "181fdad61feb8a6d3dd6561c82dc2730a5598964bf30fa08b43615687239c379",
+          "configuration_index": 2,
+          "configuration_seed": 7,
+          "configuration_sha256": "53da4dc33bcb1151bde99c46f4ec5d44dda63d23acc62ec623c12d4d0fb32574",
+          "consumed_candidate_evaluations": 1,
+          "episode_task_state": [
+            {
+              "actual_goal_position": [
+                0.6275685690245193,
+                0.17252071899905919,
+                0.14502494273668382
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.6275685690245193,
+                0.17252071899905919,
+                0.14502494273668382
+              ],
+              "hinge_angle": null,
+              "object_initial_position": [
+                0.5125095466604667,
+                0.039721380096957554,
+                0.03
+              ]
+            },
+            {
+              "actual_goal_position": [
+                0.6275685690245193,
+                0.17252071899905919,
+                0.14502494273668382
+              ],
+              "episode_index": 1,
+              "goal_position": [
+                0.6275685690245193,
+                0.17252071899905919,
+                0.14502494273668382
+              ],
+              "hinge_angle": null,
+              "object_initial_position": [
+                0.5125095466604667,
+                0.039721380096957554,
+                0.03
+              ]
+            },
+            {
+              "actual_goal_position": [
+                0.6275685690245193,
+                0.17252071899905919,
+                0.14502494273668382
+              ],
+              "episode_index": 2,
+              "goal_position": [
+                0.6275685690245193,
+                0.17252071899905919,
+                0.14502494273668382
+              ],
+              "hinge_angle": null,
+              "object_initial_position": [
+                0.5125095466604667,
+                0.039721380096957554,
+                0.03
+              ]
+            }
+          ],
+          "randomisation_debug": {
+            "body_deltas": {
+              "13": [
+                0.02756856902451936,
+                -0.027479281000940815,
+                0.045024942736683816
+              ]
+            },
+            "qpos_delta": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.012509546660466664,
+              0.039721380096957554,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "scene_frozen": true
+          },
+          "randomised_task_state": {
+            "actual_goal_position": [
+              0.6275685690245193,
+              0.17252071899905919,
+              0.14502494273668382
+            ],
+            "episode_index": 0,
+            "goal_position": [
+              0.6275685690245193,
+              0.17252071899905919,
+              0.14502494273668382
+            ],
+            "hinge_angle": null,
+            "object_initial_position": [
+              0.5125095466604667,
+              0.039721380096957554,
+              0.03
+            ]
+          },
+          "realized_scene": {
+            "anchors": [
+              {
+                "name": "object",
+                "value": [
+                  0.5125095466604667,
+                  0.039721380096957554,
+                  0.03
+                ]
+              },
+              {
+                "name": "goal",
+                "value": [
+                  0.6275685690245193,
+                  0.17252071899905919,
+                  0.14502494273668382
+                ]
+              }
+            ],
+            "axes": [],
+            "fixture_states": [],
+            "fixtures": [],
+            "limits": [
+              {
+                "name": "goal_tolerance_m",
+                "value": 0.02
+              },
+              {
+                "name": "force_limit_n",
+                "value": 20.0
+              },
+              {
+                "name": "force_scale_n",
+                "value": 5.0
+              }
+            ],
+            "object_starts": [
+              {
+                "name": "grasp_target",
+                "orientation": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "position": [
+                  0.5125095466604667,
+                  0.039721380096957554,
+                  0.03
+                ]
+              }
+            ],
+            "obstacles": [],
+            "schema_version": "paper-release",
+            "targets": [
+              {
+                "name": "place_target",
+                "orientation": [
+                  1.0,
+                  0.0,
+                  0.0,
+                  0.0
+                ],
+                "position": [
+                  0.6275685690245193,
+                  0.17252071899905919,
+                  0.14502494273668382
+                ]
+              }
+            ],
+            "task_name": "grasp_place"
+          },
+          "realized_scene_sha256": "8a4edc50bf1a337961423afe5cdf858aa28147f944f8fcd30a2ce1adc75d1bd6",
+          "representative_task_state": {
+            "actual_goal_position": [
+              0.6275685690245193,
+              0.17252071899905919,
+              0.14502494273668382
+            ],
+            "episode_index": 0,
+            "goal_position": [
+              0.6275685690245193,
+              0.17252071899905919,
+              0.14502494273668382
+            ],
+            "hinge_angle": null,
+            "object_initial_position": [
+              0.5125095466604667,
+              0.039721380096957554,
+              0.03
+            ]
+          },
+          "run_index": 2,
+          "seed": 7,
+          "stop_reason": "no_parameters"
+        }
+      ]
+    },
+    "randomised_config_count": 3,
+    "robust_composite_score": 0.2684817500263735,
+    "robust_fitness_score": 0.3884817500263735,
+    "robust_task_score": 0.32286877413961296,
+    "search_fitness_score": 0.3884817500263735,
+    "stagnated": false,
+    "stop_reason": "no_parameters"
+  },
+  "protocol": {
+    "K_basin_runs": 3,
+    "budget": 200,
+    "budget_accounting": {
+      "allocated_candidate_evaluations": 198,
+      "basin_runs": [
+        {
+          "allocated_candidate_evaluations": 66,
+          "consumed_candidate_evaluations": 1,
+          "run_index": 0,
+          "stop_reason": "no_parameters"
+        },
+        {
+          "allocated_candidate_evaluations": 66,
+          "consumed_candidate_evaluations": 1,
+          "run_index": 1,
+          "stop_reason": "no_parameters"
+        },
+        {
+          "allocated_candidate_evaluations": 66,
+          "consumed_candidate_evaluations": 1,
+          "run_index": 2,
+          "stop_reason": "no_parameters"
+        }
+      ],
+      "consumed_candidate_evaluations": 3,
+      "requested_candidate_evaluations": 200,
+      "unallocated_candidate_evaluations": 2,
+      "unconsumed_allocated_candidate_evaluations": 195
+    },
+    "candidate_evaluations_per_configuration": 1,
+    "historical_run_log_modified": false,
+    "n_samples_per_eval": 3,
+    "per_run_budget": 66,
+    "score_source": "optimization_metrics.canonical_task_score",
+    "total_objective_episodes": 9,
+    "unused_budget": 2
+  },
+  "schema_version": "paper-release",
+  "source": {
+    "arm": "create_llm_refine_fixed_st",
+    "evaluated_skill_yaml_sha256": "6f53ecc3a4044ccfe45481934b853589442446b7537eb9bd93cf6c8085751e57",
+    "iteration": 0,
+    "randomized_config_bank": "<historical-source-hash-only>",
+    "randomized_config_bank_file_sha256": "ef12bbc9cac8a787e5927282d1c84a0f54332e4f462334649cac9921d7de2883",
+    "randomized_config_bank_sha256": "181fdad61feb8a6d3dd6561c82dc2730a5598964bf30fa08b43615687239c379",
+    "run_log": "<historical-source-hash-only>",
+    "run_log_sha256": "b0fd49ca7cf1111516ad1d1b3cbd233dd55970d66bd5605f3549219122ecaf77",
+    "seed": 5,
+    "task": "grasp_place"
+  }
+}

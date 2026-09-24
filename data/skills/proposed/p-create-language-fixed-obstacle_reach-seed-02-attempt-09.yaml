@@ -1,0 +1,79 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_side
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.3
+      range:
+      - 0.05
+      - 0.5
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - -0.2
+    - 0.25
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.05
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_side
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - -0.2
+    - 0.02
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: descend
+- control: position_control
+  generator: linear_cartesian
+  id: lateral_adjust
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.01
+      - 0.06
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: approach
+skill: obstacle_reach
+skill_type: arm_gripper

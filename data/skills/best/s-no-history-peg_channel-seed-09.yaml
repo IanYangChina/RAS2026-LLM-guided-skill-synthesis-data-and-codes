@@ -1,0 +1,171 @@
+skill: peg_channel
+dsl_version: 2
+subtasks:
+- id: reach_peg
+  anchor: object
+  offset:
+  - 0.0
+  - 0.08
+  - 0.08
+  weight: 0.2
+- id: lateral_center
+  anchor: fixture
+  offset:
+  - 0.04
+  - 0.0
+  - 0.0
+  weight: 0.3
+- id: push_to_goal
+  target_entity: object
+  metric: goal_progress
+  weight: 0.5
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.08
+    - 0.08
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.3
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_peg
+- id: lateral_center
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.04
+    - 0.0
+    - -0.005
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    lateral_distance:
+      type: scalar
+      range:
+      - -0.06
+      - 0.06
+      default: 0.04
+      binds_to:
+      - path: target.offset.x
+        mode: replace
+    lateral_force_threshold:
+      type: scalar
+      range:
+      - 10.0
+      - 50.0
+      default: 30.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    lateral_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.15
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: lateral_guard
+    when: after_phase
+    predicate: force_below
+    threshold: 40.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  subtask_id: lateral_center
+- id: push_1
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.0
+    - -0.005
+    offset_along_axis:
+      distance: 0.16
+      axis: channel_axis
+      mode: replace_offset_projection
+      sign: positive
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.08
+      - 0.2
+      default: 0.16
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.15
+      default: 0.06
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: push_force_guard
+    when: after_phase
+    predicate: force_below
+    threshold: 40.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: reduce_speed
+  subtask_id: push_to_goal
+- id: retract_1
+  type: retract
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - -0.05
+    - 0.1
+    orientation:
+      mode: keep_current

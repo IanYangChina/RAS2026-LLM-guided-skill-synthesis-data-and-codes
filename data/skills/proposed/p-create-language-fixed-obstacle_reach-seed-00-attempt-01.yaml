@@ -1,0 +1,44 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_via
+  target:
+    anchor: world
+    offset:
+    - 0.5
+    - 0.0
+    - 0.4
+    source: yaml
+    tolerance: 0.05
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: approach_goal
+  target:
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    source: yaml
+    tolerance: 0.05
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_goal
+  target:
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: descend
+skill: obstacle_reach

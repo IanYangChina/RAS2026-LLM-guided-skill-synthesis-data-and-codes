@@ -1,0 +1,161 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_peg
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.06
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  subtask_id: reach_pre_contact
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.0
+    - 0.08
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  guards:
+  - id: check_contact
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 1.0
+    when: after_phase
+  id: descend_contact
+  parameters:
+    force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 20.0
+      range:
+      - 5.0
+      - 35.0
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.01
+    - 0.0
+    strategy: offset_target
+  subtask_id: reach_pre_contact
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.015
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: force_exceeded
+  type: descend
+- control: position_control
+  generator: linear_cartesian
+  id: lower_to_peg
+  parameters:
+    lower_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 1
+    strategy: repeat
+  subtask_id: reach_pre_contact
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.02
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: descend
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - id: monitor_force
+    on_failure: retry
+    predicate: force_below
+    threshold: 35.0
+    when: during_phase
+  id: push_peg
+  parameters:
+    push_force_guard:
+      binds_to:
+      - mode: replace
+        path: guards.monitor_force.threshold
+      default: 35.0
+      range:
+      - 30.0
+      - 40.0
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.07
+      range:
+      - 0.03
+      - 0.12
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - -0.005
+    - 0.0
+    - 0.0
+    strategy: offset_target
+  subtask_id: push_through_channel
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.02
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: push
+skill: peg_channel
+subtasks:
+- anchor: object
+  id: reach_pre_contact
+  offset:
+  - 0.0
+  - 0.0
+  - 0.05
+  weight: 0.3
+- anchor: goal
+  id: push_through_channel
+  metric: goal_progress
+  weight: 0.7

@@ -1,0 +1,227 @@
+skill: peg_insert
+dsl_version: 2
+subtasks:
+- id: approach_subtask
+  anchor: fixture
+  offset:
+  - 0.0
+  - 0.0
+  - 0.055
+  weight: 0.3
+- id: insertion_subtask
+  anchor: fixture
+  weight: 0.7
+phases:
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.12
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+      tolerance: 0.05
+  parameters:
+    lateral_offset_x:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: add
+    lateral_offset_y:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: add
+  subtask_id: approach_subtask
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.055
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+      tolerance: 0.05
+  parameters:
+    approach_height:
+      type: scalar
+      range:
+      - 0.04
+      - 0.08
+      default: 0.055
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+  subtask_id: approach_subtask
+- id: contact_1
+  type: contact
+  generator: linear_cartesian
+  control: impedance_control
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - -0.02
+    offset_along_axis:
+      distance: 0.03
+      axis: channel_axis
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+      tolerance: 0.05
+  parameters:
+    contact_force:
+      type: scalar
+      range:
+      - 1.0
+      - 20.0
+      default: 10.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.01
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: insertion_subtask
+- id: insert_1
+  type: insert
+  generator: linear_cartesian
+  control: admittance_control
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.055
+    offset_along_axis:
+      distance: 0.05
+      axis: channel_axis
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+      tolerance: 0.05
+  parameters:
+    insertion_stroke:
+      type: scalar
+      range:
+      - 0.03
+      - 0.06
+      default: 0.05
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.03
+      default: 0.01
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    insertion_force:
+      type: scalar
+      range:
+      - 5.0
+      - 25.0
+      default: 15.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+  subtask_id: insertion_subtask
+- id: retract_1
+  type: retract
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    orientation:
+      mode: keep_current
+  parameters:
+    retract_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  retries:
+    max_attempts: 1
+    strategy: reduce_speed
+
+```

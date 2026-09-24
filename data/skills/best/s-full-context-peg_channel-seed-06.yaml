@@ -1,0 +1,163 @@
+skill: peg_channel
+dsl_version: 2
+subtasks:
+- id: behind_peg
+  anchor: object
+  offset:
+  - 0.0
+  - 0.05
+  - 0.1
+  weight: 0.3
+- id: insertion_progress
+  target_entity: object
+  metric: goal_progress
+  weight: 0.7
+phases:
+- id: approach
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.05
+    - 0.1
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    approach_tolerance:
+      type: scalar
+      range:
+      - 0.001
+      - 0.01
+      default: 0.005
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  subtask_id: behind_peg
+- id: descend
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.05
+    - 0.0
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    descend_tolerance:
+      type: scalar
+      range:
+      - 0.001
+      - 0.01
+      default: 0.005
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    descend_z_offset:
+      type: scalar
+      range:
+      - -0.01
+      - 0.02
+      default: 0.0
+      binds_to:
+      - path: target.offset.z
+        mode: add
+- id: contact_seating
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: channel_exit
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  parameters:
+    contact_force_threshold:
+      type: scalar
+      range:
+      - 2.0
+      - 10.0
+      default: 5.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    contact_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.03
+      default: 0.015
+      binds_to:
+      - path: generator.speed
+        mode: replace
+- id: push
+  type: push
+  generator: impedance_motion
+  control: impedance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: channel_exit
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  parameters:
+    push_max_time:
+      type: scalar
+      range:
+      - 2.0
+      - 8.0
+      default: 5.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.04
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: force_guard
+    when: during_phase
+    predicate: force_below
+    threshold: 39.0
+    on_failure: retry
+  retries:
+    max_attempts: 3
+    strategy: reduce_speed
+  subtask_id: insertion_progress

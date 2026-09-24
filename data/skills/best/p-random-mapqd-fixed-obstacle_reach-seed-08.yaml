@@ -1,0 +1,29 @@
+skill: obstacle_reach
+phases:
+- id: pull_1
+  type: pull
+  generator: arc_cartesian
+  control: impedance_control
+  termination: time_limit
+  parameters:
+    pull_angle:
+      type: angle
+      range:
+      - 0.1
+      - 1.2
+- id: insert_1
+  type: insert
+  generator: joint_interpolation
+  control: impedance_control
+  termination: pose_tolerance
+  parameters:
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.15
+    insertion_force:
+      type: scalar
+      range:
+      - 1.0
+      - 20.0

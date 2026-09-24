@@ -1,0 +1,23 @@
+skill: obstacle_reach
+phases:
+- id: approach_1
+  type: approach
+  generator: arc_cartesian
+  control: force_threshold_switch
+  termination: pose_tolerance
+  parameters:
+    param_0:
+      type: scalar
+      range:
+      - -0.739551098990882
+      - 0.3574479186177837
+    reach_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: admittance_control
+  termination: contact_detected

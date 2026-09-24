@@ -1,0 +1,215 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: joint_interpolation
+  guards:
+  - id: contact_guard
+    on_failure: abort
+    predicate: contact_detected
+    threshold: 0.0
+    when: during_phase
+  id: approach_behind
+  orientation:
+    mode: keep_current
+  parameters:
+    approach_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.12
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.15
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+  target:
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0.0
+    - 0.0
+    - 0.025
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.12
+      mode: replace_offset_projection
+      sign: negative
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - id: force_limit_align
+    on_failure: abort
+    predicate: force_below
+    threshold: 10.0
+    when: during_phase
+  id: align_behind
+  orientation:
+    mode: keep_current
+  parameters:
+    align_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.04
+      range:
+      - 0.02
+      - 0.08
+      type: scalar
+    align_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  target:
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0.0
+    - 0.0
+    - 0.025
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.04
+      mode: replace_offset_projection
+      sign: negative
+    source: yaml
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: align
+- control: force_threshold_switch
+  generator: linear_cartesian
+  guards:
+  - id: pre_force
+    on_failure: abort
+    predicate: force_below
+    threshold: 15.0
+    when: before_phase
+  id: contact_make
+  orientation:
+    mode: keep_current
+  parameters:
+    contact_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.04
+      range:
+      - 0.02
+      - 0.06
+      type: scalar
+    contact_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.03
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+    force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 3.0
+      range:
+      - 1.0
+      - 10.0
+      type: scalar
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.04
+      mode: replace_offset_projection
+      sign: positive
+    source: yaml
+    tolerance: 0.01
+  termination: force_exceeded
+  type: contact
+- control: admittance_control
+  generator: linear_cartesian
+  guards:
+  - id: force_limit_guard
+    on_failure: abort
+    predicate: force_below
+    threshold: 20.0
+    when: during_phase
+  id: push_to_goal
+  orientation:
+    mode: keep_current
+  parameters:
+    max_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 5.0
+      range:
+      - 2.0
+      - 10.0
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+    stroke_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.15
+      range:
+      - 0.08
+      - 0.25
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.01
+    - 0.01
+    - 0.0
+    strategy: offset_target
+  subtask_id: push_progress
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.15
+      mode: replace_offset_projection
+      sign: positive
+    source: yaml
+    tolerance: 0.02
+  termination: time_limit
+  type: push
+skill: push_to_goal
+subtasks:
+- id: push_progress
+  metric: goal_progress
+  target_entity: object

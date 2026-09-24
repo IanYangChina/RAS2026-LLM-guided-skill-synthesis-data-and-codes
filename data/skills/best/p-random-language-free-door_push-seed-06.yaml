@@ -1,0 +1,124 @@
+skill: door_push
+dsl_version: 2
+subtasks:
+- id: hinge_progress
+  anchor: fixture
+  target_entity: hinge
+  metric: hinge_angle
+phases:
+- id: approach_above
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    tolerance: 0.02
+  parameters:
+    approach_above_arc:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    approach_above_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+- id: contact_handle
+  type: align
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  parameters:
+    contact_force_threshold:
+      type: scalar
+      range:
+      - 3.0
+      - 15.0
+      default: 5.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    contact_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+- id: push_door
+  type: push
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - -0.2
+    - 0.0
+    tolerance: 0.02
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - -0.4
+      - -0.1
+      default: -0.2
+      binds_to:
+      - path: target.offset.y
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: push_contact_ok
+    when: during_phase
+    predicate: contact_detected
+    threshold: 2.0
+    on_failure: retry
+  - id: push_force_safe
+    when: during_phase
+    predicate: force_below
+    threshold: 30.0
+    on_failure: abort
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.005
+    - 0.0
+  subtask_id: hinge_progress

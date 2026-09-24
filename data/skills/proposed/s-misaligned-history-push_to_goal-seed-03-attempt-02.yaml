@@ -1,0 +1,125 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_behind_high
+  parameters:
+    behind_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  subtask_id: reach_pre_push
+  target:
+    anchor: task_object
+    offset:
+    - 0
+    - 0
+    - 0.1
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.02
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      align_with: task_goal_direction
+      axis:
+      - 1
+      - 0
+      - 0
+      mode: align_axis
+      tolerance: 0.1
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: admittance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: contact_confirm
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 0.1
+    when: after_phase
+  id: descend_to_contact
+  parameters:
+    behind_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0
+    - 0
+    - -0.005
+    strategy: offset_target
+  subtask_id: reach_pre_push
+  target:
+    anchor: task_object
+    offset:
+    - 0
+    - 0
+    - 0.025
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.02
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: descend
+- control: admittance_control
+  generator: linear_cartesian
+  id: push_to_goal
+  parameters:
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.02
+      - 0.2
+      type: scalar
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0
+    - 0
+    - 0.025
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.015
+  termination: pose_tolerance
+  type: push
+skill: push_to_goal
+subtasks:
+- anchor: object
+  id: reach_pre_push
+  offset:
+  - 0
+  - 0
+  - 0
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: reach_goal
+  metric: goal_progress
+  target_entity: tcp
+  weight: 0.7

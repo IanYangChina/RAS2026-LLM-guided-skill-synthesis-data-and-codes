@@ -1,0 +1,189 @@
+skill: peg_insert
+dsl_version: 2
+subtasks:
+- id: reach_above_socket
+  anchor: fixture
+  offset:
+  - 0.0
+  - 0.0
+  - 0.15
+  weight: 0.2
+- id: contact_socket
+  anchor: fixture
+  offset:
+  - 0.0
+  - 0.0
+  - 0.055
+  weight: 0.3
+- id: insert_goal
+  weight: 0.5
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      mode: none
+  parameters:
+    approach_z:
+      type: scalar
+      range:
+      - 0.08
+      - 0.2
+      default: 0.15
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_above_socket
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.055
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+  parameters:
+    lateral_x:
+      type: scalar
+      range:
+      - -0.04
+      - 0.04
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: replace
+    lateral_y:
+      type: scalar
+      range:
+      - -0.04
+      - 0.04
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: replace
+  subtask_id: contact_socket
+- id: insert_1
+  type: insert
+  generator: impedance_motion
+  control: admittance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.05
+      axis: channel_axis
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+  parameters:
+    insert_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.02
+      - 0.06
+      default: 0.05
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    pose_tol:
+      type: scalar
+      range:
+      - 0.001
+      - 0.01
+      default: 0.005
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.002
+    - 0.002
+    - 0.0
+  subtask_id: insert_goal
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      mode: none
+  parameters:
+    retract_z:
+      type: scalar
+      range:
+      - 0.08
+      - 0.2
+      default: 0.15
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace

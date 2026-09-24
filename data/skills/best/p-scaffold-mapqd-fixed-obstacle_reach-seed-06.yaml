@@ -1,0 +1,38 @@
+skill: obstacle_reach
+phases:
+- id: approach_1
+  type: approach
+  generator: bezier_curve
+  control: force_threshold_switch
+  termination: contact_lost
+  parameters:
+    approach_distance:
+      type: scalar
+      range:
+      - 0.1
+      - 0.3
+    arc_height:
+      type: scalar
+      range:
+      - 0.32
+      - 0.5
+- id: lift_1
+  type: lift
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+- id: push_1
+  type: push
+  generator: bezier_curve
+  control: position_control
+  termination: pose_tolerance
+- id: descend_2
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance

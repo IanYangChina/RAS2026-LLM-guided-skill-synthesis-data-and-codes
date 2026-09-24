@@ -1,0 +1,216 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_object
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  subtask_id: approach_object
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.12
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_to_grasp
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: grasp_object
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.03
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: descend
+- control: null
+  end_effector_action: force_grasp
+  generator: null
+  guards:
+  - args: {}
+    id: grasp_guard
+    on_failure: retry
+    predicate: bilateral_grasp
+    threshold: 0.5
+    when: after_phase
+  id: grasp
+  parameters:
+    grasp_force:
+      binds_to:
+      - mode: replace
+        path: guards.grasp_guard.threshold
+      default: 10.0
+      range:
+      - 5.0
+      - 20.0
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.0
+    - -0.005
+    strategy: offset_target
+  subtask_id: grasp_object
+  termination: grasp_success
+  type: grasp
+- control: position_control
+  generator: linear_cartesian
+  id: lift_object
+  parameters:
+    lift_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.15
+      range:
+      - 0.1
+      - 0.25
+      type: scalar
+    lift_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: lift_object
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: lift
+- control: position_control
+  generator: linear_cartesian
+  id: approach_goal
+  parameters:
+    approach_goal_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  subtask_id: place_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.08
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_place
+  subtask_id: place_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.01
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: descend
+- control: null
+  end_effector_action: open
+  generator: null
+  id: release_object
+  termination: time_limit
+  type: release
+- control: position_control
+  generator: linear_cartesian
+  id: retract_after_place
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.03
+  termination: pose_tolerance
+  type: retract
+skill: grasp_place
+subtasks:
+- anchor: object
+  id: approach_object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.12
+  target_entity: tcp
+  weight: 0.2
+- anchor: object
+  id: grasp_object
+  metric: contact
+  offset:
+  - 0.0
+  - 0.0
+  - 0.03
+  target_entity: tcp
+  weight: 0.3
+- anchor: object
+  id: lift_object
+  metric: goal_progress
+  offset:
+  - 0.0
+  - 0.0
+  - 0.15
+  target_entity: object
+  weight: 0.2
+- anchor: goal
+  id: place_goal
+  metric: distance
+  target_entity: object
+  weight: 0.3

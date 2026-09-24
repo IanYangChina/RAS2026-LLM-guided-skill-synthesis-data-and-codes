@@ -1,0 +1,129 @@
+skill: peg_insert
+dsl_version: 2
+subtasks:
+- id: approach_entry
+  anchor: fixture
+  offset:
+  - 0.0
+  - 0.0
+  - 0.06
+  weight: 0.3
+- id: insert
+  weight: 0.7
+phases:
+- id: approach_above
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.06
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+      tolerance: 0.1
+  parameters:
+    approach_max_time:
+      type: scalar
+      range:
+      - 200.0
+      - 1000.0
+      default: 500
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    approach_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    lateral_offset_x:
+      type: scalar
+      range:
+      - -0.02
+      - 0.02
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: add
+    lateral_offset_y:
+      type: scalar
+      range:
+      - -0.02
+      - 0.02
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: add
+  subtask_id: approach_entry
+- id: descend_and_insert
+  type: insert
+  generator: linear_cartesian
+  control: impedance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+      tolerance: 0.1
+  parameters:
+    insert_max_time:
+      type: scalar
+      range:
+      - 300.0
+      - 1500.0
+      default: 800
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    insertion_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.03
+      default: 0.015
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    lateral_insert_x:
+      type: scalar
+      range:
+      - -0.02
+      - 0.02
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: add
+    lateral_insert_y:
+      type: scalar
+      range:
+      - -0.02
+      - 0.02
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: add
+  subtask_id: insert

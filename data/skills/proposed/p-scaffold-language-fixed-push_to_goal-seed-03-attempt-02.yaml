@@ -1,0 +1,140 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.06
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  subtask_id: approach
+  target:
+    anchor: task_object
+    offset:
+    - 0
+    - 0.08
+    - 0
+    orientation:
+      mode: keep_current
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: contact_confirm
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 1
+    when: after_phase
+  id: contact_1
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.025
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0
+    - 0.01
+    - 0
+    strategy: offset_target
+  subtask_id: contact
+  target:
+    anchor: task_object
+    offset:
+    - 0
+    - 0.03
+    - 0
+    orientation:
+      mode: keep_current
+  termination: pose_tolerance
+  type: contact
+- control: impedance_control
+  generator: linear_cartesian
+  id: push_1
+  parameters:
+    push_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  subtask_id: push
+  target:
+    anchor: task_goal
+    offset:
+    - 0
+    - 0.03
+    - 0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.05
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: none
+  termination: pose_tolerance
+  type: push
+- control: position_control
+  generator: linear_cartesian
+  id: lift_1
+  parameters:
+    lift_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0
+    - 0
+    - 0.2
+    orientation:
+      mode: keep_current
+  termination: pose_tolerance
+  type: lift
+- control: position_control
+  generator: linear_cartesian
+  id: retract_1
+  parameters:
+    retract_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  target:
+    anchor: world
+    offset:
+    - 0.5
+    - 0
+    - 0.3
+    orientation:
+      mode: keep_current
+  termination: pose_tolerance
+  type: retract
+skill: push_to_goal

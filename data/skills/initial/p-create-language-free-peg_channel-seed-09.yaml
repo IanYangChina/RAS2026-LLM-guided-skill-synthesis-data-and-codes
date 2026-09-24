@@ -1,0 +1,131 @@
+skill: peg_channel
+dsl_version: 2
+subtasks:
+- id: reach_peg
+  anchor: object
+  offset:
+  - 0.0
+  - 0.02
+  - 0.0
+  weight: 0.3
+- id: reach_goal
+  weight: 0.7
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.02
+    - 0.0
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_peg
+- id: contact_1
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.01
+      axis: channel_axis
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+  parameters:
+    contact_force:
+      type: scalar
+      range:
+      - 1.0
+      - 20.0
+      default: 5.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    contact_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.01
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_peg
+- id: push_1
+  type: push
+  generator: impedance_motion
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.16
+      axis: channel_axis
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.14
+      - 0.18
+      default: 0.16
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.04
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_goal
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: world
+    offset:
+    - 0.5
+    - 0.2
+    - 0.3
+    orientation:
+      mode: keep_current

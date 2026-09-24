@@ -1,0 +1,90 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: arc_cartesian
+  id: approach_1
+  parameters:
+    arc_height:
+      binds_to:
+      - mode: replace
+        path: generator.arc_height
+      default: 0.15
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.2
+      range:
+      - 0.1
+      - 0.3
+      type: scalar
+  subtask_id: reach_above_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_1
+  parameters:
+    descend_z_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: -0.01
+      range:
+      - -0.05
+      - 0.0
+      type: scalar
+    speed_descend:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.15
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: descend
+skill: obstacle_reach
+subtasks:
+- anchor: goal
+  id: reach_above_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.05
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: reach_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.7

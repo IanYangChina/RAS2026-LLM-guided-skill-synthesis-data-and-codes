@@ -1,0 +1,56 @@
+skill: peg_insert
+dsl_version: 2
+phases:
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.12
+    orientation:
+      mode: keep_current
+  subtask_id: align
+- id: approach_2
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.09
+    orientation:
+      mode: keep_current
+  subtask_id: approach
+- id: insert_1
+  type: insert
+  generator: impedance_motion
+  control: admittance_control
+  termination: grasp_success
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.03
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+      tolerance: 0.05

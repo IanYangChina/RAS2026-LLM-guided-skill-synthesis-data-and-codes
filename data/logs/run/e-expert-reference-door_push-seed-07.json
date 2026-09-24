@@ -1,0 +1,2727 @@
+{
+  "bank": {
+    "byte_sha256": "99f10f3388ae1ecdd2ae3494fd1bd3e8f42420c416b3c3e75f2738699c60d9f4",
+    "configuration_order": [
+      0,
+      1,
+      2
+    ],
+    "configuration_sha256": [
+      "fb31b2d7951f101afe3533d0babe40d387e4396f53837e61e543f2cfc46b7e19",
+      "2fe1c8aab50c64fd16f940100e2036790f2ea8f75271c649e6989441e8f9191e",
+      "356d1c9659b48b76a1cff255b134bf18d0729848f67621b991467785bdaaef44"
+    ],
+    "content_sha256": "2fa9c04e562df03eff32cc7f63abe386d265bbd85d42dcee2df7f90a42e2de0a",
+    "create_byte_sha256": "99f10f3388ae1ecdd2ae3494fd1bd3e8f42420c416b3c3e75f2738699c60d9f4",
+    "random_byte_sha256": "99f10f3388ae1ecdd2ae3494fd1bd3e8f42420c416b3c3e75f2738699c60d9f4"
+  },
+  "bank_byte_sha256": "99f10f3388ae1ecdd2ae3494fd1bd3e8f42420c416b3c3e75f2738699c60d9f4",
+  "bank_content_sha256": "2fa9c04e562df03eff32cc7f63abe386d265bbd85d42dcee2df7f90a42e2de0a",
+  "budget_accounting": {
+    "K_basin_runs": 3,
+    "allocated_total": 198,
+    "allocation": [
+      66,
+      66,
+      66
+    ],
+    "legitimate_early_termination": true,
+    "requested_budget": 200,
+    "stop_reason": "tolfunhist",
+    "unused_budget_units": 2
+  },
+  "configuration_order": [
+    0,
+    1,
+    2
+  ],
+  "configuration_sha256": [
+    "fb31b2d7951f101afe3533d0babe40d387e4396f53837e61e543f2cfc46b7e19",
+    "2fe1c8aab50c64fd16f940100e2036790f2ea8f75271c649e6989441e8f9191e",
+    "356d1c9659b48b76a1cff255b134bf18d0729848f67621b991467785bdaaef44"
+  ],
+  "dead_parameter_names": [],
+  "executed_skill_yaml_sha256": "38f2a79fae78fb44ffb3fa10c889533db9265befae31bebdbea105b8eab7900b",
+  "execution": {
+    "wall_time_seconds": 354.00492548942566
+  },
+  "expert_yaml": "skill: door_push\ndsl_version: 2\nskill_type: arm\n\nphases:\n  - id: approach_handle\n    type: approach\n    generator: arc_cartesian\n    control: position_control\n    termination: pose_tolerance\n    target:\n      source: yaml\n      anchor: site\n      entity: door_handle\n      offset: [0.0, 0.06, 0.0]\n      tolerance: 0.015\n      orientation: {mode: keep_current}\n    parameters:\n      approach_arc_height:\n        type: scalar\n        range: [0.03, 0.09]\n        default: 0.05\n        binds_to:\n          - {path: generator.arc_height, mode: replace}\n\n  - id: contact_handle\n    type: contact\n    generator: linear_cartesian\n    control: force_threshold_switch\n    termination: contact_detected\n    target:\n      source: yaml\n      anchor: site\n      entity: door_handle\n      offset: [0.0, 0.0, 0.0]\n      tolerance: 0.01\n      orientation: {mode: keep_current}\n\n  - id: push_handle_arc_chord\n    type: push\n    generator: linear_cartesian\n    control: impedance_control\n    termination: time_limit\n    target:\n      source: yaml\n      anchor: site\n      entity: door_handle\n      offset: [0.065, -0.20, 0.0]\n      tolerance: 0.025\n      orientation: {mode: keep_current}\n    parameters:\n      push_time:\n        type: scalar\n        range: [2.0, 4.0]\n        default: 3.0\n        binds_to:\n          - {path: duration.max_time, mode: replace}\n    guards:\n      - id: door_opened\n        when: after_phase\n        predicate: hinge_delta_reached\n        args: {joint: door_hinge, mode: delta_from_initial}\n        threshold: 0.45\n        on_failure: retry\n    retries:\n      max_attempts: 1\n      strategy: repeat\n\n  - id: retract_from_door\n    type: retract\n    generator: linear_cartesian\n    control: position_control\n    termination: pose_tolerance\n    target:\n      source: yaml\n      anchor: current_tcp\n      offset: [0.0, 0.10, 0.10]\n      tolerance: 0.02\n      orientation: {mode: keep_current}\n",
+  "expert_yaml_sha256": "38f2a79fae78fb44ffb3fa10c889533db9265befae31bebdbea105b8eab7900b",
+  "optimization": {
+    "budget_accounting": {
+      "allocated_candidate_evaluations": 198,
+      "basin_runs": [
+        {
+          "allocated_candidate_evaluations": 66,
+          "consumed_candidate_evaluations": 30,
+          "run_index": 0,
+          "stop_reason": "tolfun"
+        },
+        {
+          "allocated_candidate_evaluations": 66,
+          "consumed_candidate_evaluations": 60,
+          "run_index": 1,
+          "stop_reason": "tolfunhist"
+        },
+        {
+          "allocated_candidate_evaluations": 66,
+          "consumed_candidate_evaluations": 60,
+          "run_index": 2,
+          "stop_reason": "tolfunhist"
+        }
+      ],
+      "consumed_candidate_evaluations": 150,
+      "requested_candidate_evaluations": 200,
+      "unallocated_candidate_evaluations": 2,
+      "unconsumed_allocated_candidate_evaluations": 48
+    },
+    "canonical_task_score": 1.0,
+    "cma_diagnostics": {
+      "aggregation": "mean_of_config_specific_optimized_outcomes",
+      "best_fitness_score": 1.0,
+      "best_score": 0.84,
+      "best_task_score": 1.0,
+      "budget_accounting": {
+        "allocated_candidate_evaluations": 198,
+        "basin_runs": [
+          {
+            "allocated_candidate_evaluations": 66,
+            "consumed_candidate_evaluations": 30,
+            "run_index": 0,
+            "stop_reason": "tolfun"
+          },
+          {
+            "allocated_candidate_evaluations": 66,
+            "consumed_candidate_evaluations": 60,
+            "run_index": 1,
+            "stop_reason": "tolfunhist"
+          },
+          {
+            "allocated_candidate_evaluations": 66,
+            "consumed_candidate_evaluations": 60,
+            "run_index": 2,
+            "stop_reason": "tolfunhist"
+          }
+        ],
+        "consumed_candidate_evaluations": 150,
+        "requested_candidate_evaluations": 200,
+        "unallocated_candidate_evaluations": 2,
+        "unconsumed_allocated_candidate_evaluations": 48
+      },
+      "canonical_task_score": 1.0,
+      "configuration_count": 3,
+      "final_sigma_mean": 0.4401431505489959,
+      "k_run_variance": 0.0,
+      "median_score": 0.84,
+      "n_generations_mean": 8.333333333333334,
+      "optimisation_signal_source": "task_score_only",
+      "params_at_lower_bound": [],
+      "params_at_upper_bound": [],
+      "posthoc_diagnostics": {
+        "configuration_bank_sha256": "2fa9c04e562df03eff32cc7f63abe386d265bbd85d42dcee2df7f90a42e2de0a",
+        "randomised_config_count": 3,
+        "randomised_config_results": [
+          {
+            "allocated_candidate_evaluations": 66,
+            "best_composite_score": 0.84,
+            "best_fitness_score": 1.0,
+            "best_params": {
+              "approach_handle.approach_arc_height": 0.06097089699277246,
+              "push_handle_arc_chord.push_time": 3.1937564254838033
+            },
+            "best_task_score": 1.0,
+            "configuration_bank_sha256": "2fa9c04e562df03eff32cc7f63abe386d265bbd85d42dcee2df7f90a42e2de0a",
+            "configuration_index": 0,
+            "configuration_seed": 7,
+            "configuration_sha256": "fb31b2d7951f101afe3533d0babe40d387e4396f53837e61e543f2cfc46b7e19",
+            "consumed_candidate_evaluations": 30,
+            "episode_task_state": [
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 0,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.7623046273359375,
+                "hinge_angle_initial": 0.043666555431400994,
+                "initial_hinge_angle": 0.043666555431400994,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 1,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.7623046273359375,
+                "hinge_angle_initial": 0.043666555431400994,
+                "initial_hinge_angle": 0.043666555431400994,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 2,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.7623046273359375,
+                "hinge_angle_initial": 0.043666555431400994,
+                "initial_hinge_angle": 0.043666555431400994,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ],
+            "randomisation_debug": {
+              "body_deltas": {},
+              "qpos_delta": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.043666555431400994
+              ],
+              "scene_frozen": true
+            },
+            "randomised_task_state": {
+              "actual_goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "door_panel_position": [
+                0.5,
+                0.2,
+                0.0
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "hinge_angle": 0.7623046273359375,
+              "hinge_angle_initial": 0.043666555431400994,
+              "initial_hinge_angle": 0.043666555431400994,
+              "object_initial_position": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "realized_scene": {
+              "anchors": [
+                {
+                  "name": "fixture",
+                  "value": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                }
+              ],
+              "axes": [
+                {
+                  "name": "door_hinge_axis",
+                  "value": [
+                    0.0,
+                    0.0,
+                    1.0
+                  ]
+                }
+              ],
+              "door": {
+                "hinge_axis": [
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "initial_hinge_angle": 0.043666555431400994,
+                "panel": {
+                  "name": "door_panel",
+                  "orientation": [
+                    0.9997616634600807,
+                    0.0,
+                    0.0,
+                    0.02183154313218311
+                  ],
+                  "position": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                },
+                "target_hinge_angle": 0.524
+              },
+              "fixture_states": [],
+              "fixtures": [
+                {
+                  "name": "door_panel",
+                  "orientation": [
+                    0.9997616634600807,
+                    0.0,
+                    0.0,
+                    0.02183154313218311
+                  ],
+                  "position": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                }
+              ],
+              "limits": [
+                {
+                  "name": "goal_tolerance_m",
+                  "value": 0.05
+                },
+                {
+                  "name": "force_limit_n",
+                  "value": 30.0
+                },
+                {
+                  "name": "force_scale_n",
+                  "value": 5.0
+                },
+                {
+                  "name": "target_hinge_angle_rad",
+                  "value": 0.524
+                }
+              ],
+              "object_starts": [],
+              "obstacles": [],
+              "schema_version": "paper-release",
+              "targets": [],
+              "task_name": "door_push"
+            },
+            "realized_scene_sha256": "82ce57ad272540c243cfe7c86f1faba3a732bddf0a834ea70613e69de7a6ff57",
+            "representative_task_state": {
+              "actual_goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "door_panel_position": [
+                0.5,
+                0.2,
+                0.0
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "hinge_angle": 0.7623046273359375,
+              "hinge_angle_initial": 0.043666555431400994,
+              "initial_hinge_angle": 0.043666555431400994,
+              "object_initial_position": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "run_index": 0,
+            "seed": 7,
+            "stagnated": true,
+            "stop_reason": "tolfun"
+          },
+          {
+            "allocated_candidate_evaluations": 66,
+            "best_composite_score": 0.84,
+            "best_fitness_score": 1.0,
+            "best_params": {
+              "approach_handle.approach_arc_height": 0.05988649274324841,
+              "push_handle_arc_chord.push_time": 3.415102836505268
+            },
+            "best_task_score": 1.0,
+            "configuration_bank_sha256": "2fa9c04e562df03eff32cc7f63abe386d265bbd85d42dcee2df7f90a42e2de0a",
+            "configuration_index": 1,
+            "configuration_seed": 8,
+            "configuration_sha256": "2fe1c8aab50c64fd16f940100e2036790f2ea8f75271c649e6989441e8f9191e",
+            "consumed_candidate_evaluations": 60,
+            "episode_task_state": [
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 0,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.6844193079383453,
+                "hinge_angle_initial": -0.060398069409259694,
+                "initial_hinge_angle": -0.060398069409259694,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 1,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.6844193079383453,
+                "hinge_angle_initial": -0.060398069409259694,
+                "initial_hinge_angle": -0.060398069409259694,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 2,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.6844193079383453,
+                "hinge_angle_initial": -0.060398069409259694,
+                "initial_hinge_angle": -0.060398069409259694,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ],
+            "randomisation_debug": {
+              "body_deltas": {},
+              "qpos_delta": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                -0.060398069409259694
+              ],
+              "scene_frozen": true
+            },
+            "randomised_task_state": {
+              "actual_goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "door_panel_position": [
+                0.5,
+                0.2,
+                0.0
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "hinge_angle": 0.6844193079383453,
+              "hinge_angle_initial": -0.060398069409259694,
+              "initial_hinge_angle": -0.060398069409259694,
+              "object_initial_position": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "realized_scene": {
+              "anchors": [
+                {
+                  "name": "fixture",
+                  "value": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                }
+              ],
+              "axes": [
+                {
+                  "name": "door_hinge_axis",
+                  "value": [
+                    0.0,
+                    0.0,
+                    1.0
+                  ]
+                }
+              ],
+              "door": {
+                "hinge_axis": [
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "initial_hinge_angle": -0.060398069409259694,
+                "panel": {
+                  "name": "door_panel",
+                  "orientation": [
+                    0.9995440438050098,
+                    0.0,
+                    0.0,
+                    -0.03019444475277904
+                  ],
+                  "position": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                },
+                "target_hinge_angle": 0.524
+              },
+              "fixture_states": [],
+              "fixtures": [
+                {
+                  "name": "door_panel",
+                  "orientation": [
+                    0.9995440438050098,
+                    0.0,
+                    0.0,
+                    -0.03019444475277904
+                  ],
+                  "position": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                }
+              ],
+              "limits": [
+                {
+                  "name": "goal_tolerance_m",
+                  "value": 0.05
+                },
+                {
+                  "name": "force_limit_n",
+                  "value": 30.0
+                },
+                {
+                  "name": "force_scale_n",
+                  "value": 5.0
+                },
+                {
+                  "name": "target_hinge_angle_rad",
+                  "value": 0.524
+                }
+              ],
+              "object_starts": [],
+              "obstacles": [],
+              "schema_version": "paper-release",
+              "targets": [],
+              "task_name": "door_push"
+            },
+            "realized_scene_sha256": "03ad88d640dcd23384857b752dfa12af63a722a6c6b9379a358f8168d1c71e09",
+            "representative_task_state": {
+              "actual_goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "door_panel_position": [
+                0.5,
+                0.2,
+                0.0
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "hinge_angle": 0.6844193079383453,
+              "hinge_angle_initial": -0.060398069409259694,
+              "initial_hinge_angle": -0.060398069409259694,
+              "object_initial_position": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "run_index": 1,
+            "seed": 8,
+            "stagnated": false,
+            "stop_reason": "tolfunhist"
+          },
+          {
+            "allocated_candidate_evaluations": 66,
+            "best_composite_score": 0.84,
+            "best_fitness_score": 1.0,
+            "best_params": {
+              "approach_handle.approach_arc_height": 0.051954748973858725,
+              "push_handle_arc_chord.push_time": 2.9577621739901385
+            },
+            "best_task_score": 1.0,
+            "configuration_bank_sha256": "2fa9c04e562df03eff32cc7f63abe386d265bbd85d42dcee2df7f90a42e2de0a",
+            "configuration_index": 2,
+            "configuration_seed": 9,
+            "configuration_sha256": "356d1c9659b48b76a1cff255b134bf18d0729848f67621b991467785bdaaef44",
+            "consumed_candidate_evaluations": 60,
+            "episode_task_state": [
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 0,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.8157021612040555,
+                "hinge_angle_initial": 0.12924135324332073,
+                "initial_hinge_angle": 0.12924135324332073,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 1,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.8157021612040555,
+                "hinge_angle_initial": 0.12924135324332073,
+                "initial_hinge_angle": 0.12924135324332073,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 2,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.8157021612040555,
+                "hinge_angle_initial": 0.12924135324332073,
+                "initial_hinge_angle": 0.12924135324332073,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ],
+            "randomisation_debug": {
+              "body_deltas": {},
+              "qpos_delta": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.12924135324332073
+              ],
+              "scene_frozen": true
+            },
+            "randomised_task_state": {
+              "actual_goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "door_panel_position": [
+                0.5,
+                0.2,
+                0.0
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "hinge_angle": 0.8157021612040555,
+              "hinge_angle_initial": 0.12924135324332073,
+              "initial_hinge_angle": 0.12924135324332073,
+              "object_initial_position": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "realized_scene": {
+              "anchors": [
+                {
+                  "name": "fixture",
+                  "value": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                }
+              ],
+              "axes": [
+                {
+                  "name": "door_hinge_axis",
+                  "value": [
+                    0.0,
+                    0.0,
+                    1.0
+                  ]
+                }
+              ],
+              "door": {
+                "hinge_axis": [
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "initial_hinge_angle": 0.12924135324332073,
+                "panel": {
+                  "name": "door_panel",
+                  "orientation": [
+                    0.997912810540837,
+                    0.0,
+                    0.0,
+                    0.0645757118310551
+                  ],
+                  "position": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                },
+                "target_hinge_angle": 0.524
+              },
+              "fixture_states": [],
+              "fixtures": [
+                {
+                  "name": "door_panel",
+                  "orientation": [
+                    0.997912810540837,
+                    0.0,
+                    0.0,
+                    0.0645757118310551
+                  ],
+                  "position": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                }
+              ],
+              "limits": [
+                {
+                  "name": "goal_tolerance_m",
+                  "value": 0.05
+                },
+                {
+                  "name": "force_limit_n",
+                  "value": 30.0
+                },
+                {
+                  "name": "force_scale_n",
+                  "value": 5.0
+                },
+                {
+                  "name": "target_hinge_angle_rad",
+                  "value": 0.524
+                }
+              ],
+              "object_starts": [],
+              "obstacles": [],
+              "schema_version": "paper-release",
+              "targets": [],
+              "task_name": "door_push"
+            },
+            "realized_scene_sha256": "8483aeff51d0063ec1cf7a724dac4352cd76049b8e216b9602c279ab004268b5",
+            "representative_task_state": {
+              "actual_goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "door_panel_position": [
+                0.5,
+                0.2,
+                0.0
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "hinge_angle": 0.8157021612040555,
+              "hinge_angle_initial": 0.12924135324332073,
+              "initial_hinge_angle": 0.12924135324332073,
+              "object_initial_position": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "run_index": 2,
+            "seed": 9,
+            "stagnated": false,
+            "stop_reason": "tolfunhist"
+          }
+        ]
+      },
+      "randomised_config_count": 3,
+      "robust_composite_score": 0.84,
+      "robust_fitness_score": 1.0,
+      "robust_task_score": 1.0,
+      "search_fitness_score": 1.0,
+      "stagnated": false,
+      "stop_reason": "tolfunhist"
+    },
+    "metrics": {
+      "LAMBDA": 0.05,
+      "canonical_task_score": 1.0,
+      "complexity_penalty": 0.16,
+      "composite_formula_version": "paper-release",
+      "composite_score": 0.84,
+      "episode_task_state": [
+        {
+          "actual_goal_position": [
+            0.1,
+            0.18,
+            0.35
+          ],
+          "door_panel_position": [
+            0.5,
+            0.2,
+            0.0
+          ],
+          "episode_index": 0,
+          "goal_position": [
+            0.1,
+            0.18,
+            0.35
+          ],
+          "hinge_angle": 0.7623046273359375,
+          "hinge_angle_initial": 0.043666555431400994,
+          "initial_hinge_angle": 0.043666555431400994,
+          "object_initial_position": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "actual_goal_position": [
+            0.1,
+            0.18,
+            0.35
+          ],
+          "door_panel_position": [
+            0.5,
+            0.2,
+            0.0
+          ],
+          "episode_index": 1,
+          "goal_position": [
+            0.1,
+            0.18,
+            0.35
+          ],
+          "hinge_angle": 0.7623046273359375,
+          "hinge_angle_initial": 0.043666555431400994,
+          "initial_hinge_angle": 0.043666555431400994,
+          "object_initial_position": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        {
+          "actual_goal_position": [
+            0.1,
+            0.18,
+            0.35
+          ],
+          "door_panel_position": [
+            0.5,
+            0.2,
+            0.0
+          ],
+          "episode_index": 2,
+          "goal_position": [
+            0.1,
+            0.18,
+            0.35
+          ],
+          "hinge_angle": 0.7623046273359375,
+          "hinge_angle_initial": 0.043666555431400994,
+          "initial_hinge_angle": 0.043666555431400994,
+          "object_initial_position": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      ],
+      "fitness_score": 1.0,
+      "force_compliance": 0.0,
+      "mean_phase_displacement": 0.13799592850188863,
+      "metrics_version": "paper-release",
+      "optimisation_signal_source": "task_score_only",
+      "optimiser_diagnostics": {
+        "K_basin_runs": 3.0,
+        "aggregation": "mean_of_config_specific_optimized_outcomes",
+        "basin_fraction": 1.0,
+        "best_fitness_score": 1.0,
+        "best_score": 0.84,
+        "best_task_score": 1.0,
+        "budget_accounting": {
+          "allocated_candidate_evaluations": 198,
+          "basin_runs": [
+            {
+              "allocated_candidate_evaluations": 66,
+              "consumed_candidate_evaluations": 30,
+              "run_index": 0,
+              "stop_reason": "tolfun"
+            },
+            {
+              "allocated_candidate_evaluations": 66,
+              "consumed_candidate_evaluations": 60,
+              "run_index": 1,
+              "stop_reason": "tolfunhist"
+            },
+            {
+              "allocated_candidate_evaluations": 66,
+              "consumed_candidate_evaluations": 60,
+              "run_index": 2,
+              "stop_reason": "tolfunhist"
+            }
+          ],
+          "consumed_candidate_evaluations": 150,
+          "requested_candidate_evaluations": 200,
+          "unallocated_candidate_evaluations": 2,
+          "unconsumed_allocated_candidate_evaluations": 48
+        },
+        "canonical_task_score": 1.0,
+        "configuration_count": 3,
+        "expressivity_threshold": 0.3,
+        "final_sigma_mean": 0.4401431505489959,
+        "k_run_variance": 0.0,
+        "landscape_smoothness": 0.9800879625446407,
+        "mean_force_compliance": 0.0,
+        "mean_termination_fidelity": 0.0,
+        "median_score": 0.84,
+        "n_converging_runs": 3.0,
+        "n_generations_mean": 8.333333333333334,
+        "optimisability_B": 1.0,
+        "optimisation_signal_source": "task_score_only",
+        "params_at_lower_bound": [],
+        "params_at_upper_bound": [],
+        "randomised_config_count": 3.0,
+        "raw_cma_task_score": 1.0,
+        "robust_composite_score": 0.84,
+        "robust_fitness_score": 1.0,
+        "robust_task_score": 1.0,
+        "search_fitness_score": 1.0,
+        "stagnated": false,
+        "stop_reason": "tolfunhist"
+      },
+      "optimiser_fitness_components": {
+        "canonical_task_score": 1.0,
+        "formula": "canonical_task_score"
+      },
+      "phase_completion_rate": 1.0,
+      "posthoc_diagnostics": {
+        "configuration_bank_sha256": "2fa9c04e562df03eff32cc7f63abe386d265bbd85d42dcee2df7f90a42e2de0a",
+        "randomised_config_count": 3,
+        "randomised_config_results": [
+          {
+            "allocated_candidate_evaluations": 66,
+            "best_composite_score": 0.84,
+            "best_fitness_score": 1.0,
+            "best_params": {
+              "approach_handle.approach_arc_height": 0.06097089699277246,
+              "push_handle_arc_chord.push_time": 3.1937564254838033
+            },
+            "best_task_score": 1.0,
+            "configuration_bank_sha256": "2fa9c04e562df03eff32cc7f63abe386d265bbd85d42dcee2df7f90a42e2de0a",
+            "configuration_index": 0,
+            "configuration_seed": 7,
+            "configuration_sha256": "fb31b2d7951f101afe3533d0babe40d387e4396f53837e61e543f2cfc46b7e19",
+            "consumed_candidate_evaluations": 30,
+            "episode_task_state": [
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 0,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.7623046273359375,
+                "hinge_angle_initial": 0.043666555431400994,
+                "initial_hinge_angle": 0.043666555431400994,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 1,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.7623046273359375,
+                "hinge_angle_initial": 0.043666555431400994,
+                "initial_hinge_angle": 0.043666555431400994,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 2,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.7623046273359375,
+                "hinge_angle_initial": 0.043666555431400994,
+                "initial_hinge_angle": 0.043666555431400994,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ],
+            "randomisation_debug": {
+              "body_deltas": {},
+              "qpos_delta": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.043666555431400994
+              ],
+              "scene_frozen": true
+            },
+            "randomised_task_state": {
+              "actual_goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "door_panel_position": [
+                0.5,
+                0.2,
+                0.0
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "hinge_angle": 0.7623046273359375,
+              "hinge_angle_initial": 0.043666555431400994,
+              "initial_hinge_angle": 0.043666555431400994,
+              "object_initial_position": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "realized_scene": {
+              "anchors": [
+                {
+                  "name": "fixture",
+                  "value": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                }
+              ],
+              "axes": [
+                {
+                  "name": "door_hinge_axis",
+                  "value": [
+                    0.0,
+                    0.0,
+                    1.0
+                  ]
+                }
+              ],
+              "door": {
+                "hinge_axis": [
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "initial_hinge_angle": 0.043666555431400994,
+                "panel": {
+                  "name": "door_panel",
+                  "orientation": [
+                    0.9997616634600807,
+                    0.0,
+                    0.0,
+                    0.02183154313218311
+                  ],
+                  "position": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                },
+                "target_hinge_angle": 0.524
+              },
+              "fixture_states": [],
+              "fixtures": [
+                {
+                  "name": "door_panel",
+                  "orientation": [
+                    0.9997616634600807,
+                    0.0,
+                    0.0,
+                    0.02183154313218311
+                  ],
+                  "position": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                }
+              ],
+              "limits": [
+                {
+                  "name": "goal_tolerance_m",
+                  "value": 0.05
+                },
+                {
+                  "name": "force_limit_n",
+                  "value": 30.0
+                },
+                {
+                  "name": "force_scale_n",
+                  "value": 5.0
+                },
+                {
+                  "name": "target_hinge_angle_rad",
+                  "value": 0.524
+                }
+              ],
+              "object_starts": [],
+              "obstacles": [],
+              "schema_version": "paper-release",
+              "targets": [],
+              "task_name": "door_push"
+            },
+            "realized_scene_sha256": "82ce57ad272540c243cfe7c86f1faba3a732bddf0a834ea70613e69de7a6ff57",
+            "representative_task_state": {
+              "actual_goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "door_panel_position": [
+                0.5,
+                0.2,
+                0.0
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "hinge_angle": 0.7623046273359375,
+              "hinge_angle_initial": 0.043666555431400994,
+              "initial_hinge_angle": 0.043666555431400994,
+              "object_initial_position": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "run_index": 0,
+            "seed": 7,
+            "stagnated": true,
+            "stop_reason": "tolfun"
+          },
+          {
+            "allocated_candidate_evaluations": 66,
+            "best_composite_score": 0.84,
+            "best_fitness_score": 1.0,
+            "best_params": {
+              "approach_handle.approach_arc_height": 0.05988649274324841,
+              "push_handle_arc_chord.push_time": 3.415102836505268
+            },
+            "best_task_score": 1.0,
+            "configuration_bank_sha256": "2fa9c04e562df03eff32cc7f63abe386d265bbd85d42dcee2df7f90a42e2de0a",
+            "configuration_index": 1,
+            "configuration_seed": 8,
+            "configuration_sha256": "2fe1c8aab50c64fd16f940100e2036790f2ea8f75271c649e6989441e8f9191e",
+            "consumed_candidate_evaluations": 60,
+            "episode_task_state": [
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 0,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.6844193079383453,
+                "hinge_angle_initial": -0.060398069409259694,
+                "initial_hinge_angle": -0.060398069409259694,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 1,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.6844193079383453,
+                "hinge_angle_initial": -0.060398069409259694,
+                "initial_hinge_angle": -0.060398069409259694,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 2,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.6844193079383453,
+                "hinge_angle_initial": -0.060398069409259694,
+                "initial_hinge_angle": -0.060398069409259694,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ],
+            "randomisation_debug": {
+              "body_deltas": {},
+              "qpos_delta": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                -0.060398069409259694
+              ],
+              "scene_frozen": true
+            },
+            "randomised_task_state": {
+              "actual_goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "door_panel_position": [
+                0.5,
+                0.2,
+                0.0
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "hinge_angle": 0.6844193079383453,
+              "hinge_angle_initial": -0.060398069409259694,
+              "initial_hinge_angle": -0.060398069409259694,
+              "object_initial_position": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "realized_scene": {
+              "anchors": [
+                {
+                  "name": "fixture",
+                  "value": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                }
+              ],
+              "axes": [
+                {
+                  "name": "door_hinge_axis",
+                  "value": [
+                    0.0,
+                    0.0,
+                    1.0
+                  ]
+                }
+              ],
+              "door": {
+                "hinge_axis": [
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "initial_hinge_angle": -0.060398069409259694,
+                "panel": {
+                  "name": "door_panel",
+                  "orientation": [
+                    0.9995440438050098,
+                    0.0,
+                    0.0,
+                    -0.03019444475277904
+                  ],
+                  "position": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                },
+                "target_hinge_angle": 0.524
+              },
+              "fixture_states": [],
+              "fixtures": [
+                {
+                  "name": "door_panel",
+                  "orientation": [
+                    0.9995440438050098,
+                    0.0,
+                    0.0,
+                    -0.03019444475277904
+                  ],
+                  "position": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                }
+              ],
+              "limits": [
+                {
+                  "name": "goal_tolerance_m",
+                  "value": 0.05
+                },
+                {
+                  "name": "force_limit_n",
+                  "value": 30.0
+                },
+                {
+                  "name": "force_scale_n",
+                  "value": 5.0
+                },
+                {
+                  "name": "target_hinge_angle_rad",
+                  "value": 0.524
+                }
+              ],
+              "object_starts": [],
+              "obstacles": [],
+              "schema_version": "paper-release",
+              "targets": [],
+              "task_name": "door_push"
+            },
+            "realized_scene_sha256": "03ad88d640dcd23384857b752dfa12af63a722a6c6b9379a358f8168d1c71e09",
+            "representative_task_state": {
+              "actual_goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "door_panel_position": [
+                0.5,
+                0.2,
+                0.0
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "hinge_angle": 0.6844193079383453,
+              "hinge_angle_initial": -0.060398069409259694,
+              "initial_hinge_angle": -0.060398069409259694,
+              "object_initial_position": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "run_index": 1,
+            "seed": 8,
+            "stagnated": false,
+            "stop_reason": "tolfunhist"
+          },
+          {
+            "allocated_candidate_evaluations": 66,
+            "best_composite_score": 0.84,
+            "best_fitness_score": 1.0,
+            "best_params": {
+              "approach_handle.approach_arc_height": 0.051954748973858725,
+              "push_handle_arc_chord.push_time": 2.9577621739901385
+            },
+            "best_task_score": 1.0,
+            "configuration_bank_sha256": "2fa9c04e562df03eff32cc7f63abe386d265bbd85d42dcee2df7f90a42e2de0a",
+            "configuration_index": 2,
+            "configuration_seed": 9,
+            "configuration_sha256": "356d1c9659b48b76a1cff255b134bf18d0729848f67621b991467785bdaaef44",
+            "consumed_candidate_evaluations": 60,
+            "episode_task_state": [
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 0,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.8157021612040555,
+                "hinge_angle_initial": 0.12924135324332073,
+                "initial_hinge_angle": 0.12924135324332073,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 1,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.8157021612040555,
+                "hinge_angle_initial": 0.12924135324332073,
+                "initial_hinge_angle": 0.12924135324332073,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 2,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.8157021612040555,
+                "hinge_angle_initial": 0.12924135324332073,
+                "initial_hinge_angle": 0.12924135324332073,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ],
+            "randomisation_debug": {
+              "body_deltas": {},
+              "qpos_delta": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.12924135324332073
+              ],
+              "scene_frozen": true
+            },
+            "randomised_task_state": {
+              "actual_goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "door_panel_position": [
+                0.5,
+                0.2,
+                0.0
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "hinge_angle": 0.8157021612040555,
+              "hinge_angle_initial": 0.12924135324332073,
+              "initial_hinge_angle": 0.12924135324332073,
+              "object_initial_position": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "realized_scene": {
+              "anchors": [
+                {
+                  "name": "fixture",
+                  "value": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                }
+              ],
+              "axes": [
+                {
+                  "name": "door_hinge_axis",
+                  "value": [
+                    0.0,
+                    0.0,
+                    1.0
+                  ]
+                }
+              ],
+              "door": {
+                "hinge_axis": [
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "initial_hinge_angle": 0.12924135324332073,
+                "panel": {
+                  "name": "door_panel",
+                  "orientation": [
+                    0.997912810540837,
+                    0.0,
+                    0.0,
+                    0.0645757118310551
+                  ],
+                  "position": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                },
+                "target_hinge_angle": 0.524
+              },
+              "fixture_states": [],
+              "fixtures": [
+                {
+                  "name": "door_panel",
+                  "orientation": [
+                    0.997912810540837,
+                    0.0,
+                    0.0,
+                    0.0645757118310551
+                  ],
+                  "position": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                }
+              ],
+              "limits": [
+                {
+                  "name": "goal_tolerance_m",
+                  "value": 0.05
+                },
+                {
+                  "name": "force_limit_n",
+                  "value": 30.0
+                },
+                {
+                  "name": "force_scale_n",
+                  "value": 5.0
+                },
+                {
+                  "name": "target_hinge_angle_rad",
+                  "value": 0.524
+                }
+              ],
+              "object_starts": [],
+              "obstacles": [],
+              "schema_version": "paper-release",
+              "targets": [],
+              "task_name": "door_push"
+            },
+            "realized_scene_sha256": "8483aeff51d0063ec1cf7a724dac4352cd76049b8e216b9602c279ab004268b5",
+            "representative_task_state": {
+              "actual_goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "door_panel_position": [
+                0.5,
+                0.2,
+                0.0
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "hinge_angle": 0.8157021612040555,
+              "hinge_angle_initial": 0.12924135324332073,
+              "initial_hinge_angle": 0.12924135324332073,
+              "object_initial_position": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "run_index": 2,
+            "seed": 9,
+            "stagnated": false,
+            "stop_reason": "tolfunhist"
+          }
+        ]
+      },
+      "randomised_task_state": {
+        "actual_goal_position": [
+          0.1,
+          0.18,
+          0.35
+        ],
+        "door_panel_position": [
+          0.5,
+          0.2,
+          0.0
+        ],
+        "episode_index": 0,
+        "goal_position": [
+          0.1,
+          0.18,
+          0.35
+        ],
+        "hinge_angle": 0.7623046273359375,
+        "hinge_angle_initial": 0.043666555431400994,
+        "initial_hinge_angle": 0.043666555431400994,
+        "object_initial_position": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "safety_diagnostics": {
+        "force_compliance": 0.0,
+        "force_limit": 30.0,
+        "max_peak_contact_force": 62.67139228852188,
+        "mean_peak_contact_force": 62.67139228852188
+      },
+      "search_fitness_score": 1.0,
+      "skill_parameter_optimisation_scores": {
+        "K_basin_runs": 3.0,
+        "aggregation": "mean_of_config_specific_optimized_outcomes",
+        "basin_fraction": 1.0,
+        "best_fitness_score": 1.0,
+        "best_score": 0.84,
+        "best_task_score": 1.0,
+        "budget_accounting": {
+          "allocated_candidate_evaluations": 198,
+          "basin_runs": [
+            {
+              "allocated_candidate_evaluations": 66,
+              "consumed_candidate_evaluations": 30,
+              "run_index": 0,
+              "stop_reason": "tolfun"
+            },
+            {
+              "allocated_candidate_evaluations": 66,
+              "consumed_candidate_evaluations": 60,
+              "run_index": 1,
+              "stop_reason": "tolfunhist"
+            },
+            {
+              "allocated_candidate_evaluations": 66,
+              "consumed_candidate_evaluations": 60,
+              "run_index": 2,
+              "stop_reason": "tolfunhist"
+            }
+          ],
+          "consumed_candidate_evaluations": 150,
+          "requested_candidate_evaluations": 200,
+          "unallocated_candidate_evaluations": 2,
+          "unconsumed_allocated_candidate_evaluations": 48
+        },
+        "canonical_task_score": 1.0,
+        "configuration_count": 3,
+        "expressivity_threshold": 0.3,
+        "final_sigma_mean": 0.4401431505489959,
+        "k_run_variance": 0.0,
+        "landscape_smoothness": 0.9800879625446407,
+        "mean_force_compliance": 0.0,
+        "mean_termination_fidelity": 0.0,
+        "median_score": 0.84,
+        "n_converging_runs": 3.0,
+        "n_generations_mean": 8.333333333333334,
+        "optimisability_B": 1.0,
+        "optimisation_signal_source": "task_score_only",
+        "params_at_lower_bound": [],
+        "params_at_upper_bound": [],
+        "randomised_config_count": 3.0,
+        "raw_cma_task_score": 1.0,
+        "robust_composite_score": 0.84,
+        "robust_fitness_score": 1.0,
+        "robust_task_score": 1.0,
+        "search_fitness_score": 1.0,
+        "stagnated": false,
+        "stop_reason": "tolfunhist"
+      },
+      "task_score": 1.0,
+      "task_score_components": {
+        "formula": "door_hinge_delta_ratio",
+        "hinge_angle_ratio": 1.0,
+        "target_hinge_delta_rad": 0.524
+      },
+      "task_subscores": {
+        "arc_quality": 1.0,
+        "hinge_angle_ratio": 1.0
+      },
+      "termination_diagnostics": {
+        "mean_phase_displacement": 0.13752828270471865,
+        "phase_completion_rate": 1.0,
+        "termination_fidelity": 0.0
+      },
+      "termination_fidelity": 0.0
+    },
+    "optimiser_diagnostics": {
+      "aggregation": "mean_of_config_specific_optimized_outcomes",
+      "best_fitness_score": 1.0,
+      "best_score": 0.84,
+      "best_task_score": 1.0,
+      "budget_accounting": {
+        "allocated_candidate_evaluations": 198,
+        "basin_runs": [
+          {
+            "allocated_candidate_evaluations": 66,
+            "consumed_candidate_evaluations": 30,
+            "run_index": 0,
+            "stop_reason": "tolfun"
+          },
+          {
+            "allocated_candidate_evaluations": 66,
+            "consumed_candidate_evaluations": 60,
+            "run_index": 1,
+            "stop_reason": "tolfunhist"
+          },
+          {
+            "allocated_candidate_evaluations": 66,
+            "consumed_candidate_evaluations": 60,
+            "run_index": 2,
+            "stop_reason": "tolfunhist"
+          }
+        ],
+        "consumed_candidate_evaluations": 150,
+        "requested_candidate_evaluations": 200,
+        "unallocated_candidate_evaluations": 2,
+        "unconsumed_allocated_candidate_evaluations": 48
+      },
+      "canonical_task_score": 1.0,
+      "configuration_count": 3,
+      "final_sigma_mean": 0.4401431505489959,
+      "k_run_variance": 0.0,
+      "median_score": 0.84,
+      "n_generations_mean": 8.333333333333334,
+      "optimisation_signal_source": "task_score_only",
+      "params_at_lower_bound": [],
+      "params_at_upper_bound": [],
+      "posthoc_diagnostics": {
+        "configuration_bank_sha256": "2fa9c04e562df03eff32cc7f63abe386d265bbd85d42dcee2df7f90a42e2de0a",
+        "randomised_config_count": 3,
+        "randomised_config_results": [
+          {
+            "allocated_candidate_evaluations": 66,
+            "best_composite_score": 0.84,
+            "best_fitness_score": 1.0,
+            "best_params": {
+              "approach_handle.approach_arc_height": 0.06097089699277246,
+              "push_handle_arc_chord.push_time": 3.1937564254838033
+            },
+            "best_task_score": 1.0,
+            "configuration_bank_sha256": "2fa9c04e562df03eff32cc7f63abe386d265bbd85d42dcee2df7f90a42e2de0a",
+            "configuration_index": 0,
+            "configuration_seed": 7,
+            "configuration_sha256": "fb31b2d7951f101afe3533d0babe40d387e4396f53837e61e543f2cfc46b7e19",
+            "consumed_candidate_evaluations": 30,
+            "episode_task_state": [
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 0,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.7623046273359375,
+                "hinge_angle_initial": 0.043666555431400994,
+                "initial_hinge_angle": 0.043666555431400994,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 1,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.7623046273359375,
+                "hinge_angle_initial": 0.043666555431400994,
+                "initial_hinge_angle": 0.043666555431400994,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 2,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.7623046273359375,
+                "hinge_angle_initial": 0.043666555431400994,
+                "initial_hinge_angle": 0.043666555431400994,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ],
+            "randomisation_debug": {
+              "body_deltas": {},
+              "qpos_delta": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.043666555431400994
+              ],
+              "scene_frozen": true
+            },
+            "randomised_task_state": {
+              "actual_goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "door_panel_position": [
+                0.5,
+                0.2,
+                0.0
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "hinge_angle": 0.7623046273359375,
+              "hinge_angle_initial": 0.043666555431400994,
+              "initial_hinge_angle": 0.043666555431400994,
+              "object_initial_position": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "realized_scene": {
+              "anchors": [
+                {
+                  "name": "fixture",
+                  "value": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                }
+              ],
+              "axes": [
+                {
+                  "name": "door_hinge_axis",
+                  "value": [
+                    0.0,
+                    0.0,
+                    1.0
+                  ]
+                }
+              ],
+              "door": {
+                "hinge_axis": [
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "initial_hinge_angle": 0.043666555431400994,
+                "panel": {
+                  "name": "door_panel",
+                  "orientation": [
+                    0.9997616634600807,
+                    0.0,
+                    0.0,
+                    0.02183154313218311
+                  ],
+                  "position": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                },
+                "target_hinge_angle": 0.524
+              },
+              "fixture_states": [],
+              "fixtures": [
+                {
+                  "name": "door_panel",
+                  "orientation": [
+                    0.9997616634600807,
+                    0.0,
+                    0.0,
+                    0.02183154313218311
+                  ],
+                  "position": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                }
+              ],
+              "limits": [
+                {
+                  "name": "goal_tolerance_m",
+                  "value": 0.05
+                },
+                {
+                  "name": "force_limit_n",
+                  "value": 30.0
+                },
+                {
+                  "name": "force_scale_n",
+                  "value": 5.0
+                },
+                {
+                  "name": "target_hinge_angle_rad",
+                  "value": 0.524
+                }
+              ],
+              "object_starts": [],
+              "obstacles": [],
+              "schema_version": "paper-release",
+              "targets": [],
+              "task_name": "door_push"
+            },
+            "realized_scene_sha256": "82ce57ad272540c243cfe7c86f1faba3a732bddf0a834ea70613e69de7a6ff57",
+            "representative_task_state": {
+              "actual_goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "door_panel_position": [
+                0.5,
+                0.2,
+                0.0
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "hinge_angle": 0.7623046273359375,
+              "hinge_angle_initial": 0.043666555431400994,
+              "initial_hinge_angle": 0.043666555431400994,
+              "object_initial_position": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "run_index": 0,
+            "seed": 7,
+            "stagnated": true,
+            "stop_reason": "tolfun"
+          },
+          {
+            "allocated_candidate_evaluations": 66,
+            "best_composite_score": 0.84,
+            "best_fitness_score": 1.0,
+            "best_params": {
+              "approach_handle.approach_arc_height": 0.05988649274324841,
+              "push_handle_arc_chord.push_time": 3.415102836505268
+            },
+            "best_task_score": 1.0,
+            "configuration_bank_sha256": "2fa9c04e562df03eff32cc7f63abe386d265bbd85d42dcee2df7f90a42e2de0a",
+            "configuration_index": 1,
+            "configuration_seed": 8,
+            "configuration_sha256": "2fe1c8aab50c64fd16f940100e2036790f2ea8f75271c649e6989441e8f9191e",
+            "consumed_candidate_evaluations": 60,
+            "episode_task_state": [
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 0,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.6844193079383453,
+                "hinge_angle_initial": -0.060398069409259694,
+                "initial_hinge_angle": -0.060398069409259694,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 1,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.6844193079383453,
+                "hinge_angle_initial": -0.060398069409259694,
+                "initial_hinge_angle": -0.060398069409259694,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 2,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.6844193079383453,
+                "hinge_angle_initial": -0.060398069409259694,
+                "initial_hinge_angle": -0.060398069409259694,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ],
+            "randomisation_debug": {
+              "body_deltas": {},
+              "qpos_delta": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                -0.060398069409259694
+              ],
+              "scene_frozen": true
+            },
+            "randomised_task_state": {
+              "actual_goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "door_panel_position": [
+                0.5,
+                0.2,
+                0.0
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "hinge_angle": 0.6844193079383453,
+              "hinge_angle_initial": -0.060398069409259694,
+              "initial_hinge_angle": -0.060398069409259694,
+              "object_initial_position": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "realized_scene": {
+              "anchors": [
+                {
+                  "name": "fixture",
+                  "value": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                }
+              ],
+              "axes": [
+                {
+                  "name": "door_hinge_axis",
+                  "value": [
+                    0.0,
+                    0.0,
+                    1.0
+                  ]
+                }
+              ],
+              "door": {
+                "hinge_axis": [
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "initial_hinge_angle": -0.060398069409259694,
+                "panel": {
+                  "name": "door_panel",
+                  "orientation": [
+                    0.9995440438050098,
+                    0.0,
+                    0.0,
+                    -0.03019444475277904
+                  ],
+                  "position": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                },
+                "target_hinge_angle": 0.524
+              },
+              "fixture_states": [],
+              "fixtures": [
+                {
+                  "name": "door_panel",
+                  "orientation": [
+                    0.9995440438050098,
+                    0.0,
+                    0.0,
+                    -0.03019444475277904
+                  ],
+                  "position": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                }
+              ],
+              "limits": [
+                {
+                  "name": "goal_tolerance_m",
+                  "value": 0.05
+                },
+                {
+                  "name": "force_limit_n",
+                  "value": 30.0
+                },
+                {
+                  "name": "force_scale_n",
+                  "value": 5.0
+                },
+                {
+                  "name": "target_hinge_angle_rad",
+                  "value": 0.524
+                }
+              ],
+              "object_starts": [],
+              "obstacles": [],
+              "schema_version": "paper-release",
+              "targets": [],
+              "task_name": "door_push"
+            },
+            "realized_scene_sha256": "03ad88d640dcd23384857b752dfa12af63a722a6c6b9379a358f8168d1c71e09",
+            "representative_task_state": {
+              "actual_goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "door_panel_position": [
+                0.5,
+                0.2,
+                0.0
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "hinge_angle": 0.6844193079383453,
+              "hinge_angle_initial": -0.060398069409259694,
+              "initial_hinge_angle": -0.060398069409259694,
+              "object_initial_position": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "run_index": 1,
+            "seed": 8,
+            "stagnated": false,
+            "stop_reason": "tolfunhist"
+          },
+          {
+            "allocated_candidate_evaluations": 66,
+            "best_composite_score": 0.84,
+            "best_fitness_score": 1.0,
+            "best_params": {
+              "approach_handle.approach_arc_height": 0.051954748973858725,
+              "push_handle_arc_chord.push_time": 2.9577621739901385
+            },
+            "best_task_score": 1.0,
+            "configuration_bank_sha256": "2fa9c04e562df03eff32cc7f63abe386d265bbd85d42dcee2df7f90a42e2de0a",
+            "configuration_index": 2,
+            "configuration_seed": 9,
+            "configuration_sha256": "356d1c9659b48b76a1cff255b134bf18d0729848f67621b991467785bdaaef44",
+            "consumed_candidate_evaluations": 60,
+            "episode_task_state": [
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 0,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.8157021612040555,
+                "hinge_angle_initial": 0.12924135324332073,
+                "initial_hinge_angle": 0.12924135324332073,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 1,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.8157021612040555,
+                "hinge_angle_initial": 0.12924135324332073,
+                "initial_hinge_angle": 0.12924135324332073,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              },
+              {
+                "actual_goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "door_panel_position": [
+                  0.5,
+                  0.2,
+                  0.0
+                ],
+                "episode_index": 2,
+                "goal_position": [
+                  0.1,
+                  0.18,
+                  0.35
+                ],
+                "hinge_angle": 0.8157021612040555,
+                "hinge_angle_initial": 0.12924135324332073,
+                "initial_hinge_angle": 0.12924135324332073,
+                "object_initial_position": [
+                  0.0,
+                  0.0,
+                  0.0
+                ]
+              }
+            ],
+            "randomisation_debug": {
+              "body_deltas": {},
+              "qpos_delta": [
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.12924135324332073
+              ],
+              "scene_frozen": true
+            },
+            "randomised_task_state": {
+              "actual_goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "door_panel_position": [
+                0.5,
+                0.2,
+                0.0
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "hinge_angle": 0.8157021612040555,
+              "hinge_angle_initial": 0.12924135324332073,
+              "initial_hinge_angle": 0.12924135324332073,
+              "object_initial_position": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "realized_scene": {
+              "anchors": [
+                {
+                  "name": "fixture",
+                  "value": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                }
+              ],
+              "axes": [
+                {
+                  "name": "door_hinge_axis",
+                  "value": [
+                    0.0,
+                    0.0,
+                    1.0
+                  ]
+                }
+              ],
+              "door": {
+                "hinge_axis": [
+                  0.0,
+                  0.0,
+                  1.0
+                ],
+                "initial_hinge_angle": 0.12924135324332073,
+                "panel": {
+                  "name": "door_panel",
+                  "orientation": [
+                    0.997912810540837,
+                    0.0,
+                    0.0,
+                    0.0645757118310551
+                  ],
+                  "position": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                },
+                "target_hinge_angle": 0.524
+              },
+              "fixture_states": [],
+              "fixtures": [
+                {
+                  "name": "door_panel",
+                  "orientation": [
+                    0.997912810540837,
+                    0.0,
+                    0.0,
+                    0.0645757118310551
+                  ],
+                  "position": [
+                    0.5,
+                    0.2,
+                    0.0
+                  ]
+                }
+              ],
+              "limits": [
+                {
+                  "name": "goal_tolerance_m",
+                  "value": 0.05
+                },
+                {
+                  "name": "force_limit_n",
+                  "value": 30.0
+                },
+                {
+                  "name": "force_scale_n",
+                  "value": 5.0
+                },
+                {
+                  "name": "target_hinge_angle_rad",
+                  "value": 0.524
+                }
+              ],
+              "object_starts": [],
+              "obstacles": [],
+              "schema_version": "paper-release",
+              "targets": [],
+              "task_name": "door_push"
+            },
+            "realized_scene_sha256": "8483aeff51d0063ec1cf7a724dac4352cd76049b8e216b9602c279ab004268b5",
+            "representative_task_state": {
+              "actual_goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "door_panel_position": [
+                0.5,
+                0.2,
+                0.0
+              ],
+              "episode_index": 0,
+              "goal_position": [
+                0.1,
+                0.18,
+                0.35
+              ],
+              "hinge_angle": 0.8157021612040555,
+              "hinge_angle_initial": 0.12924135324332073,
+              "initial_hinge_angle": 0.12924135324332073,
+              "object_initial_position": [
+                0.0,
+                0.0,
+                0.0
+              ]
+            },
+            "run_index": 2,
+            "seed": 9,
+            "stagnated": false,
+            "stop_reason": "tolfunhist"
+          }
+        ]
+      },
+      "randomised_config_count": 3,
+      "robust_composite_score": 0.84,
+      "robust_fitness_score": 1.0,
+      "robust_task_score": 1.0,
+      "search_fitness_score": 1.0,
+      "stagnated": false,
+      "stop_reason": "tolfunhist"
+    },
+    "optimized_params": {
+      "approach_handle.approach_arc_height": 0.06097089699277246,
+      "push_handle_arc_chord.push_time": 3.1937564254838033
+    },
+    "score_source": "optimization_time_canonical_task_score"
+  },
+  "protocol_fingerprint": "cb3b5956e71dc6fb7d50c8c3d3b8e22277d32bce683fb6036e052ad63eb16a0e",
+  "repair_count": 0,
+  "schema_version": "paper-release",
+  "seed": 7,
+  "task": "door_push"
+}

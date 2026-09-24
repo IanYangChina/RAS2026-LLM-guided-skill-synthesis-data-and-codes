@@ -1,0 +1,171 @@
+skill: grasp_place
+dsl_version: 2
+skill_type: arm_gripper
+subtasks:
+- id: reach_grasp_standoff
+  anchor: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.05
+  weight: 0.3
+- id: reach_place_standoff
+  offset:
+  - 0.0
+  - 0.0
+  - 0.05
+  weight: 0.7
+phases:
+- id: approach_object
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+    tolerance: 0.005
+    orientation:
+      mode: keep_current
+  subtask_id: reach_grasp_standoff
+- id: descend_object
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.005
+    orientation:
+      mode: keep_current
+- id: grasp_object
+  type: grasp
+  control: position_control
+  termination: grasp_success
+  end_effector_action: force_grasp
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+  guards:
+  - id: bilateral_grasp_check
+    when: after_phase
+    predicate: bilateral_grasp
+    threshold: 0.01
+    on_failure: retry
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.01
+    - 0.0
+    - 0.0
+- id: lift_object
+  type: lift
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    tolerance: 0.005
+    orientation:
+      mode: keep_current
+- id: approach_goal
+  type: approach
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: placement_surface
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+    tolerance: 0.005
+    orientation:
+      mode: keep_current
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.1
+      - 0.5
+      default: 0.2
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: object_retained
+    when: during_phase
+    predicate: object_lifted
+    threshold: 0.05
+    on_failure: abort
+  subtask_id: reach_place_standoff
+- id: descend_goal
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: placement_surface
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.005
+    orientation:
+      mode: keep_current
+- id: release_object
+  type: release
+  control: position_control
+  termination: time_limit
+  end_effector_action: open
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+- id: retract_goal
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+    tolerance: 0.005
+    orientation:
+      mode: keep_current

@@ -1,0 +1,121 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator:
+    speed: 0.2
+    type: linear_cartesian
+  id: approach_behind_peg
+  orientation:
+    mode: keep_current
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.2
+      range:
+      - 0.1
+      - 0.5
+      type: scalar
+  subtask_id: reach_behind_peg
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.02
+    - 0.12
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator:
+    speed: 0.1
+    type: linear_cartesian
+  id: descend_behind_peg
+  orientation:
+    mode: keep_current
+  parameters:
+    lateral_offset_x:
+      binds_to:
+      - mode: replace
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.02
+      - 0.02
+      type: scalar
+  subtask_id: reach_behind_peg
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.02
+    - 0.035
+  termination: pose_tolerance
+  type: descend
+- control: impedance_control
+  duration:
+    max_time: 2.0
+  generator:
+    speed: 0.05
+    type: linear_cartesian
+  id: push_through_channel
+  parameters:
+    max_push_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 2.0
+      range:
+      - 1.0
+      - 3.5
+      type: scalar
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.18
+      range:
+      - 0.12
+      - 0.22
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.03
+      - 0.1
+      type: scalar
+  subtask_id: push_through_channel
+  target:
+    anchor: current_tcp
+    offset_along_axis:
+      axis: channel_axis
+      distance: 0.18
+      mode: add_to_offset
+      sign: negative
+  termination: time_limit
+  type: push
+skill: peg_channel
+subtasks:
+- anchor: object
+  id: reach_behind_peg
+  metric: distance
+  offset:
+  - 0.0
+  - 0.02
+  - 0.12
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: push_through_channel
+  metric: goal_progress
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: object
+  weight: 0.7

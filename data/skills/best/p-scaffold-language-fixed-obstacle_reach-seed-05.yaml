@@ -1,0 +1,102 @@
+skill: obstacle_reach
+dsl_version: 2
+phases:
+- id: approach_over_obstacle
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.25
+    tolerance: 0.02
+    orientation:
+      mode: none
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.1
+      - 0.5
+      default: 0.3
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.15
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+- id: align_above_goal
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.25
+    tolerance: 0.02
+    orientation:
+      mode: none
+  parameters:
+    align_speed:
+      type: scalar
+      range:
+      - 0.1
+      - 0.5
+      default: 0.3
+      binds_to:
+      - path: generator.speed
+        mode: replace
+- id: descend_to_goal
+  type: descend
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: none
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.1
+      - 0.5
+      default: 0.3
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    force_threshold:
+      type: scalar
+      range:
+      - 1.0
+      - 5.0
+      default: 3.0
+      binds_to:
+      - path: guards.force_guard.threshold
+        mode: replace
+  guards:
+  - id: force_guard
+    when: during_phase
+    predicate: force_below
+    threshold: 3.0
+    on_failure: abort

@@ -1,0 +1,134 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.3
+      range:
+      - 0.1
+      - 0.5
+      type: scalar
+    approach_z:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.1
+      range:
+      - 0.05
+      - 0.15
+      type: scalar
+  subtask_id: approach_object
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    orientation:
+      mode: none
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_behind
+  parameters:
+    alignment_tolerance:
+      binds_to:
+      - mode: replace
+        path: target.orientation.tolerance
+      default: 0.1
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+    behind_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: push_direction
+      distance: 0.02
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      align_with: push_direction
+      axis:
+      - 1.0
+      - 0.0
+      - 0.0
+      mode: align_axis
+      tolerance: 0.1
+    source: yaml
+  termination: pose_tolerance
+  type: align
+- control: impedance_control
+  generator: linear_cartesian
+  id: push_1
+  parameters:
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+    push_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.01
+      range:
+      - 0.005
+      - 0.02
+      type: scalar
+  subtask_id: push_to_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: push
+skill: push_to_goal
+subtasks:
+- anchor: object
+  id: approach_object
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: push_to_goal
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.7

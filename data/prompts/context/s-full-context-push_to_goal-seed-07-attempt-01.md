@@ -1,0 +1,385 @@
+## Search State
+
+- **Seed**: 7
+- **Iteration**: 2 / 15
+
+### Mutation History (most recent first)
+
+| Iter | Phase Sequence | Generators | Controls | Terminations | Params | Q | task_score | Result |
+|---|---|---|---|---|---|---|---|---|
+| 1 | approach → descend → push | linear_cartesian | linear_cartesian | linear_cartesian | position_control | force_threshold_switch | admittance_control | pose_tolerance | force_exceeded | pose_tolerance | 3 | 0.1887 | 0.00 | ✅ accepted |
+| 0 | descend → insert → grasp → approach → align | linear_cartesian | impedance_motion | — | linear_cartesian | linear_cartesian | admittance_control | admittance_control | position_control | position_control | position_control | pose_tolerance | pose_tolerance | time_limit | pose_tolerance | pose_tolerance | 5 | -0.3400 | 0.00 | ✅ accepted |
+
+**Proposal policy**: task_score is 0.00 — NOT near-perfect (target ≥ 0.9). Do NOT hold or make cosmetic tweaks. Make any coherent updates needed to address the diagnosed failure while preserving useful working structure. Use the Mutation History above to avoid repeating failed edits. - task_score ≈ 0: add or repair missing prerequisites, targets, guard/retry logic, generator/control choices, subtasks, or phase-ordering errors that block task progress.
+- task_score stagnant: change coupled targets, parameters, terminations, phase types, controls, subtasks, or ordering when evidence shows they need to change together.
+A HOLD wastes an iteration when task_score is below 0.9.
+
+## Optimisation Objective
+
+Your goal is to **maximise task_score first, then composite score Q**:
+
+> **Primary objective: task_score** — the fraction of episodes where the robot successfully completes the task. This is the most important metric. **Never propose a simpler or shorter skill if it reduces task_score.**
+
+> **Q = fitness_score + termination_fidelity − complexity_penalty**
+
+- `fitness_score`: shaped task reward (includes phase progress for contact-rich tasks)
+- `termination_fidelity`: fraction of phases that terminated by designed condition (not timeout)
+- `complexity_penalty`: cost for over-parameterised or over-phased designs
+
+**Warning**: Do not reduce phases or parameters to lower complexity if doing so reduces task_score. Structure complexity is only penalised when it adds no performance gain.
+
+# Proposal Context
+
+## Task Specification
+
+- Task name: push_to_goal
+- Frozen realised-scene SHA-256: `c8d09cd43835becf8e5eb4413394fad8627e4bf404e9e7726e9f380b60e09752`
+- Frozen object start: [0.51501145599256, 0.047665656116349056, 0.025]
+- Frozen task target: [0.5, -0.15, 0.025]
+- Goal object position: (0.5, -0.15, 0.025)
+- Object initial pose: (0.51501145599256, 0.047665656116349056, 0.025)
+- Goal tolerance: 0.02 m
+- Expressivity sigma: 1.0 m
+- Expressivity threshold: 0.8
+- Force limit: 25.0 N
+- Robot initial TCP position: (0.5, 0.0, 0.3)
+- Phase navigation guidance: the task `phase_target_map` may provide internal predefined TCP waypoint aliases / semantic phase ids. These names are not DSL phase types and are intentionally not enumerated here to avoid confusing ids with types. Phase `id` may be semantic, but phase `type` must be exactly one of the DSL enum values listed in the prompt.
+- Primary evaluation target: **object displacement ratio toward goal_object_position**
+
+## Scene Entities
+
+robot:
+  model: panda_pusher
+  tcp_site: attachment_site
+  gripper: null
+  tcp_initial_world: [0.5, 0, 0.3]
+objects:
+  - name: push_box
+    role: manipulated_object
+    dynamics: free
+    geometry: box
+    dimensions_m: [0.05, 0.05, 0.05]
+    mass_kg: 0.1
+  - name: goal_marker
+    role: target_marker
+    dynamics: static
+    geometry: point
+task_landmarks:
+  frozen_object_start: [0.515, 0.0477, 0.025]
+  frozen_task_target: [0.5, -0.15, 0.025]
+  frozen_object_starts: {'push_box': [0.51501145599256, 0.047665656116349056, 0.025]}
+  frozen_targets: {'task_goal': [0.5, -0.15, 0.025]}
+  push_direction: [-0.015, -0.1977, 0]
+  goal_tolerance_m: 0.02
+  force_limit_n: 25
+  force_scale_n: 5
+  realized_scene_sha256: c8d09cd43835becf8e5eb4413394fad8627e4bf404e9e7726e9f380b60e09752
+
+## Subtask Layer
+
+**Mode**: free (you define subtask targets; use `subtasks:` block in your YAML)
+
+Define subtasks in a `subtasks:` block **before** `phases:`. Each subtask specifies an intermediate optimisation target.
+
+**Required fields** — always include both, never omit:
+- `anchor` (**required**): fixture | goal | object | world
+- `target_entity` (**required**): hinge | object | tcp
+
+Subtask anchors are separate from phase `target.anchor` vocabulary: subtasks use `world | object | goal | fixture`, while phase targets use `world | task_goal | task_object | fixture | body | site | current_tcp`.
+
+Optional fields:
+- `metric`: contact | distance | goal_progress | hinge_angle (default: distance)
+- `offset`: [x, y, z] in metres relative to anchor (default: [0, 0, 0])
+- `param_offset_key`: CMA-ES parameter added to offset at runtime (optional)
+- `weight`: scoring weight [0.1, 1.0] (default: 1.0)
+
+**Anchor resolution for this task** — choose anchor so the resolved position is meaningful:
+| Anchor | Resolves to | Best used for |
+|--------|-------------|---------------|
+| `world` | absolute world-frame coordinate | fixed reference points not tied to objects |
+| `object` | offset from object initial position (0.51501145599256, 0.047665656116349056, 0.025) | approach/contact targets near object start |
+| `goal` | offset from task goal position (0.5, -0.15, 0.025) | final destination targets |
+| `fixture` | offset from fixture pose (if defined, else world) | targets near fixture |
+
+Annotate each phase with `subtask_id: <id>` to bind it to a subtask.
+Only the **last phase** bound to a given subtask contributes to subtask scoring.
+
+Example (two subtasks — one near object start, one at goal):
+```yaml
+subtasks:
+  - id: reach_pre_contact
+    anchor: object         # resolved to object initial position (see table above)
+    target_entity: tcp     # score TCP distance to this target
+    metric: distance
+    offset: [0.0, 0.0, 0.10]  # 10 cm above object start position
+    weight: 0.3
+  - id: reach_goal
+    anchor: goal           # resolved to task goal position (see table above)
+    target_entity: tcp
+    metric: distance
+    offset: [0.0, 0.0, 0.0]
+    weight: 0.7
+phases:
+  - id: approach_1
+    type: approach
+    subtask_id: reach_pre_contact
+    ...
+  - id: push_1
+    type: push
+    subtask_id: reach_goal
+    ...
+```
+
+## Current Skill (Q=0.189) — your mutation base
+
+```yaml
+skill: push_to_goal
+dsl_version: 2
+subtasks:
+- id: approach_sub
+  anchor: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  weight: 0.3
+- id: push_sub
+  metric: goal_progress
+  weight: 0.7
+phases:
+- id: approach_behind
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.12
+    offset_along_axis:
+      distance: 0.08
+      axis: task_goal_direction
+      mode: add_to_offset
+      sign: positive
+    tolerance: 0.01
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: approach_sub
+- id: descend_to_contact
+  type: descend
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.02
+    tolerance: 0.01
+  parameters:
+    force_threshold:
+      type: scalar
+      range:
+      - 1.0
+      - 8.0
+      default: 4.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+- id: push_to_goal
+  type: push
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.25
+      axis: task_goal_direction
+      mode: replace_offset_projection
+      sign: positive
+    tolerance: 0.02
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.1
+      - 0.4
+      default: 0.25
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+  guards:
+  - id: force_check
+    when: during_phase
+    predicate: force_below
+    threshold: 25.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.005
+    - 0.0
+    - 0.0
+  subtask_id: push_sub
+
+```
+
+## Executable Phase Semantics
+
+Visible executable target/binding metadata from the compiled controller:
+- **approach_behind** (`approach`)
+  - target: source=yaml, anchor=task_object, offset=[0.0, 0.0, 0.12], offset_along_axis={axis=task_goal_direction, distance=0.08, mode=add_to_offset, sign=positive}, tolerance=0.01
+  - parameter_bindings:
+    - speed: status=consumed; consumers=generator.speed (replace)
+- **descend_to_contact** (`descend`)
+  - target: source=yaml, anchor=task_object, offset=[0.0, 0.0, 0.02], tolerance=0.01
+  - parameter_bindings:
+    - force_threshold: status=consumed; consumers=termination.force_threshold (replace)
+- **push_to_goal** (`push`)
+  - target: source=yaml, anchor=current_tcp, offset=[0.0, 0.0, 0.0], offset_along_axis={axis=task_goal_direction, distance=0.25, mode=replace_offset_projection, sign=positive}, tolerance=0.02
+  - parameter_bindings:
+    - push_distance: status=consumed; consumers=target.offset_along_axis.distance (replace)
+  - guards:
+    - id=force_check, when=during_phase, predicate=force_below, on_failure=retry, threshold=25.0
+  - retries: max_attempts=2, strategy=offset_target, offset=[0.005, 0.0, 0.0]
+
+## Design Metrics
+
+- **Composite score**: 0.189
+- **task_score** (E): 0.000
+- **fitness_score**: 0.035  *(CMA-ES inner optimisation target; = task_score for most tasks; includes phase progress bonus for contact-rich tasks)*
+  → CMA-ES cannot optimise this structure (shaped reward also near zero)
+- **Termination Fidelity** (C): 0.333
+  → phases frequently time out instead of reaching designed conditions
+- **Force Compliance**: 0.000
+- **Complexity Penalty**: 0.180
+
+## Per-Phase Performance
+
+| Phase | Normal Term. Rate | Contact Rate | Mean Displacement (m) |
+|-------|-------------------|--------------|------------------------|
+| approach_behind | 1.00 | 1.00 | 0.1587 |
+| descend_to_contact | 1.00 | 1.00 | 0.1178 |
+| push_to_goal | 0.00 | 1.00 | 0.0001 |
+
+## Last Optimised Execution State
+
+Mean phase-boundary state across the latest CMA-ES optimised traces (up to 8 phases; values rounded to 3 decimals).
+
+| Phase | Type | Normal / reason | TCP start→end | Object start→end | Obj→goal start→end | Contact rate / events | Peak force | Raw peak force |
+|---|---|---|---|---|---|---|---|---|
+| approach_behind | approach | 1.00 / step_budget | (0.500, -0.000, 0.301)→(0.501, -0.047, 0.153) | (0.513, 0.027, 0.025)→(0.513, 0.027, 0.025) | 0.180→0.180 | 1.00 / 4.000 | 0.245 | 0.245 |
+| descend_to_contact | descend | 1.00 / force_exceeded | (0.501, -0.047, 0.153)→(0.507, 0.016, 0.055) | (0.513, 0.027, 0.025)→(0.513, 0.027, 0.025) | 0.180→0.180 | 1.00 / 5.000 | 75893.537 | 0.245 |
+| push_to_goal | push | 0.00 / guard_failure | (0.507, 0.017, 0.055)→(0.507, 0.017, 0.054) | (0.513, 0.027, 0.025)→(0.513, 0.027, 0.025) | 0.180→0.180 | 1.00 / 3.000 | 22.077 | 42.300 |
+
+## Task Sub-Scores
+
+These are diagnostics / optimiser fitness-shaping signals, not a guaranteed decomposition of canonical task_score.
+
+- object_displacement_ratio: 0.001
+- lateral_force_integral: None
+- approach_alignment: 0.541
+- goal_progress: 0.001
+- terminal_score: 0.001
+- phase_score: 0.062
+- phase_breakdown.approach_sub_score: 0.206
+- phase_breakdown.push_sub_score: 0.000
+
+## CMA-ES Diagnostics
+
+- **Best shaped reward** (fitness_score): 0.037
+  *(shaped task+phase signal; this is the CMA-ES objective)*
+- **Best task_score**: 0.001
+- **Median Q (composite search score)**: 0.188
+- **K-run variance**: 0.0000
+- **Stagnated**: no
+- **Stop reason**: budget_exhausted
+- **Mean generations**: 10.0
+- **Final σ (mean)**: 0.190
+
+
+## Frozen randomized evaluation bank (shared across every structure)
+
+Bank SHA-256: `75e2389a1a667086aa2b9c0de482ff37adf5571150b90a83772692baadf8b52e`. Stable order: configuration 1 to configuration 3.
+
+### Nominal task randomization distribution and ranges
+
+These nominal ranges define how the fixed bank was sampled and remain valid alongside the realized facts below.
+
+```json
+{"distribution":"independent_uniform","parameters":{"enabled":true,"goal_xy_delta":[0.0,0.0],"object_xy_delta":[0.06,0.06]},"range_semantics":{"*_xy_delta":"independent per-axis draws in [-delta, +delta]","goal_z_delta":"draw in [0, max_delta]","hinge_delta_deg":"draw in [-delta_deg, +delta_deg]"}}
+```
+
+### Configuration 1 of 3
+
+Configuration SHA-256: `154c216c563de6b8ee153943e5b668ca6d0c7dfd9253696b060f91a67dca06ec`; realized-scene SHA-256: `c8d09cd43835becf8e5eb4413394fad8627e4bf404e9e7726e9f380b60e09752`.
+
+<!-- skill-synthesis:realized-scene:v1 -->
+
+Realized scene facts (concise typed schema):
+
+```json
+{"anchors":[{"name":"object","value":[0.51501,0.04767,0.025]},{"name":"goal","value":[0.5,-0.15,0.025]}],"axes":[{"name":"push_direction","value":[-0.01501,-0.19767,0.0]}],"fixture_states":[],"fixtures":[],"limits":[{"name":"goal_tolerance_m","value":0.02},{"name":"force_limit_n","value":25.0},{"name":"force_scale_n","value":5.0}],"object_starts":[{"name":"push_box","orientation":[1.0,0.0,0.0,0.0],"position":[0.51501,0.04767,0.025]}],"obstacles":[],"targets":[{"name":"task_goal","orientation":[1.0,0.0,0.0,0.0],"position":[0.5,-0.15,0.025]}],"task_name":"push_to_goal"}
+```
+
+Aligned optimization and replay/contact feedback:
+
+```json
+{"averaged_ik_statistics":{"available":true,"average_failure_count":0.0,"average_failure_rate":0.0,"average_mean_iterations":3.59211,"average_solve_count":76.0,"average_success_count":76.0,"replay_count":1},"omitted_parameter_count":0,"optimized_parameters":{"approach_behind.speed":0.0695,"descend_to_contact.force_threshold":2.89993,"push_to_goal.push_distance":0.24899},"optimized_scores":{"best_composite_score":0.18798,"best_fitness_score":0.03465,"best_task_score":0.00028},"replay_outcomes":[{"contacts":{"omitted_contact_groups":0,"reported_contact_groups":[{"body_a":"attachment","body_b":"push_box","contact_count":3.0,"contact_point_centroid":[0.52055,0.03702,0.0499],"force_p95":40.35411,"geom_a":"pusher_tip","geom_b":"push_box_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":42.70573,"mean_force":25.88181,"phase_index":2.0,"phase_name":"push_to_goal","phase_type":"push","tcp_position_centroid":[0.50956,0.03691,0.05458]},{"body_a":"world","body_b":"push_box","contact_count":8.0,"contact_point_centroid":[0.5025,0.04766,-1e-05],"force_p95":27.48192,"geom_a":"table","geom_b":"push_box_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":34.33406,"mean_force":9.98843,"phase_index":2.0,"phase_name":"push_to_goal","phase_type":"push","tcp_position_centroid":[0.50957,0.0369,0.0546]},{"body_a":"world","body_b":"push_box","contact_count":1992.0,"contact_point_centroid":[0.51501,0.04767,-1e-05],"force_p95":0.24529,"geom_a":"table","geom_b":"push_box_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":0.24534,"mean_force":0.24525,"phase_index":0.0,"phase_name":"approach_behind","phase_type":"approach","tcp_position_centroid":[0.50162,-0.01421,0.22719]},{"body_a":"world","body_b":"push_box","contact_count":2824.0,"contact_point_centroid":[0.51501,0.04767,-1e-05],"force_p95":0.24525,"geom_a":"table","geom_b":"push_box_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":0.24525,"mean_force":0.24525,"phase_index":1.0,"phase_name":"descend_to_contact","phase_type":"descend","tcp_position_centroid":[0.50589,0.00347,0.10245]}],"total_contact_groups":4},"final_pose_error":0.24914,"key_states":{"actual_goal_position":[0.5,-0.15,0.025],"final_object_position":[0.51489,0.04762,0.02505],"final_tcp_position":[0.50944,0.03701,0.0544],"realised_goal_position":[0.5,-0.15,0.025],"realised_object_initial_position":[0.51501,0.04767,0.025]},"peak_contact_force":75893.53664,"phases":[{"contact_detected":true,"contact_event_count":4.0,"n_steps":498.0,"n_steps_budget":1000.0,"object_pos_end":[0.51501,0.04767,0.02499],"object_pos_start":[0.51501,0.04767,0.025],"object_to_goal_dist_end":0.19823,"object_to_goal_dist_start":0.19823,"object_z_max":0.025,"peak_contact_force":0.24525,"phase_name":"approach_behind","phase_peak_obstacle_force":0.0,"phase_type":"approach","raw_contact_event_count":1992.0,"raw_peak_contact_force":0.24534,"subtask_id":"approach_sub","tcp_end":[0.50506,-0.02924,0.15347],"tcp_start":[0.49978,-0.0,0.30067],"tcp_to_object_dist_end":0.15006,"terminated_normally":true,"termination_reason":"step_budget"},{"contact_detected":true,"contact_event_count":5.0,"n_steps":706.0,"n_steps_budget":840.0,"object_pos_end":[0.51501,0.04767,0.02499],"object_pos_start":[0.51501,0.04767,0.02499],"object_to_goal_dist_end":0.19823,"object_to_goal_dist_start":0.19823,"object_z_max":0.02499,"peak_contact_force":75893.53664,"phase_name":"descend_to_contact","phase_peak_obstacle_force":0.0,"phase_type":"descend","raw_contact_event_count":2824.0,"raw_peak_contact_force":0.24525,"tcp_end":[0.50961,0.03685,0.05467],"tcp_start":[0.50506,-0.02924,0.15347],"tcp_to_object_dist_end":0.03205,"terminated_normally":true,"termination_reason":"force_exceeded"},{"contact_detected":true,"contact_event_count":3.0,"n_steps":3.0,"n_steps_budget":1000.0,"object_pos_end":[0.51496,0.04765,0.02502],"object_pos_start":[0.51501,0.04767,0.02499],"object_to_goal_dist_end":0.19822,"object_to_goal_dist_start":0.19823,"object_z_max":0.02504,"peak_contact_force":19.1895,"phase_name":"push_to_goal","phase_peak_obstacle_force":0.0,"phase_type":"push","raw_contact_event_count":11.0,"raw_peak_contact_force":42.70573,"subtask_id":"push_sub","tcp_end":[0.50944,0.03701,0.0544],"tcp_start":[0.5095,0.03697,0.05448],"tcp_to_object_dist_end":0.03174,"terminated_normally":false,"termination_reason":"guard_failure"}],"success":false}]}
+```
+
+### Configuration 2 of 3
+
+Configuration SHA-256: `4d55d9375783bea830660bf0a13dfc76a97a0d4f5645e7ebcc1ef7143776d0b7`; realized-scene SHA-256: `f3b8ea82cefd9504be10e2d47c49094a836a703404c06bdee3b01a27a59bf7be`.
+
+<!-- skill-synthesis:realized-scene:v1 -->
+
+Realized scene facts (concise typed schema):
+
+```json
+{"anchors":[{"name":"object","value":[0.47924,0.05847,0.025]},{"name":"goal","value":[0.5,-0.15,0.025]}],"axes":[{"name":"push_direction","value":[0.02076,-0.20847,0.0]}],"fixture_states":[],"fixtures":[],"limits":[{"name":"goal_tolerance_m","value":0.02},{"name":"force_limit_n","value":25.0},{"name":"force_scale_n","value":5.0}],"object_starts":[{"name":"push_box","orientation":[1.0,0.0,0.0,0.0],"position":[0.47924,0.05847,0.025]}],"obstacles":[],"targets":[{"name":"task_goal","orientation":[1.0,0.0,0.0,0.0],"position":[0.5,-0.15,0.025]}],"task_name":"push_to_goal"}
+```
+
+Aligned optimization and replay/contact feedback:
+
+```json
+{"averaged_ik_statistics":{"available":true,"average_failure_count":0.0,"average_failure_rate":0.0,"average_mean_iterations":3.78082,"average_solve_count":73.0,"average_success_count":73.0,"replay_count":1},"omitted_parameter_count":0,"optimized_parameters":{"approach_behind.speed":0.0736,"descend_to_contact.force_threshold":4.40215,"push_to_goal.push_distance":0.30084},"optimized_scores":{"best_composite_score":0.1875,"best_fitness_score":0.03416,"best_task_score":0.0002},"replay_outcomes":[{"contacts":{"omitted_contact_groups":0,"reported_contact_groups":[{"body_a":"attachment","body_b":"push_box","contact_count":3.0,"contact_point_centroid":[0.48673,0.04771,0.04989],"force_p95":35.86202,"geom_a":"pusher_tip","geom_b":"push_box_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":37.0337,"mean_force":25.47203,"phase_index":2.0,"phase_name":"push_to_goal","phase_type":"push","tcp_position_centroid":[0.47612,0.04746,0.05537]},{"body_a":"world","body_b":"push_box","contact_count":8.0,"contact_point_centroid":[0.46673,0.05847,-1e-05],"force_p95":27.72353,"geom_a":"table","geom_b":"push_box_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":31.85703,"mean_force":9.84957,"phase_index":2.0,"phase_name":"push_to_goal","phase_type":"push","tcp_position_centroid":[0.47614,0.04744,0.05539]},{"body_a":"world","body_b":"push_box","contact_count":1880.0,"contact_point_centroid":[0.47924,0.05847,-1e-05],"force_p95":0.2453,"geom_a":"table","geom_b":"push_box_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":0.24534,"mean_force":0.24525,"phase_index":0.0,"phase_name":"approach_behind","phase_type":"approach","tcp_position_centroid":[0.49204,-0.0093,0.22785]},{"body_a":"world","body_b":"push_box","contact_count":2804.0,"contact_point_centroid":[0.47924,0.05847,-1e-05],"force_p95":0.24525,"geom_a":"table","geom_b":"push_box_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":0.24525,"mean_force":0.24525,"phase_index":1.0,"phase_name":"descend_to_contact","phase_type":"descend","tcp_position_centroid":[0.47936,0.01389,0.10323]}],"total_contact_groups":4},"final_pose_error":0.30101,"key_states":{"actual_goal_position":[0.5,-0.15,0.025],"final_object_position":[0.47911,0.05842,0.02505],"final_tcp_position":[0.47601,0.04755,0.0552],"realised_goal_position":[0.5,-0.15,0.025],"realised_object_initial_position":[0.47924,0.05847,0.025]},"peak_contact_force":75893.53664,"phases":[{"contact_detected":true,"contact_event_count":4.0,"n_steps":470.0,"n_steps_budget":1000.0,"object_pos_end":[0.47924,0.05847,0.02499],"object_pos_start":[0.47924,0.05847,0.025],"object_to_goal_dist_end":0.2095,"object_to_goal_dist_start":0.2095,"object_z_max":0.025,"peak_contact_force":0.24525,"phase_name":"approach_behind","phase_peak_obstacle_force":0.0,"phase_type":"approach","raw_contact_event_count":1880.0,"raw_peak_contact_force":0.24534,"subtask_id":"approach_sub","tcp_end":[0.48528,-0.01918,0.15434],"tcp_start":[0.49978,-0.0,0.30067],"tcp_to_object_dist_end":0.15099,"terminated_normally":true,"termination_reason":"step_budget"},{"contact_detected":true,"contact_event_count":5.0,"n_steps":701.0,"n_steps_budget":840.0,"object_pos_end":[0.47924,0.05847,0.02499],"object_pos_start":[0.47924,0.05847,0.02499],"object_to_goal_dist_end":0.2095,"object_to_goal_dist_start":0.2095,"object_z_max":0.02499,"peak_contact_force":75893.53664,"phase_name":"descend_to_contact","phase_peak_obstacle_force":0.0,"phase_type":"descend","raw_contact_event_count":2804.0,"raw_peak_contact_force":0.24525,"tcp_end":[0.47618,0.0474,0.05546],"tcp_start":[0.48528,-0.01918,0.15434],"tcp_to_object_dist_end":0.03257,"terminated_normally":true,"termination_reason":"force_exceeded"},{"contact_detected":true,"contact_event_count":3.0,"n_steps":3.0,"n_steps_budget":1000.0,"object_pos_end":[0.47919,0.05846,0.02502],"object_pos_start":[0.47924,0.05847,0.02499],"object_to_goal_dist_end":0.20949,"object_to_goal_dist_start":0.2095,"object_z_max":0.02503,"peak_contact_force":25.31686,"phase_name":"push_to_goal","phase_peak_obstacle_force":0.0,"phase_type":"push","raw_contact_event_count":11.0,"raw_peak_contact_force":37.0337,"subtask_id":"push_sub","tcp_end":[0.47601,0.04755,0.0552],"tcp_start":[0.47608,0.04752,0.05528],"tcp_to_object_dist_end":0.03225,"terminated_normally":false,"termination_reason":"guard_failure"}],"success":false}]}
+```
+
+### Configuration 3 of 3
+
+Configuration SHA-256: `0a9238470f4497c7aa88b149b7cee960f9853513db10bf496723f5ea1d3a6043`; realized-scene SHA-256: `2cf7387f3e8baf02f18930263090d6f78777bdbc147b7fa30c178332e76b547b`.
+
+<!-- skill-synthesis:realized-scene:v1 -->
+
+Realized scene facts (concise typed schema):
+
+```json
+{"anchors":[{"name":"object","value":[0.54443,-0.02558,0.025]},{"name":"goal","value":[0.5,-0.15,0.025]}],"axes":[{"name":"push_direction","value":[-0.04443,-0.12442,0.0]}],"fixture_states":[],"fixtures":[],"limits":[{"name":"goal_tolerance_m","value":0.02},{"name":"force_limit_n","value":25.0},{"name":"force_scale_n","value":5.0}],"object_starts":[{"name":"push_box","orientation":[1.0,0.0,0.0,0.0],"position":[0.54443,-0.02558,0.025]}],"obstacles":[],"targets":[{"name":"task_goal","orientation":[1.0,0.0,0.0,0.0],"position":[0.5,-0.15,0.025]}],"task_name":"push_to_goal"}
+```
+
+Aligned optimization and replay/contact feedback:
+
+```json
+{"averaged_ik_statistics":{"available":true,"average_failure_count":0.0,"average_failure_rate":0.0,"average_mean_iterations":3.48864,"average_solve_count":88.0,"average_success_count":88.0,"replay_count":1},"omitted_parameter_count":0,"optimized_parameters":{"approach_behind.speed":0.06403,"descend_to_contact.force_threshold":3.66432,"push_to_goal.push_distance":0.24934},"optimized_scores":{"best_composite_score":0.19066,"best_fitness_score":0.03732,"best_task_score":0.00054},"replay_outcomes":[{"contacts":{"omitted_contact_groups":0,"reported_contact_groups":[{"body_a":"attachment","body_b":"push_box","contact_count":3.0,"contact_point_centroid":[0.54715,-0.03479,0.04994],"force_p95":44.6177,"geom_a":"pusher_tip","geom_b":"push_box_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":47.16149,"mean_force":29.52502,"phase_index":2.0,"phase_name":"push_to_goal","phase_type":"push","tcp_position_centroid":[0.53588,-0.03484,0.05398]},{"body_a":"world","body_b":"push_box","contact_count":8.0,"contact_point_centroid":[0.53192,-0.02558,-1e-05],"force_p95":26.12919,"geom_a":"table","geom_b":"push_box_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":30.99695,"mean_force":11.36762,"phase_index":2.0,"phase_name":"push_to_goal","phase_type":"push","tcp_position_centroid":[0.53589,-0.03486,0.05401]},{"body_a":"world","body_b":"push_box","contact_count":2592.0,"contact_point_centroid":[0.54443,-0.02558,-1e-05],"force_p95":0.24528,"geom_a":"table","geom_b":"push_box_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":0.24534,"mean_force":0.24525,"phase_index":0.0,"phase_name":"approach_behind","phase_type":"approach","tcp_position_centroid":[0.50561,-0.04621,0.22446]},{"body_a":"world","body_b":"push_box","contact_count":2724.0,"contact_point_centroid":[0.54443,-0.02558,-1e-05],"force_p95":0.24525,"geom_a":"table","geom_b":"push_box_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":0.24525,"mean_force":0.24525,"phase_index":1.0,"phase_name":"descend_to_contact","phase_type":"descend","tcp_position_centroid":[0.52296,-0.06456,0.10066]}],"total_contact_groups":4},"final_pose_error":0.24945,"key_states":{"actual_goal_position":[0.5,-0.15,0.025],"final_object_position":[0.54428,-0.0256,0.02507],"final_tcp_position":[0.53579,-0.03474,0.05381],"realised_goal_position":[0.5,-0.15,0.025],"realised_object_initial_position":[0.54443,-0.02558,0.025]},"peak_contact_force":75893.53664,"phases":[{"contact_detected":true,"contact_event_count":4.0,"n_steps":648.0,"n_steps_budget":1000.0,"object_pos_end":[0.54443,-0.02558,0.02499],"object_pos_start":[0.54443,-0.02558,0.025],"object_to_goal_dist_end":0.13211,"object_to_goal_dist_start":0.13211,"object_z_max":0.025,"peak_contact_force":0.24525,"phase_name":"approach_behind","phase_peak_obstacle_force":0.0,"phase_type":"approach","raw_contact_event_count":2592.0,"raw_peak_contact_force":0.24534,"subtask_id":"approach_sub","tcp_end":[0.51319,-0.09365,0.15031],"tcp_start":[0.49978,-0.0,0.30067],"tcp_to_object_dist_end":0.14599,"terminated_normally":true,"termination_reason":"step_budget"},{"contact_detected":true,"contact_event_count":5.0,"n_steps":681.0,"n_steps_budget":810.0,"object_pos_end":[0.54443,-0.02558,0.02499],"object_pos_start":[0.54443,-0.02558,0.02499],"object_to_goal_dist_end":0.13211,"object_to_goal_dist_start":0.13211,"object_z_max":0.02499,"peak_contact_force":75893.53664,"phase_name":"descend_to_contact","phase_peak_obstacle_force":0.0,"phase_type":"descend","raw_contact_event_count":2724.0,"raw_peak_contact_force":0.24525,"tcp_end":[0.53591,-0.0349,0.05408],"tcp_start":[0.51319,-0.09365,0.15031],"tcp_to_object_dist_end":0.03171,"terminated_normally":true,"termination_reason":"force_exceeded"},{"contact_detected":true,"contact_event_count":3.0,"n_steps":3.0,"n_steps_budget":1000.0,"object_pos_end":[0.54438,-0.02559,0.02502],"object_pos_start":[0.54443,-0.02558,0.02499],"object_to_goal_dist_end":0.13209,"object_to_goal_dist_start":0.13211,"object_z_max":0.02505,"peak_contact_force":21.72368,"phase_name":"push_to_goal","phase_peak_obstacle_force":0.0,"phase_type":"push","raw_contact_event_count":11.0,"raw_peak_contact_force":47.16149,"subtask_id":"push_sub","tcp_end":[0.53579,-0.03474,0.05381],"tcp_start":[0.53584,-0.03478,0.05389],"tcp_to_object_dist_end":0.03141,"terminated_normally":false,"termination_reason":"guard_failure"}],"success":false}]}
+```

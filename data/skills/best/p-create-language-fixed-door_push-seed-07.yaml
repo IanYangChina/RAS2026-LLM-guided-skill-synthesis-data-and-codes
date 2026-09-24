@@ -1,0 +1,151 @@
+skill: door_push
+dsl_version: 2
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.1
+    - 0.0
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+- id: contact_1
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.12
+      axis: world_y
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+  parameters:
+    contact_force:
+      type: scalar
+      range:
+      - 1.0
+      - 20.0
+      default: 5.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    contact_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+- id: push_1
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.2
+      axis: world_y
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+  parameters:
+    push1_distance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.5
+      default: 0.22
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    push1_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+- id: push_2
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.2
+      axis: world_y
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+  parameters:
+    push2_distance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.5
+      default: 0.22
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    push2_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    push_duration:
+      type: scalar
+      range:
+      - 0.5
+      - 5.0
+      default: 2.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace

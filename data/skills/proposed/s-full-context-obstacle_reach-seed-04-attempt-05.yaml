@@ -1,0 +1,132 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_side
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+    clearance_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.2
+      range:
+      - 0.15
+      - 0.3
+      type: scalar
+    lateral_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.25
+      range:
+      - 0.15
+      - 0.35
+      type: scalar
+    pose_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.05
+      range:
+      - 0.02
+      - 0.08
+      type: scalar
+  subtask_id: sub_approach
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.25
+    - 0.2
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_side
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+    descend_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.05
+      range:
+      - 0.02
+      - 0.08
+      type: scalar
+  subtask_id: sub_approach
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.25
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: descend
+- control: position_control
+  generator: linear_cartesian
+  id: lateral_goal
+  parameters:
+    lateral_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+    lateral_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.015
+      range:
+      - 0.005
+      - 0.03
+      type: scalar
+  subtask_id: sub_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+skill: obstacle_reach
+subtasks:
+- id: sub_approach
+  offset:
+  - 0.0
+  - 0.25
+  - 0.2
+  weight: 0.3
+- id: sub_goal
+  weight: 0.7

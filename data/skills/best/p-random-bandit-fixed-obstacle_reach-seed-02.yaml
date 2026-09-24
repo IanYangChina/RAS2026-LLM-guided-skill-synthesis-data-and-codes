@@ -1,0 +1,68 @@
+skill: obstacle_reach
+skill_type: arm_gripper
+phases:
+- id: approach_1
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: align_2
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    lateral_offset_x:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+- id: pull_1
+  type: pull
+  generator: linear_cartesian
+  control: impedance_control
+  termination: time_limit
+  parameters:
+    pull_distance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+- id: release_1
+  type: release
+  control: position_control
+  termination: time_limit
+  end_effector_action: open
+- id: grasp_1
+  type: grasp
+  control: position_control
+  termination: grasp_success
+  end_effector_action: force_grasp
+  parameters:
+    grip_force:
+      type: scalar
+      range:
+      - 5.0
+      - 30.0
+- id: push_1
+  type: push
+  generator: impedance_motion
+  control: impedance_control
+  termination: pose_tolerance
+  parameters:
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1

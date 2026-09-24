@@ -1,0 +1,113 @@
+skill: peg_channel
+dsl_version: 2
+subtasks:
+- id: reach_contact
+  anchor: object
+  offset:
+  - 0.0
+  - 0.025
+  - 0.05
+  weight: 0.3
+- id: complete_push
+  offset:
+  - 0.0
+  - 0.025
+  - 0.0
+  weight: 0.7
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.025
+    - 0.06
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  subtask_id: reach_contact
+- id: contact_1
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.025
+    - 0.0
+    orientation:
+      mode: keep_current
+  parameters:
+    contact_force:
+      type: scalar
+      range:
+      - 1.0
+      - 20.0
+      default: 5.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+  subtask_id: reach_contact
+- id: push_1
+  type: push
+  generator: impedance_motion
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.16
+      axis: world_y
+      mode: add_to_offset
+      sign: negative
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+      default: 0.16
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.03
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: complete_push
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    tolerance: 0.01
+    orientation:
+      mode: keep_current

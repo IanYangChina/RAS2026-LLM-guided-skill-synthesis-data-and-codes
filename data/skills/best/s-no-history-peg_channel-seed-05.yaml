@@ -1,0 +1,128 @@
+skill: peg_channel
+dsl_version: 2
+subtasks:
+- id: reach_above_peg
+  anchor: object
+  offset:
+  - 0.0
+  - 0.03
+  - 0.12
+  weight: 0.2
+- id: contact_peg
+  anchor: object
+  offset:
+  - 0.0
+  - 0.03
+  - 0.0
+  weight: 0.3
+- id: push_through_channel
+  target_entity: object
+  metric: goal_progress
+  weight: 0.5
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.03
+    - 0.12
+    tolerance: 0.02
+    orientation:
+      mode: none
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: add
+  subtask_id: reach_above_peg
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: impedance_control
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.03
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: none
+  parameters:
+    force_threshold:
+      type: scalar
+      range:
+      - 5.0
+      - 40.0
+      default: 10.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: add
+  subtask_id: contact_peg
+- id: push_1
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: peg
+    offset:
+    - 0.0
+    - 0.02
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: none
+  parameters:
+    overshoot_y:
+      type: scalar
+      range:
+      - 0.0
+      - 0.04
+      default: 0.02
+      binds_to:
+      - path: target.offset.y
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.08
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: add
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.005
+    - 0.0
+    - 0.0
+  subtask_id: push_through_channel

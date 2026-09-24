@@ -1,0 +1,126 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: arc_cartesian
+  id: arc_over_obstacle
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.4
+      range:
+      - 0.2
+      - 0.8
+      type: scalar
+    approach_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.025
+      range:
+      - 0.01
+      - 0.04
+      type: scalar
+    arc_height:
+      binds_to:
+      - mode: replace
+        path: generator.arc_height
+      default: 0.3
+      range:
+      - 0.2
+      - 0.5
+      type: scalar
+    ph_x_offset:
+      binds_to:
+      - mode: add
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.05
+      - 0.05
+      type: scalar
+    ph_y_offset:
+      binds_to:
+      - mode: add
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.05
+      - 0.05
+      type: scalar
+  subtask_id: approach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.25
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_to_goal
+  parameters:
+    descend_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.01
+      - 0.03
+      type: scalar
+    descend_x_offset:
+      binds_to:
+      - mode: add
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.05
+      - 0.05
+      type: scalar
+    descend_y_offset:
+      binds_to:
+      - mode: add
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.05
+      - 0.05
+      type: scalar
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: descend
+skill: obstacle_reach
+subtasks:
+- anchor: goal
+  id: approach_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.25
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: reach_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.7

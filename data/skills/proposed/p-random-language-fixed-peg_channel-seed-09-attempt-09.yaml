@@ -1,0 +1,173 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_peg
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: approach
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.04
+    - 0.06
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0
+      - 0
+      - 1
+      mode: align_axis
+      tolerance: 0.1
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_to_peg
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  subtask_id: contact
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.04
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: descend
+- control: force_threshold_switch
+  generator: linear_cartesian
+  guards:
+  - id: contact_detect
+    on_failure: continue
+    predicate: contact_detected
+    threshold: 1.0
+    when: during_phase
+  id: contact_peg
+  parameters:
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 15.0
+      range:
+      - 5.0
+      - 30.0
+      type: scalar
+    contact_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.01
+      range:
+      - 0.005
+      - 0.03
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - -0.005
+    - 0.0
+    strategy: offset_target
+  subtask_id: contact
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: force_exceeded
+  type: contact
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - id: force_limit
+    on_failure: abort
+    predicate: force_below
+    threshold: 40.0
+    when: during_phase
+  id: push_through_channel
+  parameters:
+    max_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 12.0
+      range:
+      - 5.0
+      - 20.0
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.015
+      range:
+      - 0.005
+      - 0.03
+      type: scalar
+  retries:
+    max_attempts: 1
+    strategy: reduce_speed
+  subtask_id: push
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: time_limit
+  type: push
+skill: peg_channel
+skill_type: arm_gripper
+subtasks:
+- anchor: object
+  id: approach
+  offset:
+  - 0.0
+  - 0.04
+  - 0.0
+- anchor: object
+  id: contact
+  offset:
+  - 0.0
+  - 0.02
+  - 0.0
+- anchor: world
+  id: push
+  offset:
+  - 0.5
+  - -0.08
+  - 0.04

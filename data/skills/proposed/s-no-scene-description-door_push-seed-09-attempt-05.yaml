@@ -1,0 +1,126 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: contact_ok
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 0.5
+    when: after_phase
+  id: approach
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+    strategy: offset_target
+  subtask_id: pre_contact
+  target:
+    anchor: task_object
+    entity: door_panel
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: admittance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: goal_reached
+    on_failure: continue
+    predicate: hinge_delta_reached
+    threshold: 0.4
+    when: during_phase
+  - args: {}
+    id: safe_force
+    on_failure: retry
+    predicate: force_below
+    threshold: 25.0
+    when: during_phase
+  id: push
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: add
+        path: target.offset_along_axis.distance
+      default: 0.15
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.04
+      range:
+      - 0.02
+      - 0.08
+      type: scalar
+  retries:
+    max_attempts: 1
+    strategy: reduce_speed
+  subtask_id: hinge_motion
+  target:
+    anchor: task_goal
+    entity: door_panel
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.15
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      align_with: task_goal_direction
+      axis:
+      - 1
+      - 0
+      - 0
+      mode: align_axis
+      tolerance: 0.15
+    source: yaml
+    tolerance: 0.05
+  termination: time_limit
+  type: push
+skill: door_push
+subtasks:
+- anchor: object
+  id: pre_contact
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.15
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: hinge_motion
+  metric: hinge_angle
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: hinge
+  weight: 0.7

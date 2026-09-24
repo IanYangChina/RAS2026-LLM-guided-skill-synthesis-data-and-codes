@@ -1,0 +1,181 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - id: contact_guard_lat
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 0.0
+    when: during_phase
+  id: lateral_clearance
+  parameters:
+    approach_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.01
+      - 0.03
+      type: scalar
+    lateral_y_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.2
+      range:
+      - 0.15
+      - 0.25
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.02
+    - 0.0
+    strategy: offset_target
+  subtask_id: lateral_clear
+  target:
+    anchor: fixture
+    offset:
+    - -0.15
+    - 0.2
+    - 0.17
+    orientation:
+      align_with: world_z
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - id: contact_guard_fwd
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 0.0
+    when: during_phase
+  id: forward_past_obstacle
+  parameters:
+    forward_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.01
+      - 0.03
+      type: scalar
+    forward_x_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.x
+      default: -0.1
+      range:
+      - -0.12
+      - -0.05
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.02
+    - 0.0
+    strategy: offset_target
+  subtask_id: forward_clear
+  target:
+    anchor: task_goal
+    offset:
+    - -0.1
+    - 0.15
+    - 0.15
+    orientation:
+      align_with: world_z
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - id: contact_guard_desc
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 0.0
+    when: during_phase
+  id: descend_to_goal
+  parameters:
+    descend_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.01
+      - 0.03
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.02
+    - 0.0
+    strategy: offset_target
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      align_with: world_z
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: descend
+skill: obstacle_reach
+subtasks:
+- anchor: fixture
+  id: lateral_clear
+  offset:
+  - -0.15
+  - 0.2
+  - 0.17
+  target_entity: tcp
+  weight: 0.2
+- anchor: goal
+  id: forward_clear
+  offset:
+  - -0.1
+  - 0.15
+  - 0.15
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: reach_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.5

@@ -1,0 +1,115 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    speed:
+      binds_to:
+      - mode: add
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  subtask_id: approach
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.08
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: contact_1
+  parameters:
+    contact_force:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 5
+      range:
+      - 1.0
+      - 20.0
+      type: scalar
+  subtask_id: contact
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.03
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: force_exceeded
+  type: contact
+- control: impedance_control
+  generator: impedance_motion
+  guards:
+  - args: {}
+    id: progress_check
+    on_failure: retry
+    predicate: object_progress
+    threshold: 0.02
+    when: after_phase
+  id: push_1
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.05
+      range:
+      - 0.02
+      - 0.12
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: add
+        path: generator.speed
+      default: 0.04
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    push_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.005
+      - 0.04
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - -0.02
+    - 0.0
+    strategy: offset_target
+  subtask_id: push
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.05
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: push
+skill: push_to_goal

@@ -1,0 +1,194 @@
+skill: peg_insert
+dsl_version: 2
+subtasks:
+- id: approach_entry
+  anchor: fixture
+  offset:
+  - -0.018
+  - 0.039
+  - -0.2653
+  weight: 0.3
+- id: reach_entry
+  anchor: fixture
+  offset:
+  - -0.018
+  - 0.039
+  - -0.3153
+  weight: 0.3
+- id: insertion
+  anchor: fixture
+  offset:
+  - -0.018
+  - 0.039
+  - -0.3653
+  weight: 0.4
+phases:
+- id: descend_to_approach
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - -0.018
+    - 0.039
+    - -0.2653
+    tolerance: 0.01
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: channel_axis
+      tolerance: 0.1
+  parameters:
+    approach_duration:
+      type: scalar
+      range:
+      - 1.0
+      - 8.0
+      default: 5.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    approach_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: approach_entry
+- id: align_to_entry
+  type: align
+  generator: linear_cartesian
+  control: impedance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - -0.018
+    - 0.039
+    - -0.3153
+    tolerance: 0.005
+    orientation:
+      mode: keep_current
+  parameters:
+    align_duration:
+      type: scalar
+      range:
+      - 1.0
+      - 8.0
+      default: 5.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    align_offset_x:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: add
+    align_offset_y:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: add
+  subtask_id: reach_entry
+- id: insert_into_hole
+  type: insert
+  generator: linear_cartesian
+  control: impedance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - -0.018
+    - 0.039
+    - -0.3153
+    offset_along_axis:
+      distance: 0.03
+      axis: channel_axis
+      mode: add_to_offset
+      sign: positive
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    insert_duration:
+      type: scalar
+      range:
+      - 1.0
+      - 8.0
+      default: 5.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    insert_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.015
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.06
+      default: 0.04
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    retry_offset_x:
+      type: scalar
+      range:
+      - -0.005
+      - 0.005
+      default: 0.0
+      binds_to:
+      - path: retry.offset.x
+        mode: replace
+    retry_offset_y:
+      type: scalar
+      range:
+      - -0.005
+      - 0.005
+      default: 0.0
+      binds_to:
+      - path: retry.offset.y
+        mode: replace
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  guards:
+  - id: insert_force_safety
+    when: during_phase
+    predicate: force_below
+    threshold: 39.5
+    on_failure: retry
+  subtask_id: insertion
+```

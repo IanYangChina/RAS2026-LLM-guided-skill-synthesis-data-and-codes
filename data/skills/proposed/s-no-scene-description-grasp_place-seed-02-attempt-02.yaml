@@ -1,0 +1,222 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_above_obj
+  orientation:
+    align_with: world_z
+    axis:
+    - 0.0
+    - 0.0
+    - -1.0
+    mode: align_axis
+    tolerance: 0.1
+  parameters:
+    approach_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  subtask_id: reach_object
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: descend_to_object
+  orientation:
+    mode: keep_current
+  parameters:
+    descend_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 5.0
+      range:
+      - 1.0
+      - 10.0
+      type: scalar
+  subtask_id: grasp_object
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: force_exceeded
+  type: descend
+- control: null
+  end_effector_action: force_grasp
+  generator: null
+  id: grasp_object
+  orientation:
+    mode: keep_current
+  subtask_id: grasp_object
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: grasp_success
+  type: grasp
+- control: admittance_control
+  generator: linear_cartesian
+  id: lift_object
+  orientation:
+    mode: keep_current
+  parameters:
+    lift_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.2
+      range:
+      - 0.1
+      - 0.3
+      type: scalar
+  subtask_id: lift_object
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    source: yaml
+  termination: pose_tolerance
+  type: lift
+- control: position_control
+  generator: linear_cartesian
+  id: transport_to_goal
+  orientation:
+    mode: keep_current
+  parameters:
+    transport_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  subtask_id: transport_to_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: descend_to_place
+  orientation:
+    mode: keep_current
+  parameters:
+    place_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 5.0
+      range:
+      - 1.0
+      - 10.0
+      type: scalar
+  subtask_id: place_object
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: force_exceeded
+  type: descend
+- control: null
+  end_effector_action: open
+  generator: null
+  id: release_object
+  orientation:
+    mode: keep_current
+  parameters:
+    release_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 0.3
+      range:
+      - 0.1
+      - 0.5
+      type: scalar
+  subtask_id: place_object
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: time_limit
+  type: release
+skill: grasp_place
+subtasks:
+- anchor: object
+  id: reach_object
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  target_entity: tcp
+  weight: 0.1
+- anchor: object
+  id: grasp_object
+  metric: contact
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.2
+- anchor: object
+  id: lift_object
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.2
+  target_entity: tcp
+  weight: 0.1
+- anchor: goal
+  id: transport_to_goal
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  target_entity: tcp
+  weight: 0.2
+- anchor: goal
+  id: place_object
+  metric: goal_progress
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.4

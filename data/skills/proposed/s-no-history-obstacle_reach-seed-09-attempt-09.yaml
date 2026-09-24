@@ -1,0 +1,135 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_side
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.25
+      range:
+      - 0.1
+      - 0.5
+      type: scalar
+    lateral_clearance:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.2
+      range:
+      - 0.16
+      - 0.35
+      type: scalar
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  subtask_id: reach_clearance
+  target:
+    anchor: fixture
+    entity: obstacle_block
+    offset:
+    - 0.0
+    - 0.2
+    - 0.17
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: approach_past
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.25
+      range:
+      - 0.1
+      - 0.5
+      type: scalar
+    lateral_clearance:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.2
+      range:
+      - 0.16
+      - 0.35
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    strategy: offset_target
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.2
+    - 0.17
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_to_goal
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.35
+      range:
+      - 0.08
+      - 0.5
+      type: scalar
+    descend_y_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: -0.015
+      range:
+      - -0.03
+      - 0.0
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - -0.01
+    - 0.0
+    strategy: offset_target
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - -0.018
+    - 0.0
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: descend
+skill: obstacle_reach
+subtasks:
+- anchor: fixture
+  id: reach_clearance
+  offset:
+  - 0.0
+  - 0.2
+  - 0.17
+  weight: 0.3
+- id: reach_goal
+  weight: 0.7

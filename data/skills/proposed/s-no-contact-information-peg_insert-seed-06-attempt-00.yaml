@@ -1,0 +1,104 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    lateral_offset_y:
+      binds_to:
+      - mode: add
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.015
+      - 0.015
+      type: scalar
+  subtask_id: reach_approach
+  target:
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.095
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: force_limit
+    on_failure: abort
+    predicate: force_below
+    threshold: 35.0
+    when: during_phase
+  id: descend_insert
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+    insertion_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.025
+      range:
+      - 0.005
+      - 0.045
+      type: scalar
+  subtask_id: reach_insertion
+  target:
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.005
+    orientation:
+      align_with: insertion_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.1
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: descend
+skill: peg_insert
+skill_type: arm_gripper
+subtasks:
+- anchor: fixture
+  id: reach_approach
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.095
+  target_entity: tcp
+  weight: 0.3
+- anchor: fixture
+  id: reach_insertion
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.005
+  target_entity: tcp
+  weight: 0.7

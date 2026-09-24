@@ -1,0 +1,120 @@
+skill: peg_channel
+dsl_version: 2
+subtasks:
+- id: reach_peg
+  anchor: object
+  offset:
+  - 0.0
+  - 0.03
+  - 0.0
+  weight: 0.3
+- id: reach_goal
+  offset:
+  - 0.0
+  - 0.025
+  - 0.0
+  weight: 0.7
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.03
+    - 0.05
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_height:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+  subtask_id: reach_peg
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.03
+    - 0.0
+    orientation:
+      mode: keep_current
+  parameters:
+    contact_force:
+      type: scalar
+      range:
+      - 1.0
+      - 10.0
+      default: 5.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.01
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_peg
+- id: push_1
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: world
+    offset:
+    - 0.5
+    - -0.055
+    - 0.04
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_goal
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: world
+    offset:
+    - 0.5
+    - -0.055
+    - 0.1
+    tolerance: 0.02
+    orientation:
+      mode: keep_current

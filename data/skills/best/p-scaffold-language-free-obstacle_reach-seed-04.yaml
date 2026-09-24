@@ -1,0 +1,195 @@
+skill: obstacle_reach
+dsl_version: 2
+subtasks:
+- id: reach_clearance
+  anchor: fixture
+  offset:
+  - 0.0
+  - 0.0
+  - 0.2
+  weight: 0.3
+- id: reach_goal
+  weight: 0.7
+phases:
+- id: lift_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.15
+      axis: world_z
+      mode: add_to_offset
+      sign: positive
+    tolerance: 0.05
+    orientation:
+      mode: keep_current
+  parameters:
+    lift_height:
+      type: scalar
+      range:
+      - 0.1
+      - 0.3
+      default: 0.15
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    lift_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  subtask_id: reach_clearance
+- id: arc_approach_1
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    tolerance: 0.08
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.08
+      - 0.3
+      default: 0.2
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    approach_tolerance:
+      type: scalar
+      range:
+      - 0.04
+      - 0.15
+      default: 0.08
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    approach_y_offset:
+      type: scalar
+      range:
+      - -0.15
+      - 0.15
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: add
+    arc_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.25
+      default: 0.12
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+  subtask_id: reach_clearance
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.015
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    descend_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.02
+      default: 0.015
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  subtask_id: reach_goal
+- id: descend_2
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.005
+    orientation:
+      mode: keep_current
+  parameters:
+    fine_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.08
+      default: 0.04
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    fine_tolerance:
+      type: scalar
+      range:
+      - 0.002
+      - 0.01
+      default: 0.005
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    fine_z_offset:
+      type: scalar
+      range:
+      - -0.005
+      - 0.005
+      default: 0.0
+      binds_to:
+      - path: target.offset.z
+        mode: add
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - -0.002
+  subtask_id: reach_goal

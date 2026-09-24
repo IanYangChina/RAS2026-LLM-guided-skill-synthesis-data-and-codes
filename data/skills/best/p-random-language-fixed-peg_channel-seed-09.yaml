@@ -1,0 +1,142 @@
+skill: peg_channel
+dsl_version: 2
+skill_type: arm_gripper
+subtasks:
+- id: approach
+  anchor: object
+  offset:
+  - 0.0
+  - 0.04
+  - 0.0
+- id: contact
+  anchor: object
+  offset:
+  - 0.0
+  - 0.02
+  - 0.0
+- id: push
+  anchor: world
+  offset:
+  - 0.5
+  - -0.08
+  - 0.04
+phases:
+- id: approach_peg
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: world
+    offset:
+    - 0.5
+    - 0.1
+    - 0.1
+    tolerance: 0.01
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  subtask_id: approach
+- id: contact_peg
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: world
+    offset:
+    - 0.5
+    - 0.1
+    - 0.04
+    tolerance: 0.01
+  parameters:
+    contact_force_threshold:
+      type: scalar
+      range:
+      - 5.0
+      - 30.0
+      default: 15.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    descend_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: contact_detect
+    when: during_phase
+    predicate: contact_detected
+    threshold: 1.0
+    on_failure: continue
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.005
+  subtask_id: contact
+- id: push_through_channel
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+  parameters:
+    max_time:
+      type: scalar
+      range:
+      - 5.0
+      - 20.0
+      default: 10.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: force_limit
+    when: during_phase
+    predicate: force_below
+    threshold: 40.0
+    on_failure: abort
+  retries:
+    max_attempts: 1
+    strategy: reduce_speed
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  subtask_id: push

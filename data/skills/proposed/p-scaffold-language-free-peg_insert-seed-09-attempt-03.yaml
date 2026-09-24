@@ -1,0 +1,174 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_to_entry
+  orientation:
+    align_with: world_z
+    axis:
+    - 0.0
+    - 0.0
+    - 1.0
+    mode: align_axis
+    tolerance: 0.087
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+  subtask_id: pre_contact
+  target:
+    anchor: task_goal
+    entity: null
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_to_contact
+  orientation:
+    mode: keep_current
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  subtask_id: contact_hole
+  target:
+    anchor: task_goal
+    entity: null
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: contact_1
+  orientation:
+    mode: keep_current
+  parameters:
+    contact_force:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 5.0
+      range:
+      - 1.0
+      - 15.0
+      type: scalar
+  subtask_id: null
+  target:
+    anchor: task_goal
+    entity: null
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: force_exceeded
+  type: contact
+- control: admittance_control
+  generator: linear_cartesian
+  id: insert_1
+  orientation:
+    align_with: insertion_axis
+    axis:
+    - 0.0
+    - 0.0
+    - 1.0
+    mode: align_axis
+    tolerance: 0.087
+  parameters:
+    insertion_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.05
+      range:
+      - 0.01
+      - 0.12
+      type: scalar
+  subtask_id: insertion
+  target:
+    anchor: task_goal
+    entity: null
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: insertion_axis
+      distance: 0.05
+      mode: add_to_offset
+      sign: positive
+    source: yaml
+  termination: pose_tolerance
+  type: insert
+- control: position_control
+  generator: linear_cartesian
+  id: retract_1
+  orientation:
+    mode: keep_current
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.06
+      range:
+      - 0.02
+      - 0.12
+      type: scalar
+  subtask_id: null
+  target:
+    anchor: task_goal
+    entity: null
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    source: yaml
+  termination: pose_tolerance
+  type: retract
+skill: peg_insert
+subtasks:
+- anchor: goal
+  id: pre_contact
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  target_entity: tcp
+  weight: 0.3
+- anchor: fixture
+  id: contact_hole
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.3
+- anchor: fixture
+  id: insertion
+  metric: goal_progress
+  target_entity: object
+  weight: 0.4

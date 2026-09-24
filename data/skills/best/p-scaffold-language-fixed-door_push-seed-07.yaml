@@ -1,0 +1,78 @@
+skill: door_push
+dsl_version: 2
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: ''
+    offset:
+    - 0.0
+    - 0.06
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: none
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+- id: push_1
+  type: push
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: ''
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.16
+      axis: world_y
+      mode: replace_offset_projection
+      sign: negative
+    tolerance: 0.05
+    orientation:
+      mode: none
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.16
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    tolerance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.08
+      default: 0.05
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace

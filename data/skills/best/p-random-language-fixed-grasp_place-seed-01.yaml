@@ -1,0 +1,163 @@
+skill: grasp_place
+dsl_version: 2
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.1
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: scale
+  subtask_id: approach_1
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.015
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: scale
+  subtask_id: descend_1
+- id: grasp_1
+  type: grasp
+  control: impedance_control
+  termination: grasp_success
+  end_effector_action: force_grasp
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  subtask_id: grasp_1
+- id: lift_1
+  type: lift
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.1
+      axis: world_z
+      mode: add_to_offset
+      sign: positive
+    tolerance: 0.03
+  parameters:
+    lift_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.15
+      default: 0.1
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    lift_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.15
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: scale
+- id: transport_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.03
+  parameters:
+    transport_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.15
+      binds_to:
+      - path: generator.speed
+        mode: scale
+  subtask_id: transport_arc
+- id: descend_place
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.01
+    offset_along_axis:
+      distance: 0.0
+      axis: world_z
+      mode: add_to_offset
+      sign: positive
+    tolerance: 0.025
+  parameters:
+    place_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: scale
+    place_z_offset:
+      type: scalar
+      range:
+      - -0.01
+      - 0.03
+      default: 0.01
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+  subtask_id: release_1

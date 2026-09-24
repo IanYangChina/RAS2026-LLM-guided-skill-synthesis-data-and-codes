@@ -1,0 +1,106 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: obstacle_contact_guard
+    on_failure: retry
+    predicate: force_below
+    threshold: 4.0
+    when: during_phase
+  id: go_over_obstacle
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.15
+      range:
+      - 0.01
+      - 0.5
+      type: scalar
+    lateral_offset:
+      binds_to:
+      - mode: add
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.1
+      - 0.1
+      type: scalar
+    waypoint_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.17
+      range:
+      - 0.1
+      - 0.35
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.03
+    - 0.0
+    strategy: offset_target
+  subtask_id: reach_waypoint_above_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.17
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_to_goal
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.3
+      type: scalar
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: descend
+skill: obstacle_reach
+subtasks:
+- anchor: goal
+  id: reach_waypoint_above_goal
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.17
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: reach_goal
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.7

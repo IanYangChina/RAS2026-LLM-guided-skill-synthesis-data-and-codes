@@ -1,0 +1,237 @@
+skill: peg_insert
+dsl_version: 2
+skill_type: arm_gripper
+subtasks:
+- id: approach_peg
+  anchor: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.05
+  weight: 0.2
+- id: approach_hole
+  target_entity: tcp
+  anchor: goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.05
+  weight: 0.3
+- id: insert_task
+  target_entity: object
+  anchor: goal
+  weight: 0.5
+phases:
+- id: approach_peg
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+    tolerance: 0.005
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: approach_peg
+- id: descend_to_peg
+  type: descend
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.005
+  parameters:
+    contact_force_threshold:
+      type: scalar
+      range:
+      - 2.0
+      - 15.0
+      default: 5.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    descend_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.003
+    - 0.003
+    - 0.0
+- id: grasp_peg
+  type: grasp
+  control: position_control
+  termination: grasp_success
+  end_effector_action: force_grasp
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  guards:
+  - id: grasp_check
+    when: after_phase
+    predicate: bilateral_grasp
+    threshold: 1.0
+    on_failure: retry
+  retries:
+    max_attempts: 3
+    strategy: offset_target
+    offset:
+    - 0.002
+    - 0.002
+    - 0.0
+- id: lift_peg
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+    tolerance: 0.005
+  parameters:
+    lift_height:
+      type: scalar
+      range:
+      - 0.02
+      - 0.08
+      default: 0.05
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+- id: approach_hole
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+    tolerance: 0.01
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: approach_hole
+- id: descend_insert
+  type: descend
+  generator: linear_cartesian
+  control: impedance_control
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.1
+      axis: world_z
+      mode: replace_offset_projection
+      sign: negative
+    tolerance: 0.005
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: world_z
+      tolerance: 0.1
+  parameters:
+    insert_force_threshold:
+      type: scalar
+      range:
+      - 10.0
+      - 40.0
+      default: 30.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    insert_offset_x:
+      type: scalar
+      range:
+      - -0.04
+      - 0.04
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: add
+    insert_offset_y:
+      type: scalar
+      range:
+      - -0.04
+      - 0.04
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: add
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.02
+      - 0.15
+      default: 0.1
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+  guards:
+  - id: insert_force_guard
+    when: during_phase
+    predicate: force_below
+    threshold: 300.0
+    on_failure: retry
+  retries:
+    max_attempts: 3
+    strategy: offset_target
+    offset:
+    - 0.005
+    - 0.005
+    - 0.0
+  subtask_id: insert_task
+```

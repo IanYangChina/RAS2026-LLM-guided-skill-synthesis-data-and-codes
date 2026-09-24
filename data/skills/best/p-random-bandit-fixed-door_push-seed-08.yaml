@@ -1,0 +1,40 @@
+skill: door_push
+phases:
+- id: pull_1
+  type: pull
+  generator: arc_cartesian
+  control: impedance_control
+  termination: time_limit
+  parameters:
+    pull_angle:
+      type: angle
+      range:
+      - 0.1
+      - 1.2
+- id: insert_1
+  type: insert
+  generator: impedance_motion
+  control: impedance_control
+  termination: contact_detected
+  parameters:
+    insertion_force:
+      type: scalar
+      range:
+      - 1.0
+      - 20.0
+    param_0:
+      type: scalar
+      range:
+      - 0.1462498484884327
+      - 0.7946784769076298
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: contact_detected
+  parameters:
+    depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1

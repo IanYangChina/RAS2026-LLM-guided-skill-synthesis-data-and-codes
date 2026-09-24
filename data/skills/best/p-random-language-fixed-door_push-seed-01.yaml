@@ -1,0 +1,78 @@
+skill: door_push
+dsl_version: 2
+skill_type: arm_gripper
+phases:
+- id: approach_handle
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: door_panel
+    offset:
+    - -0.4
+    - -0.01
+    - 0.35
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    contact_z_offset:
+      type: scalar
+      range:
+      - -0.05
+      - 0.05
+      default: 0.0
+      binds_to:
+      - path: target.offset.z
+        mode: add
+  retries:
+    max_attempts: 0
+    strategy: repeat
+- id: push_door
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.2
+      axis: world_y
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.05
+      - 0.5
+      default: 0.2
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.0
+    - -0.01
+    - 0.0

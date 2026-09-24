@@ -1,0 +1,98 @@
+skill: obstacle_reach
+dsl_version: 2
+phases:
+- id: approach_via
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: world
+    offset:
+    - 0.5
+    - 0.0
+    - 0.5
+    tolerance: 0.1
+    orientation:
+      mode: keep_current
+  parameters:
+    speed_approach_via:
+      type: scalar
+      range:
+      - 0.1
+      - 0.5
+      default: 0.3
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    via_height:
+      type: scalar
+      range:
+      - 0.3
+      - 0.7
+      default: 0.5
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+- id: approach_goal
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.0
+    - 0.25
+    tolerance: 0.05
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_goal_z_offset:
+      type: scalar
+      range:
+      - 0.1
+      - 0.4
+      default: 0.25
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    speed_approach_goal:
+      type: scalar
+      range:
+      - 0.1
+      - 0.5
+      default: 0.3
+      binds_to:
+      - path: generator.speed
+        mode: replace
+- id: fine_approach
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.005
+    orientation:
+      mode: keep_current
+  parameters:
+    speed_fine:
+      type: scalar
+      range:
+      - 0.02
+      - 0.15
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace

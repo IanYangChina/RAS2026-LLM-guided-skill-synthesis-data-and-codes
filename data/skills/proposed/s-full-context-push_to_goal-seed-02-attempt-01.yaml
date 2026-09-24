@@ -1,0 +1,218 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_behind
+  parameters:
+  - binds_to:
+    - mode: replace
+      path: target.offset.z
+    default: 0.15
+    name: approach_height
+    range:
+    - 0.05
+    - 0.3
+    type: scalar
+  - binds_to:
+    - mode: replace
+      path: target.offset_along_axis.distance
+    default: 0.08
+    name: behind_distance
+    range:
+    - 0.02
+    - 0.2
+    type: scalar
+  - binds_to:
+    - mode: replace
+      path: generator.speed
+    default: 0.1
+    name: approach_speed
+    range:
+    - 0.05
+    - 0.2
+    type: scalar
+  - binds_to:
+    - mode: replace
+      path: termination.pose_tolerance
+    default: 0.02
+    name: approach_tolerance
+    range:
+    - 0.005
+    - 0.05
+    type: scalar
+  subtask_id: reach_pre_push
+  target:
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0
+    - 0
+    - 0.15
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.08
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: impedance_control
+  generator: linear_cartesian
+  id: descend_to_contact
+  parameters:
+  - binds_to:
+    - mode: replace
+      path: target.offset.z
+    default: 0.025
+    name: descend_height
+    range:
+    - 0.002
+    - 0.05
+    type: scalar
+  - binds_to:
+    - mode: replace
+      path: target.offset_along_axis.distance
+    default: 0.06
+    name: descend_behind
+    range:
+    - 0.02
+    - 0.2
+    type: scalar
+  - binds_to:
+    - mode: replace
+      path: generator.speed
+    default: 0.05
+    name: descend_speed
+    range:
+    - 0.01
+    - 0.1
+    type: scalar
+  - binds_to:
+    - mode: replace
+      path: termination.pose_tolerance
+    default: 0.015
+    name: descend_tolerance
+    range:
+    - 0.005
+    - 0.05
+    type: scalar
+  subtask_id: reach_pre_push
+  target:
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0
+    - 0
+    - 0.025
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.06
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.015
+  termination: pose_tolerance
+  type: descend
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: failure_guard
+    on_failure: retry
+    predicate: force_below
+    threshold: 20
+    when: during_phase
+  id: push_to_goal
+  parameters:
+  - binds_to:
+    - mode: replace
+      path: target.offset_along_axis.distance
+    default: 0.15
+    name: push_stroke
+    range:
+    - 0.05
+    - 0.3
+    type: scalar
+  - binds_to:
+    - mode: replace
+      path: generator.speed
+    default: 0.05
+    name: push_speed
+    range:
+    - 0.01
+    - 0.15
+    type: scalar
+  - binds_to:
+    - mode: replace
+      path: guards.failure_guard.threshold
+    default: 20
+    name: force_threshold
+    range:
+    - 5
+    - 25
+    type: scalar
+  - binds_to:
+    - mode: add
+      path: retry.offset.x
+    default: 0
+    name: retry_offset_x
+    range:
+    - -0.02
+    - 0.02
+    type: scalar
+  - binds_to:
+    - mode: add
+      path: retry.offset.y
+    default: 0
+    name: retry_offset_y
+    range:
+    - -0.02
+    - 0.02
+    type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0
+    - 0
+    - 0
+    strategy: offset_target
+  subtask_id: push_to_goal
+  target:
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0
+    - 0
+    - 0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.15
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: push
+skill: push_to_goal
+subtasks:
+- anchor: object
+  id: reach_pre_push
+  metric: distance
+  offset:
+  - 0
+  - 0
+  - 0.05
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: push_to_goal
+  metric: goal_progress
+  target_entity: object
+  weight: 0.7

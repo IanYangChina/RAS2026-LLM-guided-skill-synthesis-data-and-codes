@@ -1,0 +1,130 @@
+skill: peg_insert
+dsl_version: 2
+subtasks:
+- id: pre_insert_standoff
+  anchor: goal
+  target_entity: tcp
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.04
+  weight: 0.3
+- id: insertion_depth
+  anchor: goal
+  target_entity: tcp
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - -0.055
+  weight: 0.7
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.04
+    tolerance: 0.01
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: channel_axis
+      tolerance: 0.1
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    approach_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.02
+      default: 0.01
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  subtask_id: pre_insert_standoff
+- id: insert_1
+  type: insert
+  generator: impedance_motion
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - -0.055
+    tolerance: 0.002
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: channel_axis
+      tolerance: 0.1
+  parameters:
+    insert_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    insert_tolerance:
+      type: scalar
+      range:
+      - 0.001
+      - 0.01
+      default: 0.003
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  subtask_id: insertion_depth
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    retract_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+```

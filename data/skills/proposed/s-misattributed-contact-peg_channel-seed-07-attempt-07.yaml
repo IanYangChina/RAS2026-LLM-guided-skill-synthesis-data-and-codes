@@ -1,0 +1,115 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  subtask_id: pre_insertion
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.03
+    - 0.08
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: admittance_control
+  generator: linear_cartesian
+  id: descend_1
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.01
+      - 0.06
+      type: scalar
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.03
+    - 0.025
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: descend
+- control: impedance_control
+  generator: linear_cartesian
+  id: push_1
+  parameters:
+    lateral_offset_x:
+      binds_to:
+      - mode: add
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.01
+      - 0.01
+      type: scalar
+    lateral_offset_y:
+      binds_to:
+      - mode: add
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.01
+      - 0.01
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+  subtask_id: insertion
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.03
+    - 0.025
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: push
+skill: peg_channel
+skill_type: arm_gripper
+subtasks:
+- anchor: object
+  id: pre_insertion
+  metric: distance
+  offset:
+  - 0.0
+  - 0.03
+  - 0.08
+  target_entity: tcp
+  weight: 0.2
+- anchor: goal
+  id: insertion
+  metric: goal_progress
+  offset:
+  - 0.0
+  - 0.03
+  - 0.025
+  target_entity: tcp
+  weight: 0.8

@@ -1,0 +1,198 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: align_above
+  parameters:
+    align_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.12
+    orientation:
+      align_with: insertion_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+  termination: pose_tolerance
+  type: align
+- control: position_control
+  generator: linear_cartesian
+  id: descend_to_entry
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.04
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.02
+    orientation:
+      align_with: insertion_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: impedance_motion
+  guards:
+  - args: {}
+    id: force_limit_guard
+    on_failure: abort
+    predicate: force_below
+    threshold: 40.0
+    when: during_phase
+  id: contact_probe
+  parameters:
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 5.0
+      range:
+      - 1.0
+      - 20.0
+      type: scalar
+    probe_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.015
+      range:
+      - 0.005
+      - 0.04
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: insertion_axis
+      distance: 0.03
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      align_with: insertion_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+  termination: force_exceeded
+  type: contact
+- control: admittance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: insert_force_limit
+    on_failure: abort
+    predicate: force_below
+    threshold: 40.0
+    when: during_phase
+  id: insert_fully
+  parameters:
+    insert_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.01
+      range:
+      - 0.005
+      - 0.03
+      type: scalar
+    insertion_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.05
+      range:
+      - 0.02
+      - 0.06
+      type: scalar
+    insertion_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 10.0
+      range:
+      - 5.0
+      - 30.0
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: insertion_axis
+      distance: 0.05
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      align_with: insertion_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+  termination: force_exceeded
+  type: insert
+- control: position_control
+  generator: linear_cartesian
+  id: retract_up
+  parameters:
+    retract_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.08
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: retract
+skill: peg_insert

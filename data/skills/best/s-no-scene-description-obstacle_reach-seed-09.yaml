@@ -1,0 +1,156 @@
+skill: obstacle_reach
+dsl_version: 2
+subtasks:
+- id: reach_above_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.3
+  weight: 0.3
+- id: reach_goal
+  weight: 0.7
+phases:
+- id: approach_arc
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.3
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.15
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    arc_duration:
+      type: scalar
+      range:
+      - 0.5
+      - 5.0
+      default: 2.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.15
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+  subtask_id: reach_above_goal
+- id: descend_to_goal
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_guard_tol:
+      type: scalar
+      range:
+      - 0.01
+      - 0.03
+      default: 0.02
+      binds_to:
+      - path: guards.descend_pose_check.threshold
+        mode: replace
+    descend_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: descend_pose_check
+    when: after_phase
+    predicate: pose_within_tolerance
+    args:
+      tolerance: 0.02
+    threshold: 0.02
+    on_failure: retry
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - -0.01
+  subtask_id: reach_goal
+- id: final_precise_approach
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.015
+    orientation:
+      mode: keep_current
+  parameters:
+    final_guard_tol:
+      type: scalar
+      range:
+      - 0.01
+      - 0.03
+      default: 0.02
+      binds_to:
+      - path: guards.final_pose_check.threshold
+        mode: replace
+    final_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.025
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: final_pose_check
+    when: after_phase
+    predicate: pose_within_tolerance
+    args:
+      tolerance: 0.02
+    threshold: 0.02
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - -0.005
+  subtask_id: reach_goal

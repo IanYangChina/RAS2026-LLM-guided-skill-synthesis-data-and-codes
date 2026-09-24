@@ -1,0 +1,112 @@
+skill: peg_channel
+dsl_version: 2
+subtasks:
+- id: reach_approach
+  anchor: object
+  offset:
+  - 0.0
+  - 0.02
+  - 0.05
+  weight: 0.3
+- id: reach_goal
+  weight: 0.7
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.02
+    - 0.05
+    tolerance: 0.01
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: channel_axis
+      tolerance: 0.05
+  parameters:
+    approach_height:
+      type: scalar
+      range:
+      - 0.03
+      - 0.15
+      default: 0.05
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+  subtask_id: reach_approach
+- id: contact_1
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.05
+      axis: channel_axis
+      mode: replace_offset_projection
+      sign: positive
+  parameters:
+    contact_force:
+      type: scalar
+      range:
+      - 1.0
+      - 10.0
+      default: 2.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+  subtask_id: reach_goal
+- id: push_1
+  type: push
+  generator: impedance_motion
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.16
+      axis: channel_axis
+      mode: replace_offset_projection
+      sign: positive
+    tolerance: 0.02
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.12
+      - 0.2
+      default: 0.16
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_goal

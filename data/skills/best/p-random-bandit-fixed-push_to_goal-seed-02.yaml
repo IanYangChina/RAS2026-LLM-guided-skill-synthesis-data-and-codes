@@ -1,0 +1,28 @@
+skill: push_to_goal
+phases:
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: align_2
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    param_0:
+      type: scalar
+      range:
+      - -0.5277531857698758
+      - 0.12102072205299774
+- id: grasp_1
+  type: grasp
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: pull_1
+  type: pull
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance

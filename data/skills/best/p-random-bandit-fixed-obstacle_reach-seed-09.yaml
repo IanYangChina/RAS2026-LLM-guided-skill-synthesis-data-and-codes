@@ -1,0 +1,28 @@
+skill: obstacle_reach
+phases:
+- id: pull_1
+  type: pull
+  generator: arc_cartesian
+  control: impedance_control
+  termination: time_limit
+- id: push_1
+  type: push
+  generator: arc_cartesian
+  control: position_control
+  termination: time_limit
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: descend_2
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: contact_detected

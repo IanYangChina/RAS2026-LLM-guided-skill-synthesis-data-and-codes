@@ -1,0 +1,170 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_handle
+  parameters:
+    approach_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.2
+      range:
+      - 0.15
+      - 0.35
+      type: scalar
+    approach_lateral:
+      binds_to:
+      - mode: replace
+        path: target.offset.x
+      default: 0.45
+      range:
+      - 0.4
+      - 0.55
+      type: scalar
+    approach_speed:
+      binds_to:
+      - mode: scale
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: approach_handle
+  target:
+    anchor: task_object
+    offset:
+    - 0.45
+    - 0.0
+    - 0.2
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: contact_door
+  parameters:
+    contact_speed:
+      binds_to:
+      - mode: scale
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+    force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 15.0
+      range:
+      - 5.0
+      - 30.0
+      type: scalar
+    probe_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.04
+      range:
+      - 0.01
+      - 0.08
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.0
+    - -0.01
+    strategy: offset_target
+  subtask_id: contact_door
+  target:
+    anchor: task_object
+    offset:
+    - 0.45
+    - 0.0
+    - 0.2
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.04
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.03
+  termination: force_exceeded
+  type: contact
+- control: admittance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: hinge_progress
+    on_failure: continue
+    predicate: object_progress
+    threshold: 0.05
+    when: after_phase
+  id: push_door
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.3
+      range:
+      - 0.1
+      - 0.6
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: scale
+        path: generator.speed
+      default: 0.03
+      range:
+      - 0.01
+      - 0.07
+      type: scalar
+  subtask_id: push_door
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.3
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.03
+  termination: time_limit
+  type: push
+skill: door_push
+subtasks:
+- anchor: object
+  id: approach_handle
+  metric: distance
+  offset:
+  - 0.45
+  - 0.0
+  - 0.2
+  target_entity: tcp
+  weight: 0.2
+- anchor: object
+  id: contact_door
+  metric: contact
+  target_entity: tcp
+  weight: 0.3
+- anchor: object
+  id: push_door
+  metric: hinge_angle
+  target_entity: hinge
+  weight: 0.5

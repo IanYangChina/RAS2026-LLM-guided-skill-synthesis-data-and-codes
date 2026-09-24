@@ -1,0 +1,316 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: approach_within
+    on_failure: retry
+    predicate: pose_within_tolerance
+    threshold: 0.03
+    when: after_phase
+  id: approach_to_object
+  parameters:
+    approach_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.15
+      range:
+      - 0.08
+      - 0.25
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - 0.0
+    - 0.02
+    strategy: offset_target
+  subtask_id: approach_1
+  target:
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: contact_object
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 1
+    when: after_phase
+  id: descend_to_grasp
+  parameters:
+    descent_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 12.0
+      range:
+      - 5.0
+      - 20.0
+      type: scalar
+    grasp_z_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.0
+    - -0.005
+    strategy: offset_target
+  subtask_id: descend_1
+  target:
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.02
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: force_exceeded
+  type: descend
+- control: impedance_control
+  end_effector_action: force_grasp
+  generator: null
+  guards:
+  - args: {}
+    id: bilateral_grip
+    on_failure: retry
+    predicate: bilateral_grasp
+    threshold: 1
+    when: after_phase
+  id: grasp_object
+  retries:
+    max_attempts: 2
+    strategy: repeat
+  subtask_id: grasp_1
+  target:
+    anchor: current_tcp
+    entity: null
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: grasp_success
+  type: grasp
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: object_lifted_high
+    on_failure: retry
+    predicate: object_lifted
+    threshold: 0.02
+    when: after_phase
+  id: lift_object
+  parameters:
+    lift_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.15
+      range:
+      - 0.1
+      - 0.3
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.0
+    - 0.02
+    strategy: offset_target
+  target:
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: lift
+- control: position_control
+  generator: arc_cartesian
+  guards:
+  - args: {}
+    id: at_goal_xy
+    on_failure: retry
+    predicate: pose_within_tolerance
+    threshold: 0.025
+    when: after_phase
+  id: transport_to_goal
+  parameters:
+    arc_height:
+      binds_to:
+      - mode: replace
+        path: generator.arc_height
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+    transport_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - 0.0
+    - 0.01
+    strategy: offset_target
+  subtask_id: transport_arc
+  target:
+    anchor: task_goal
+    entity: place_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  end_effector_action: open
+  generator: null
+  guards:
+  - args: {}
+    id: gripper_opened
+    on_failure: retry
+    predicate: gripper_closed
+    threshold: 0.001
+    when: after_phase
+  id: release_object
+  parameters:
+    release_wait_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 1.0
+      range:
+      - 0.5
+      - 3.0
+      type: scalar
+  retries:
+    max_attempts: 1
+    strategy: repeat
+  subtask_id: release_1
+  target:
+    anchor: current_tcp
+    entity: null
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: time_limit
+  type: release
+- control: position_control
+  generator: linear_cartesian
+  id: retract_from_goal
+  parameters:
+    retract_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.06
+      range:
+      - 0.03
+      - 0.12
+      type: scalar
+  target:
+    anchor: current_tcp
+    entity: null
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.03
+  termination: pose_tolerance
+  type: retract
+skill: grasp_place
+subtasks:
+- anchor: object
+  id: approach_1
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: grasp_target
+  weight: 1.0
+- anchor: object
+  id: descend_1
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.02
+  target_entity: grasp_target
+  weight: 1.0
+- anchor: object
+  id: grasp_1
+  metric: contact
+  offset:
+  - 0.0
+  - 0.0
+  - 0.02
+  target_entity: grasp_target
+  weight: 1.0
+- anchor: goal
+  id: transport_arc
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: place_target
+  weight: 1.0
+- anchor: goal
+  id: release_1
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: place_target
+  weight: 1.0

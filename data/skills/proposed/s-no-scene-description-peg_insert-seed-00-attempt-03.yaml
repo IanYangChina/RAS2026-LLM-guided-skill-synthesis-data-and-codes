@@ -1,0 +1,188 @@
+dsl_version: 2
+phases:
+- control: null
+  end_effector_action: force_grasp
+  generator: null
+  guards:
+  - args: {}
+    id: grasp_check
+    on_failure: retry
+    predicate: bilateral_grasp
+    threshold: 1.0
+    when: after_phase
+  id: pre_grasp
+  parameters: {}
+  retries:
+    max_attempts: 2
+    strategy: repeat
+  subtask_id: pre_insert_approach
+  target:
+    anchor: current_tcp
+    source: yaml
+  termination: grasp_success
+  type: grasp
+- control: position_control
+  generator: linear_cartesian
+  id: approach_hole
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: pre_insert_approach
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: contact_guard
+    on_failure: continue
+    predicate: contact_detected
+    threshold: 1.0
+    when: during_phase
+  id: descend_to_rim
+  parameters:
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 8.0
+      range:
+      - 3.0
+      - 20.0
+      type: scalar
+  retries:
+    max_attempts: 1
+    strategy: reduce_speed
+  subtask_id: rim_contact
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+  termination: force_exceeded
+  type: descend
+- control: admittance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: insertion_progress
+    on_failure: retry
+    predicate: object_progress
+    threshold: 0.02
+    when: during_phase
+  id: insert_peg
+  parameters:
+    insert_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.1
+      range:
+      - 0.04
+      - 0.15
+      type: scalar
+    insert_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.015
+      range:
+      - 0.005
+      - 0.04
+      type: scalar
+    insertion_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 30.0
+      range:
+      - 15.0
+      - 40.0
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.002
+    - 0.002
+    - 0.0
+    strategy: offset_target
+  subtask_id: full_insertion
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: channel_axis
+      distance: 0.1
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.04
+    source: yaml
+  termination: force_exceeded
+  type: insert
+skill: peg_insert
+subtasks:
+- anchor: goal
+  id: pre_insert_approach
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  target_entity: tcp
+  weight: 0.2
+- anchor: goal
+  id: rim_contact
+  metric: contact
+  target_entity: object
+  weight: 0.3
+- anchor: goal
+  id: full_insertion
+  metric: goal_progress
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: object
+  weight: 0.5

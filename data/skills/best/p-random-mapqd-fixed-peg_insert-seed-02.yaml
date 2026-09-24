@@ -1,0 +1,22 @@
+skill: peg_insert
+phases:
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: align_2
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: rotate_1
+  type: rotate
+  generator: linear_cartesian
+  control: position_control
+  termination: time_limit
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance

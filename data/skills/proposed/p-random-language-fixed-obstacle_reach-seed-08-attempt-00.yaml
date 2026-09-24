@@ -1,0 +1,69 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach
+  orientation:
+    mode: keep_current
+  parameters:
+    generator.speed:
+      binds_to:
+      - mode: add
+        path: generator.speed
+      default: 0.15
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+    termination.pose_tolerance:
+      binds_to:
+      - mode: add
+        path: termination.pose_tolerance
+      default: 0.01
+      range:
+      - 0.005
+      - 0.02
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0
+    - 0
+    - 0.2
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend
+  orientation:
+    mode: keep_current
+  parameters:
+    generator.speed:
+      binds_to:
+      - mode: add
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+    termination.pose_tolerance:
+      binds_to:
+      - mode: add
+        path: termination.pose_tolerance
+      default: 0.01
+      range:
+      - 0.005
+      - 0.02
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0
+    - 0
+    - 0
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: descend
+skill: obstacle_reach

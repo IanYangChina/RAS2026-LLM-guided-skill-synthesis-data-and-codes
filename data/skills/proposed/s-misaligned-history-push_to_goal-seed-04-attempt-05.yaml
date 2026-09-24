@@ -1,0 +1,86 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  subtask_id: reach_contact
+  target:
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0.0
+    - 0.03
+    - 0.025
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: admittance_control
+  generator: linear_cartesian
+  id: push_1
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.15
+      range:
+      - 0.02
+      - 0.2
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.03
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  subtask_id: push_progress
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.15
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: time_limit
+  type: push
+skill: push_to_goal
+skill_type: arm_gripper
+subtasks:
+- anchor: object
+  id: reach_contact
+  metric: distance
+  offset:
+  - 0.0
+  - 0.03
+  - 0.025
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: push_progress
+  metric: goal_progress
+  target_entity: object
+  weight: 0.7

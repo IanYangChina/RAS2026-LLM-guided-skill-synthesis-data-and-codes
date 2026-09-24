@@ -1,0 +1,112 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.12
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  subtask_id: approach
+  target:
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0.0
+    - 0.12
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: contact_1
+  parameters:
+    force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 3.0
+      range:
+      - 1.0
+      - 6.0
+      type: scalar
+  subtask_id: contact
+  target:
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0.0
+    - 0.01
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: force_exceeded
+  type: contact
+- control: admittance_control
+  generator: linear_cartesian
+  id: push_1
+  parameters:
+    max_time:
+      binds_to:
+      - mode: replace
+        path: termination.time_limit
+      default: 4.0
+      range:
+      - 2.0
+      - 6.0
+      type: scalar
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.15
+      range:
+      - 0.05
+      - 0.25
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.04
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  subtask_id: push
+  target:
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.15
+      mode: replace_offset_projection
+    orientation:
+      align_with: task_goal_direction
+      axis:
+      - 0
+      - 1
+      - 0
+      mode: align_axis
+      tolerance: 0.1
+    source: yaml
+    tolerance: 0.02
+  termination: time_limit
+  type: push
+skill: push_to_goal

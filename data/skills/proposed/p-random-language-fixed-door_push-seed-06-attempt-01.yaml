@@ -1,0 +1,89 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_handle
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.01
+      - 0.2
+      type: scalar
+  target:
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0
+    - 0
+    - 0
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: admittance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: force_check
+    on_failure: abort
+    predicate: force_below
+    threshold: 30.0
+    when: during_phase
+  - args: {}
+    id: contact_check
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 0.5
+    when: during_phase
+  id: push_door
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.25
+      range:
+      - 0.05
+      - 0.5
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.15
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0
+    - 0
+    - 0.02
+    strategy: offset_target
+  target:
+    anchor: current_tcp
+    offset_along_axis:
+      axis: world_y
+      distance: 0.25
+      mode: add_to_offset
+      sign: positive
+    source: yaml
+  termination: pose_tolerance
+  type: push
+skill: door_push
+skill_type: arm
+subtasks:
+- anchor: object
+  id: hinge_progress
+  metric: hinge_angle
+  offset:
+  - 0
+  - 0
+  - 0
+  target_entity: hinge
+  weight: 1.0

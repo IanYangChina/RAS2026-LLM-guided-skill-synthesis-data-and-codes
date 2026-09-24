@@ -1,0 +1,146 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    approach_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 10.0
+      range:
+      - 5.0
+      - 15.0
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  target:
+    anchor: site
+    entity: door_handle
+    offset:
+    - -0.1
+    - 0.0
+    - 0.0
+    orientation:
+      align_with: world_y
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.1
+    source: yaml
+  termination: time_limit
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  guards:
+  - id: contact_detect
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 1.0
+    when: during_phase
+  id: contact_1
+  parameters:
+    force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 15.0
+      range:
+      - 5.0
+      - 30.0
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - -0.01
+    - 0.0
+    strategy: offset_target
+  target:
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      align_with: world_y
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.1
+    source: yaml
+  termination: force_exceeded
+  type: contact
+- control: impedance_control
+  generator: linear_cartesian
+  id: push_1
+  parameters:
+    push_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.15
+      range:
+      - 0.1
+      - 0.25
+      type: scalar
+    push_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 10.0
+      range:
+      - 5.0
+      - 15.0
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.03
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  target:
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: world_y
+      distance: 0.15
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      align_with: world_y
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.1
+    source: yaml
+  termination: time_limit
+  type: push
+skill: door_push
+subtasks:
+- anchor: fixture
+  id: hinge_progress
+  metric: hinge_angle
+  target_entity: hinge

@@ -1,0 +1,191 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: arc_cartesian
+  id: approach_above
+  parameters:
+    approach_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.1
+      range:
+      - 0.05
+      - 0.15
+      type: scalar
+    behind_offset_y:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.06
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: reach_pre_contact
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.06
+    - 0.1
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_to_contact
+  parameters:
+    contact_offset_y:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.03
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  subtask_id: reach_pre_contact
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.03
+    - 0.0
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0
+      - 0
+      - 1
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: descend
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: contact_peg
+  parameters:
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 10.0
+      range:
+      - 5.0
+      - 15.0
+      type: scalar
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0
+      - 0
+      - 1
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+    tolerance: 0.005
+  termination: force_exceeded
+  type: contact
+- control: admittance_control
+  generator: impedance_motion
+  guards:
+  - args: {}
+    id: guard_force_limit
+    on_failure: retry
+    predicate: force_below
+    threshold: 35.0
+    when: during_phase
+  id: push_through_channel
+  parameters:
+    push_tolerance:
+      binds_to:
+      - mode: replace
+        path: target.tolerance
+      default: 0.03
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.005
+    - 0.0
+    - 0.0
+    strategy: offset_target
+  subtask_id: push_channel
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0
+      - 0
+      - 1
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+    tolerance: 0.03
+  termination: pose_tolerance
+  type: push
+- control: position_control
+  generator: arc_cartesian
+  id: retract_up
+  parameters:
+    retract_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.15
+      range:
+      - 0.1
+      - 0.25
+      type: scalar
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: retract
+skill: peg_channel
+subtasks:
+- anchor: object
+  id: reach_pre_contact
+  metric: distance
+  offset:
+  - 0.0
+  - 0.05
+  - 0.0
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: push_channel
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.7

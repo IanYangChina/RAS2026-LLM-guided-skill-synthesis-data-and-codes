@@ -1,0 +1,126 @@
+skill: obstacle_reach
+dsl_version: 2
+phases:
+- id: approach_side
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.03
+    orientation:
+      mode: keep_current
+      tolerance: 0.5
+  parameters:
+    approach_height:
+      type: scalar
+      range:
+      - 0.12
+      - 0.25
+      default: 0.17
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    approach_max_time:
+      type: scalar
+      range:
+      - 0.5
+      - 2.0
+      default: 1.2
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.18
+      binds_to:
+      - path: generator.speed
+        mode: replace
+- id: descend_goal
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.012
+    orientation:
+      mode: keep_current
+      tolerance: 0.5
+  parameters:
+    descend_max_time:
+      type: scalar
+      range:
+      - 0.5
+      - 1.5
+      default: 1.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    descend_speed:
+      type: scalar
+      range:
+      - 0.03
+      - 0.2
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace
+- id: fine_position
+  type: push
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.005
+    orientation:
+      mode: keep_current
+      tolerance: 0.5
+  parameters:
+    fine_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    fine_tolerance:
+      type: scalar
+      range:
+      - 0.002
+      - 0.008
+      default: 0.005
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace

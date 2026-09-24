@@ -1,0 +1,180 @@
+skill: peg_insert
+dsl_version: 2
+subtasks:
+- id: reach_pre_contact
+  anchor: fixture
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  weight: 0.3
+- id: insertion_complete
+  anchor: fixture
+  offset:
+  - 0.0
+  - 0.0
+  - -0.05
+  weight: 0.7
+phases:
+- id: approach_to_hover
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: world_z
+      tolerance: 0.05
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.02
+      - 0.15
+      default: 0.05
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    hover_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.03
+      default: 0.01
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  subtask_id: reach_pre_contact
+- id: descend_to_entry
+  type: contact
+  generator: linear_cartesian
+  control: impedance_control
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.1
+      axis: world_z
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_distance:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    descend_force_threshold:
+      type: scalar
+      range:
+      - 5.0
+      - 20.0
+      default: 10.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+  guards:
+  - id: force_limit_descend
+    when: during_phase
+    predicate: force_below
+    threshold: 40.0
+    on_failure: abort
+  subtask_id: reach_pre_contact
+- id: insert_into_hole
+  type: insert
+  generator: impedance_motion
+  control: admittance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.05
+      axis: channel_axis
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+  parameters:
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.02
+      - 0.08
+      default: 0.05
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    insertion_force_guard:
+      type: scalar
+      range:
+      - 30.0
+      - 50.0
+      default: 40.0
+      binds_to:
+      - path: guards.insert_force_guard.threshold
+        mode: replace
+    insertion_tolerance:
+      type: scalar
+      range:
+      - 0.003
+      - 0.02
+      default: 0.005
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  guards:
+  - id: insert_force_guard
+    when: during_phase
+    predicate: force_below
+    threshold: 40.0
+    on_failure: abort
+  subtask_id: insertion_complete
+- id: retract_from_hole
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      mode: keep_current

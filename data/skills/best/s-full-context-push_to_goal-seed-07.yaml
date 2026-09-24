@@ -1,0 +1,143 @@
+skill: push_to_goal
+dsl_version: 2
+subtasks:
+- id: approach_sub
+  anchor: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  weight: 0.3
+- id: push_sub
+  target_entity: object
+  metric: goal_progress
+  weight: 0.7
+phases:
+- id: approach_behind
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.05
+    - 0.1
+    tolerance: 0.03
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_height_z:
+      type: scalar
+      range:
+      - 0.05
+      - 0.15
+      default: 0.1
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    approach_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.1
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    behind_offset_y:
+      type: scalar
+      range:
+      - 0.03
+      - 0.08
+      default: 0.05
+      binds_to:
+      - path: target.offset.y
+        mode: replace
+  subtask_id: approach_sub
+- id: descend_to_push
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.05
+    - 0.0
+    tolerance: 0.015
+    orientation:
+      mode: keep_current
+  parameters:
+    behind_offset_y:
+      type: scalar
+      range:
+      - 0.03
+      - 0.08
+      default: 0.05
+      binds_to:
+      - path: target.offset.y
+        mode: replace
+    descend_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.1
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: approach_sub
+- id: push_to_goal
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.35
+      axis: task_goal_direction
+      mode: replace_offset_projection
+      sign: positive
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    push_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.25
+      default: 0.15
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    push_stroke:
+      type: scalar
+      range:
+      - 0.15
+      - 0.45
+      default: 0.35
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    push_time:
+      type: scalar
+      range:
+      - 3.0
+      - 8.0
+      default: 5.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+  subtask_id: push_sub

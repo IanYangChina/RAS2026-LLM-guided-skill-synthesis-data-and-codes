@@ -1,0 +1,171 @@
+skill: obstacle_reach
+dsl_version: 2
+subtasks:
+- id: above_obstacle
+  anchor: fixture
+  offset:
+  - 0.0
+  - 0.0
+  - 0.35
+  weight: 0.3
+- id: reach_goal
+  weight: 0.7
+phases:
+- id: arc_over_obstacle
+  type: approach
+  generator: arc_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: world
+    offset:
+    - 0.5
+    - 0.0
+    - 0.5
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    arc_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    arc_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: above_obstacle
+- id: traverse_above_goal
+  type: push
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.35
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    traverse_offset_x:
+      type: scalar
+      range:
+      - -0.03
+      - 0.03
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: add
+    traverse_offset_y:
+      type: scalar
+      range:
+      - -0.03
+      - 0.03
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: add
+    traverse_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: obstacle_contact_traverse
+    when: during_phase
+    predicate: force_below
+    threshold: 5.0
+    on_failure: abort
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.005
+    - 0.0
+  subtask_id: reach_goal
+- id: descend_to_goal
+  type: push
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.015
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_offset_x:
+      type: scalar
+      range:
+      - -0.015
+      - 0.015
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: add
+    descend_offset_y:
+      type: scalar
+      range:
+      - -0.015
+      - 0.015
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: add
+    descend_offset_z:
+      type: scalar
+      range:
+      - -0.015
+      - 0.015
+      default: 0.0
+      binds_to:
+      - path: target.offset.z
+        mode: add
+    descend_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.08
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: obstacle_contact_descend
+    when: during_phase
+    predicate: force_below
+    threshold: 5.0
+    on_failure: abort
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.005
+    - 0.0
+  subtask_id: reach_goal

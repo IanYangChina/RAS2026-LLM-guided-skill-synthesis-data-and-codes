@@ -1,0 +1,161 @@
+skill: peg_insert
+dsl_version: 2
+skill_type: arm_gripper
+subtasks:
+  - id: approach_socket
+    anchor: goal
+    target_entity: tcp
+    metric: distance
+    offset: [0.0, 0.0, 0.10]
+    weight: 0.3
+  - id: insert_peg
+    anchor: goal
+    target_entity: tcp
+    metric: distance
+    offset: [0.0, 0.0, 0.0]
+    weight: 0.7
+phases:
+  - id: push_1
+    type: push
+    generator: linear_cartesian
+    control: position_control
+    termination: time_limit
+    subtask_id: approach_socket
+    target:
+      source: yaml
+      anchor: task_goal
+      entity: tcp
+      offset: [0.0, 0.0, 0.08]
+      orientation:
+        mode: align_axis
+        axis: [0.0, 0.0, 1.0]
+        align_with: insertion_axis
+        tolerance: 0.1
+    parameters:
+      push_depth:
+        type: scalar
+        range: [0.01, 0.1]
+        default: 0.05
+        binds_to:
+          - path: target.offset.z
+            mode: replace
+      generator_speed:
+        type: scalar
+        range: [0.02, 0.15]
+        default: 0.08
+        binds_to:
+          - path: generator.speed
+            mode: replace
+  - id: release_1
+    type: release
+    control: impedance_control
+    termination: time_limit
+    subtask_id: insert_peg
+    end_effector_action: open
+    target:
+      source: yaml
+      anchor: task_goal
+      entity: tcp
+      offset: [0.0, 0.0, 0.06]
+      orientation:
+        mode: align_axis
+        axis: [0.0, 0.0, 1.0]
+        align_with: insertion_axis
+        tolerance: 0.1
+    parameters:
+      release_distance:
+        type: scalar
+        range: [0.005, 0.03]
+        default: 0.01
+        binds_to:
+          - path: target.offset.z
+            mode: replace
+  - id: pull_1
+    type: pull
+    generator: arc_cartesian
+    control: impedance_control
+    termination: time_limit
+    subtask_id: insert_peg
+    target:
+      source: yaml
+      anchor: task_goal
+      entity: tcp
+      offset: [0.0, 0.0, 0.20]
+      offset_along_axis:
+        axis: world_z
+        distance: 0.10
+        mode: add_to_offset
+        sign: positive
+      orientation:
+        mode: keep_current
+    parameters:
+      pull_distance:
+        type: scalar
+        range: [0.02, 0.2]
+        default: 0.1
+        binds_to:
+          - path: target.offset_along_axis.distance
+            mode: replace
+  - id: release_2
+    type: release
+    generator: linear_cartesian
+    control: admittance_control
+    termination: pose_tolerance
+    subtask_id: insert_peg
+    end_effector_action: open
+    target:
+      source: yaml
+      anchor: task_goal
+      entity: tcp
+      offset: [0.0, 0.0, 0.06]
+      orientation:
+        mode: align_axis
+        axis: [0.0, 0.0, 1.0]
+        align_with: insertion_axis
+        tolerance: 0.1
+  - id: release_3
+    type: release
+    generator: linear_cartesian
+    control: position_control
+    termination: time_limit
+    subtask_id: insert_peg
+    end_effector_action: open
+    target:
+      source: yaml
+      anchor: task_goal
+      entity: tcp
+      offset: [0.0, 0.0, 0.06]
+      orientation:
+        mode: keep_current
+  - id: grasp_1
+    type: grasp
+    control: position_control
+    termination: time_limit
+    subtask_id: insert_peg
+    end_effector_action: force_grasp
+    target:
+      source: yaml
+      anchor: current_tcp
+      offset: [0.0, 0.0, 0.0]
+  - id: retract_1
+    type: retract
+    generator: linear_cartesian
+    control: position_control
+    termination: pose_tolerance
+    subtask_id: insert_peg
+    target:
+      source: yaml
+      anchor: task_goal
+      entity: tcp
+      offset: [0.0, 0.0, 0.15]
+      orientation:
+        mode: keep_current
+    parameters:
+      speed:
+        type: scalar
+        range: [0.01, 0.1]
+        default: 0.05
+        binds_to:
+          - path: generator.speed
+            mode: replace
+```

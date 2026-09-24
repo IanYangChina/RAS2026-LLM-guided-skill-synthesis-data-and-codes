@@ -1,0 +1,150 @@
+skill: door_push
+dsl_version: 2
+subtasks:
+- id: approach_sub
+  anchor: fixture
+  offset:
+  - -0.4
+  - -0.02
+  - 0.45
+  weight: 0.3
+- id: push_sub
+  anchor: fixture
+  target_entity: hinge
+  metric: hinge_angle
+  weight: 0.7
+phases:
+- id: approach_handle
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: door_panel
+    offset:
+    - -0.4
+    - -0.02
+    - 0.45
+    tolerance: 0.02
+    orientation:
+      mode: none
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.02
+      - 0.15
+      default: 0.08
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+  subtask_id: approach_sub
+- id: contact_handle
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: fixture
+    entity: door_panel
+    offset:
+    - -0.4
+    - -0.02
+    - 0.35
+    tolerance: 0.015
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: world_y
+      tolerance: 0.2
+  parameters:
+    contact_force_threshold:
+      type: scalar
+      range:
+      - 2.0
+      - 15.0
+      default: 8.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    descend_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: approach_sub
+- id: push_door
+  type: push
+  generator: linear_cartesian
+  control: admittance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: fixture
+    entity: door_panel
+    offset:
+    - -0.4
+    - -0.02
+    - 0.35
+    offset_along_axis:
+      distance: 0.25
+      axis: world_y
+      mode: add_to_offset
+      sign: negative
+    tolerance: 0.03
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: world_y
+      tolerance: 0.2
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.1
+      - 0.4
+      default: 0.25
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.15
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    push_timeout:
+      type: scalar
+      range:
+      - 3.0
+      - 15.0
+      default: 10.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+  subtask_id: push_sub

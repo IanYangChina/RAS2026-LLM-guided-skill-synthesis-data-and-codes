@@ -1,0 +1,120 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_behind
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.3
+      range:
+      - 0.1
+      - 0.5
+      type: scalar
+  subtask_id: behind_above
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.04
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.05
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_to_pushing_height
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.15
+      range:
+      - 0.05
+      - 0.4
+      type: scalar
+  subtask_id: behind_at_height
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.04
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.04
+  termination: pose_tolerance
+  type: descend
+- control: impedance_control
+  generator: linear_cartesian
+  id: push_to_goal
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.2
+      range:
+      - 0.1
+      - 0.35
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.4
+      type: scalar
+  subtask_id: push_to_goal
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.2
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: push
+skill: push_to_goal
+subtasks:
+- anchor: object
+  id: behind_above
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  weight: 0.2
+- anchor: object
+  id: behind_at_height
+  weight: 0.2
+- id: push_to_goal
+  metric: goal_progress
+  target_entity: object
+  weight: 0.6

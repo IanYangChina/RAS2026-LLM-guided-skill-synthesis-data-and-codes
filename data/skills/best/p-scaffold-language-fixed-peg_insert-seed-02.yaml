@@ -1,0 +1,171 @@
+skill: peg_insert
+phases:
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: socket_entry
+    offset:
+    - 0.0
+    - 0.0
+    - 0.04
+    tolerance: 0.005
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+      tolerance: 0.1
+  parameters:
+    lateral_offset_x:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: add
+    lateral_offset_y:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: add
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: socket_entry
+    offset:
+    - 0.0
+    - 0.0
+    - 0.01
+    tolerance: 0.003
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+- id: contact_1
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: socket_entry
+    offset:
+    - 0.0
+    - 0.0
+    - -0.01
+    tolerance: 0.002
+    orientation:
+      mode: keep_current
+  parameters:
+    contact_force_threshold:
+      type: scalar
+      range:
+      - 2.0
+      - 15.0
+      default: 8.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+  guards:
+  - id: contact_check
+    when: after_phase
+    predicate: contact_detected
+    threshold: 0.5
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.002
+- id: insert_1
+  type: insert
+  generator: linear_cartesian
+  control: impedance_control
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: socket_entry
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.04
+      axis: insertion_axis
+      mode: add_to_offset
+      sign: negative
+    tolerance: 0.005
+    orientation:
+      mode: keep_current
+  parameters:
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.02
+      - 0.055
+      default: 0.04
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+  guards:
+  - id: insertion_force_guard
+    when: during_phase
+    predicate: force_below
+    threshold: 35.0
+    on_failure: continue
+- id: retract_1
+  type: retract
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: socket_entry
+    offset:
+    - 0.0
+    - 0.0
+    - 0.08
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace

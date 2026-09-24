@@ -1,0 +1,212 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: arc_cartesian
+  guards:
+  - args: {}
+    id: lift_contact_guard
+    on_failure: abort
+    predicate: contact_detected
+    threshold: 1
+    when: during_phase
+  id: lift_1
+  parameters:
+    lift_arc_height:
+      binds_to:
+      - mode: replace
+        path: generator.arc_height
+      default: 0.06
+      range:
+      - 0.03
+      - 0.15
+      type: scalar
+    lift_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    lift_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.01
+      range:
+      - 0.005
+      - 0.02
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0
+    - 0
+    - 0
+    strategy: repeat
+  subtask_id: lift_over_obstacle
+  target:
+    anchor: fixture
+    entity: fixture
+    offset:
+    - 0.0
+    - 0.0
+    - 0.25
+    orientation:
+      mode: keep_current
+      tolerance: 0.01
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: forward_contact_guard
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 1
+    when: during_phase
+  id: forward_over_obstacle
+  parameters:
+    forward_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    forward_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.01
+      range:
+      - 0.005
+      - 0.02
+      type: scalar
+    retry_y_offset:
+      binds_to:
+      - mode: replace
+        path: retry.offset.y
+      default: 0.02
+      range:
+      - -0.05
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0
+    - 0.02
+    - 0
+    strategy: offset_target
+  subtask_id: above_goal
+  target:
+    anchor: task_goal
+    entity: null
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      mode: keep_current
+      tolerance: 0.01
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: descend_contact_guard
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 1
+    when: during_phase
+  id: descend_1
+  parameters:
+    descend_retry_y_offset:
+      binds_to:
+      - mode: replace
+        path: retry.offset.y
+      default: 0.02
+      range:
+      - -0.05
+      - 0.05
+      type: scalar
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.03
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    descend_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.01
+      range:
+      - 0.005
+      - 0.02
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0
+    - 0.02
+    - 0
+    strategy: offset_target
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    entity: null
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+      tolerance: 0.01
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+skill: obstacle_reach
+skill_type: arm
+subtasks:
+- anchor: fixture
+  id: lift_over_obstacle
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.25
+  target_entity: tcp
+  weight: 0.2
+- anchor: goal
+  id: above_goal
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.15
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: reach_goal
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.5

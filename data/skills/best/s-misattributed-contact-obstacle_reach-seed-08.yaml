@@ -1,0 +1,141 @@
+skill: obstacle_reach
+dsl_version: 2
+subtasks:
+- id: approach_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.25
+  weight: 0.3
+- id: reach_goal
+  weight: 0.7
+phases:
+- id: arc_over_obstacle
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.25
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.2
+      - 1.0
+      default: 0.6
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    approach_tolerance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.03
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.2
+      - 0.4
+      default: 0.25
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    ph_x_offset:
+      type: scalar
+      range:
+      - -0.05
+      - 0.05
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: add
+    ph_y_offset:
+      type: scalar
+      range:
+      - -0.05
+      - 0.05
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: add
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.03
+  subtask_id: approach_goal
+- id: descend_to_goal
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_tolerance:
+      type: scalar
+      range:
+      - 0.01
+      - 0.03
+      default: 0.02
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    descend_x_offset:
+      type: scalar
+      range:
+      - -0.05
+      - 0.05
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: add
+    descend_y_offset:
+      type: scalar
+      range:
+      - -0.05
+      - 0.05
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: add
+    descend_z_offset:
+      type: scalar
+      range:
+      - -0.02
+      - 0.02
+      default: 0.0
+      binds_to:
+      - path: target.offset.z
+        mode: add
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.01
+  subtask_id: reach_goal

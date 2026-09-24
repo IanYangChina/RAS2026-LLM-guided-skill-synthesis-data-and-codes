@@ -1,0 +1,203 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: contact_ok
+    on_failure: continue
+    predicate: contact_detected
+    threshold: 1
+    when: during_phase
+  id: approach_object
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.3
+      range:
+      - 0.1
+      - 0.5
+      type: scalar
+    lateral_offset_x:
+      binds_to:
+      - mode: add
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.02
+      - 0.02
+      type: scalar
+    lateral_offset_y:
+      binds_to:
+      - mode: add
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.02
+      - 0.02
+      type: scalar
+  subtask_id: reach_object
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+    orientation:
+      align_with: world_z
+      axis:
+      - 0
+      - 0
+      - 1
+      mode: align_axis
+      tolerance: 0.05
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: force_safe
+    on_failure: abort
+    predicate: force_below
+    threshold: 20.0
+    when: during_phase
+  id: descend_contact
+  parameters:
+    contact_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.04
+      range:
+      - 0.01
+      - 0.08
+      type: scalar
+    force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 6.0
+      range:
+      - 2.0
+      - 12.0
+      type: scalar
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - -0.015
+    orientation:
+      mode: keep_current
+    tolerance: 0.005
+  termination: force_exceeded
+  type: contact
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: contact_active
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 1
+    when: during_phase
+  - args: {}
+    id: object_moved
+    on_failure: retry
+    predicate: object_progress
+    threshold: 0.03
+    when: after_phase
+  id: push_to_goal
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.15
+      range:
+      - 0.05
+      - 0.25
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.12
+      range:
+      - 0.05
+      - 0.25
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.005
+    - 0.005
+    - 0.0
+    strategy: offset_target
+  subtask_id: push_to_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.15
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      align_with: world_z
+      axis:
+      - 0
+      - 0
+      - 1
+      mode: align_axis
+      tolerance: 0.05
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: push
+- control: position_control
+  generator: linear_cartesian
+  id: retract
+  parameters:
+    retract_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.3
+      range:
+      - 0.1
+      - 0.5
+      type: scalar
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.08
+    orientation:
+      mode: keep_current
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: retract
+skill: push_to_goal
+subtasks:
+- anchor: object
+  id: reach_object
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.05
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: push_to_goal
+  metric: goal_progress
+  target_entity: tcp
+  weight: 0.7

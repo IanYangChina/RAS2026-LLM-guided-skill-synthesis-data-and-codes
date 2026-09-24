@@ -1,0 +1,159 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_to_hover
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.01
+      - 0.2
+      type: scalar
+  subtask_id: reach_pre_contact
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.18
+    orientation:
+      align_with: world_z
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  guards:
+  - id: force_guard
+    on_failure: abort
+    predicate: force_below
+    threshold: 40.0
+    when: during_phase
+  id: descend_to_entry
+  parameters:
+    contact_force:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 5.0
+      range:
+      - 1.0
+      - 10.0
+      type: scalar
+    descend_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.06
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.08
+    offset_along_axis:
+      axis: world_z
+      distance: 0.06
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: force_exceeded
+  type: contact
+- control: admittance_control
+  generator: impedance_motion
+  guards:
+  - id: force_monitor
+    on_failure: retry
+    predicate: force_below
+    threshold: 60.0
+    when: during_phase
+  id: insert_into_hole
+  parameters:
+    force_high_threshold:
+      binds_to:
+      - mode: replace
+        path: guards.force_monitor.threshold
+      default: 60.0
+      range:
+      - 40.0
+      - 80.0
+      type: scalar
+    insertion_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - -0.005
+    - 0.005
+    - 0.0
+    strategy: offset_target
+  subtask_id: insertion_complete
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: world_z
+      distance: 0.05
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: insert
+- control: position_control
+  generator: linear_cartesian
+  id: retract_1
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: retract
+skill: peg_insert
+subtasks:
+- anchor: fixture
+  id: reach_pre_contact
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  weight: 0.3
+- anchor: fixture
+  id: insertion_complete
+  offset:
+  - 0.0
+  - 0.0
+  - -0.05
+  weight: 0.7

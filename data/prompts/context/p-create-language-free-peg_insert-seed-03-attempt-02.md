@@ -1,0 +1,437 @@
+## Search State
+
+- **Seed**: 3
+- **Iteration**: 3 / 15
+
+### Mutation History (most recent first)
+
+| Iter | Phase Sequence | Generators | Controls | Terminations | Params | Q | task_score | Result |
+|---|---|---|---|---|---|---|---|---|
+| 2 | approach → contact → insert → retract | arc_cartesian | linear_cartesian | impedance_motion | linear_cartesian | position_control | force_threshold_switch | admittance_control | position_control | pose_tolerance | force_exceeded | pose_tolerance | pose_tolerance | 4 | 0.1533 | 0.86 | ✅ accepted |
+| 1 | approach → contact → insert → retract | arc_cartesian | linear_cartesian | impedance_motion | linear_cartesian | position_control | force_threshold_switch | admittance_control | position_control | pose_tolerance | force_exceeded | pose_tolerance | pose_tolerance | 4 | 0.2657 | 0.86 | ✅ accepted |
+| 0 | approach → contact → insert → retract | linear_cartesian | linear_cartesian | impedance_motion | linear_cartesian | position_control | force_threshold_switch | admittance_control | position_control | pose_tolerance | force_exceeded | pose_tolerance | pose_tolerance | 2 | 0.5015 | 0.85 | ✅ accepted |
+
+**Proposal policy**: task_score is 0.86 — NOT near-perfect (target ≥ 0.9). Do NOT hold or make cosmetic tweaks. Make any coherent updates needed to address the diagnosed failure while preserving useful working structure. Use the Mutation History above to avoid repeating failed edits. - task_score ≈ 0: add or repair missing prerequisites, targets, guard/retry logic, generator/control choices, subtasks, or phase-ordering errors that block task progress.
+- task_score stagnant: change coupled targets, parameters, terminations, phase types, controls, subtasks, or ordering when evidence shows they need to change together.
+A HOLD wastes an iteration when task_score is below 0.9.
+
+## Optimisation Objective
+
+Your goal is to **maximise task_score first, then composite score Q**:
+
+> **Primary objective: task_score** — the fraction of episodes where the robot successfully completes the task. This is the most important metric. **Never propose a simpler or shorter skill if it reduces task_score.**
+
+> **Q = fitness_score + termination_fidelity − complexity_penalty**
+
+- `fitness_score`: shaped task reward (includes phase progress for contact-rich tasks)
+- `termination_fidelity`: fraction of phases that terminated by designed condition (not timeout)
+- `complexity_penalty`: cost for over-parameterised or over-phased designs
+
+**Warning**: Do not reduce phases or parameters to lower complexity if doing so reduces task_score. Structure complexity is only penalised when it adds no performance gain.
+
+# Proposal Context
+
+## Task Specification
+
+- Task name: peg_insert
+- Frozen realised-scene SHA-256: `3a9889f49656bcc88af2945ad0b69da740661b3d51c4f32509721809854ac75e`
+- Frozen object start: [0.5039660180420721, -2.3990369582946034e-19, 0.34030658323767055]
+- Frozen task target: [0.46685193337148995, -0.021055159472312023, 0.08]
+- Frozen socket pose: [0.46685193337148995, -0.021055159472312023, 0.025] (static fixture for this episode)
+- Goal object position: (0.46685193337148995, -0.021055159472312023, 0.025)
+- Object initial pose: (0.5039660180420721, -2.3990369582946034e-19, 0.34030658323767055)
+- Goal tolerance: 0.02 m
+- Expressivity sigma: 0.15 m
+- Expressivity threshold: 0.3
+- Force limit: 40.0 N
+- Channel axis: `(0.0, 0.0, -1.0)` — use `impedance_control` to absorb lateral wall forces
+- Robot initial TCP position: (0.5, 0.0, 0.3)
+- Phase navigation guidance: the task `phase_target_map` may provide internal predefined TCP waypoint aliases / semantic phase ids. These names are not DSL phase types and are intentionally not enumerated here to avoid confusing ids with types. Phase `id` may be semantic, but phase `type` must be exactly one of the DSL enum values listed in the prompt.
+- Primary evaluation target: **insertion depth ratio (axial progress into hole)**
+
+## Scene Entities
+
+robot:
+  model: panda_peg
+  tcp_site: attachment_site
+  gripper: null
+  tcp_initial_world: [0.5, 0, 0.3]
+objects:
+  - name: peg_socket
+    role: fixture
+    dynamics: static
+    geometry: box_with_hole
+    base_dimensions_m: [0.12, 0.12, 0.05]
+    hole_entry_height_m: 0.08
+  - name: peg
+    role: manipulated_object
+    dynamics: free
+    geometry: cylinder
+    note: peg is a fixed end-effector attachment on the panda_peg arm
+task_landmarks:
+  frozen_object_start: [0.504, -0, 0.3403]
+  frozen_task_target: [0.4669, -0.0211, 0.08]
+  frozen_socket_position: [0.4669, -0.0211, 0.025]
+  socket_state: static_frozen
+  frozen_object_starts: {'peg': [0.5039660180420721, -2.3990369582946034e-19, 0.34030658323767055]}
+  frozen_targets: {'socket_entry': [0.46685193337148995, -0.021055159472312023, 0.08]}
+  frozen_fixtures: {'peg_socket': [0.46685193337148995, -0.021055159472312023, 0.025]}
+  insertion_axis: [0, 0, -1]
+  goal_tolerance_m: 0.02
+  force_limit_n: 40
+  hole_depth_m: 0.05
+  force_scale_n: 5
+  realized_scene_sha256: 3a9889f49656bcc88af2945ad0b69da740661b3d51c4f32509721809854ac75e
+
+> ⚠️ **SUBTASK STRUCTURE CAUTION**: The current best task_score is 0.864, which indicates the subtask decomposition is already effective.
+> Preserve the current subtask decomposition unless the evidence shows a subtask change is necessary. Prefer refining phases, parameters, control modes, or termination conditions first.
+> Unnecessary subtask redesign when performance is already high often causes regression.
+
+## Subtask Layer
+
+**Mode**: free (you define subtask targets; use `subtasks:` block in your YAML)
+
+Define subtasks in a `subtasks:` block **before** `phases:`. Each subtask specifies an intermediate optimisation target.
+
+**Required fields** — always include both, never omit:
+- `anchor` (**required**): fixture | goal | object | world
+- `target_entity` (**required**): hinge | object | tcp
+
+Subtask anchors are separate from phase `target.anchor` vocabulary: subtasks use `world | object | goal | fixture`, while phase targets use `world | task_goal | task_object | fixture | body | site | current_tcp`.
+
+Optional fields:
+- `metric`: contact | distance | goal_progress | hinge_angle (default: distance)
+- `offset`: [x, y, z] in metres relative to anchor (default: [0, 0, 0])
+- `param_offset_key`: CMA-ES parameter added to offset at runtime (optional)
+- `weight`: scoring weight [0.1, 1.0] (default: 1.0)
+
+**Anchor resolution for this task** — choose anchor so the resolved position is meaningful:
+| Anchor | Resolves to | Best used for |
+|--------|-------------|---------------|
+| `world` | absolute world-frame coordinate | fixed reference points not tied to objects |
+| `object` | offset from object initial position (0.5039660180420721, -2.3990369582946034e-19, 0.34030658323767055) | approach/contact targets near object start |
+| `goal` | offset from task goal position (0.46685193337148995, -0.021055159472312023, 0.025) | final destination targets |
+| `fixture` | offset from fixture pose (0.46685193337148995, -0.021055159472312023, 0.025) | approach/contact targets near fixture |
+
+Annotate each phase with `subtask_id: <id>` to bind it to a subtask.
+Only the **last phase** bound to a given subtask contributes to subtask scoring.
+
+Example (two subtasks — one near object start, one at goal):
+```yaml
+subtasks:
+  - id: reach_pre_contact
+    anchor: object         # resolved to object initial position (see table above)
+    target_entity: tcp     # score TCP distance to this target
+    metric: distance
+    offset: [0.0, 0.0, 0.10]  # 10 cm above object start position
+    weight: 0.3
+  - id: reach_goal
+    anchor: goal           # resolved to task goal position (see table above)
+    target_entity: tcp
+    metric: distance
+    offset: [0.0, 0.0, 0.0]
+    weight: 0.7
+phases:
+  - id: approach_1
+    type: approach
+    subtask_id: reach_pre_contact
+    ...
+  - id: push_1
+    type: push
+    subtask_id: reach_goal
+    ...
+```
+
+## Current Skill (Q=0.153) — your mutation base
+
+```yaml
+skill: peg_insert
+dsl_version: 2
+subtasks:
+- id: reach_pre_contact
+  anchor: fixture
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  weight: 0.3
+- id: insertion_complete
+  anchor: fixture
+  offset:
+  - 0.0
+  - 0.0
+  - -0.05
+  weight: 0.7
+phases:
+- id: approach_to_hover
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: world_z
+      tolerance: 0.05
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.12
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+  subtask_id: reach_pre_contact
+- id: descend_to_contact
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.05
+      axis: world_z
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+  parameters:
+    contact_force:
+      type: scalar
+      range:
+      - 1.0
+      - 10.0
+      default: 5.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+  guards:
+  - id: force_guard
+    when: during_phase
+    predicate: force_below
+    threshold: 40.0
+    on_failure: abort
+- id: insert_into_hole
+  type: insert
+  generator: impedance_motion
+  control: admittance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.05
+      axis: world_z
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+  parameters:
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+  guards:
+  - id: force_monitor
+    when: during_phase
+    predicate: force_below
+    threshold: 40.0
+    on_failure: abort
+  subtask_id: insertion_complete
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      mode: keep_current
+
+```
+
+## Executable Phase Semantics
+
+Visible executable target/binding metadata from the compiled controller:
+- **approach_to_hover** (`approach`)
+  - target: source=yaml, anchor=task_goal, offset=[0.0, 0.0, 0.15]
+  - orientation: mode=align_axis, axis=[0.0, 0.0, 1.0], align_with=world_z, tolerance=0.05
+  - parameter_bindings:
+    - approach_speed: status=consumed; consumers=generator.speed (replace)
+    - arc_height: status=consumed; consumers=generator.arc_height (replace)
+- **descend_to_contact** (`contact`)
+  - target: source=yaml, anchor=current_tcp, offset=[0.0, 0.0, 0.0], offset_along_axis={axis=world_z, distance=0.05, mode=add_to_offset, sign=negative}
+  - orientation: mode=keep_current
+  - parameter_bindings:
+    - contact_force: status=consumed; consumers=termination.force_threshold (replace)
+  - guards:
+    - id=force_guard, when=during_phase, predicate=force_below, on_failure=abort, threshold=40.0
+- **insert_into_hole** (`insert`)
+  - target: source=yaml, anchor=current_tcp, offset=[0.0, 0.0, 0.0], offset_along_axis={axis=world_z, distance=0.05, mode=add_to_offset, sign=negative}
+  - orientation: mode=keep_current
+  - parameter_bindings:
+    - insertion_depth: status=consumed; consumers=target.offset_along_axis.distance (replace)
+  - guards:
+    - id=force_monitor, when=during_phase, predicate=force_below, on_failure=abort, threshold=40.0
+- **retract_1** (`retract`)
+  - target: source=yaml, anchor=task_goal, offset=[0.0, 0.0, 0.15]
+  - orientation: mode=keep_current
+  - parameter_bindings: none
+
+## Design Metrics
+
+- **Composite score**: 0.153
+- **task_score** (E): 0.864
+- **fitness_score**: 0.413  *(CMA-ES inner optimisation target; = task_score for most tasks; includes phase progress bonus for contact-rich tasks)*
+- **Termination Fidelity** (C): 0.000
+  → phases frequently time out instead of reaching designed conditions
+- **Force Compliance**: 0.000
+- **Complexity Penalty**: 0.260
+
+## Per-Phase Performance
+
+| Phase | Normal Term. Rate | Contact Rate | Mean Displacement (m) |
+|-------|-------------------|--------------|------------------------|
+| approach_to_hover | 0.00 | 1.00 | 0.1509 |
+| descend_to_contact | 0.00 | 1.00 | 0.0001 |
+
+## Last Optimised Execution State
+
+Mean phase-boundary state across the latest CMA-ES optimised traces (up to 8 phases; values rounded to 3 decimals).
+
+| Phase | Type | Normal / reason | TCP start→end | Object start→end | Obj→goal start→end | Contact rate / events | Peak force | Raw peak force |
+|---|---|---|---|---|---|---|---|---|
+| approach_to_hover | approach | 0.00 / step_budget | (0.500, -0.000, 0.301)→(0.463, 0.005, 0.155) | (0.504, -0.000, 0.340)→(0.501, 0.004, 0.143) | 0.260→0.065 | 1.00 / 1.333 | 291.558 | 1216.979 |
+| descend_to_contact | contact | 0.00 / guard_failure | (0.463, 0.005, 0.155)→(0.463, 0.005, 0.155) | (0.501, 0.004, 0.143)→(0.501, 0.004, 0.143) | 0.065→0.065 | 1.00 / 1.333 | 190.312 | 190.312 |
+
+## Task Sub-Scores
+
+These are diagnostics / optimiser fitness-shaping signals, not a guaranteed decomposition of canonical task_score.
+
+- distance_to_goal_ratio: 0.813
+- alignment_error: None
+- force_efficiency: 0.000
+- terminal_score: 0.813
+- phase_score: 0.207
+- phase_breakdown.reach_pre_contact_score: 0.689
+- phase_breakdown.insertion_complete_score: 0.000
+
+## CMA-ES Diagnostics
+
+- **Best shaped reward** (fitness_score): 0.449
+  *(shaped task+phase signal; this is the CMA-ES objective)*
+- **Best task_score**: 0.923
+- **Median Q (composite search score)**: 0.155
+- **K-run variance**: 0.0009
+- **Stagnated**: no
+- **Stop reason**: budget_exhausted
+- **Mean generations**: 9.0
+- **Final σ (mean)**: 0.286
+
+
+## Frozen randomized evaluation bank (shared across every structure)
+
+Bank SHA-256: `f11800d9c2e1994b03c35d775c68a936832c378ea82102a5404a99f161f65289`. Stable order: configuration 1 to configuration 3.
+
+### Nominal task randomization distribution and ranges
+
+These nominal ranges define how the fixed bank was sampled and remain valid alongside the realized facts below.
+
+```json
+{"distribution":"independent_uniform","parameters":{"enabled":true,"goal_xy_delta":[0.0,0.0],"object_xy_delta":[0.04,0.04]},"range_semantics":{"*_xy_delta":"independent per-axis draws in [-delta, +delta]","goal_z_delta":"draw in [0, max_delta]","hinge_delta_deg":"draw in [-delta_deg, +delta_deg]"}}
+```
+
+### Configuration 1 of 3
+
+Configuration SHA-256: `5ef8adc000d20c9595fb92eedb002c99ab6f0fb118834572ef2a426eae092b67`; realized-scene SHA-256: `3a9889f49656bcc88af2945ad0b69da740661b3d51c4f32509721809854ac75e`.
+
+<!-- skill-synthesis:realized-scene:v1 -->
+
+Realized scene facts (concise typed schema):
+
+```json
+{"anchors":[{"name":"object","value":[0.50397,-0.0,0.34031]},{"name":"task_object","value":[0.50397,-0.0,0.34031]},{"name":"fixture","value":[0.46685,-0.02106,0.025]},{"name":"target","value":[0.46685,-0.02106,0.025]},{"name":"socket","value":[0.46685,-0.02106,0.025]},{"name":"goal","value":[0.46685,-0.02106,0.025]}],"axes":[{"name":"insertion_axis","value":[0.0,0.0,-1.0]}],"fixture_states":[{"name":"peg_socket","state":"static_frozen"}],"fixtures":[{"name":"peg_socket","orientation":[1.0,0.0,0.0,0.0],"position":[0.46685,-0.02106,0.025]}],"limits":[{"name":"goal_tolerance_m","value":0.02},{"name":"force_limit_n","value":40.0},{"name":"hole_depth_m","value":0.05},{"name":"force_scale_n","value":5.0}],"object_starts":[{"name":"peg","position":[0.50397,-0.0,0.34031]}],"obstacles":[],"targets":[{"name":"socket_entry","position":[0.46685,-0.02106,0.08]}],"task_name":"peg_insert"}
+```
+
+Aligned optimization and replay/contact feedback:
+
+```json
+{"averaged_ik_statistics":{"available":true,"average_failure_count":0.0,"average_failure_rate":0.0,"average_mean_iterations":7.7619,"average_solve_count":21.0,"average_success_count":21.0,"replay_count":1},"omitted_parameter_count":0,"optimized_parameters":{"approach_to_hover.approach_speed":0.19838,"approach_to_hover.arc_height":0.19998,"descend_to_contact.contact_force":2.75349,"insert_into_hole.insertion_depth":0.03217},"optimized_scores":{"best_composite_score":0.18921,"best_fitness_score":0.44921,"best_task_score":0.81283},"replay_outcomes":[{"contacts":{"omitted_contact_groups":0,"reported_contact_groups":[{"body_a":"peg_socket","body_b":"link7","contact_count":422.0,"contact_point_centroid":[0.52655,-0.01244,0.07972],"force_p95":307.51133,"geom_a":"socket_collar_x1","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":false,"max_force":1330.5758,"mean_force":296.87472,"phase_index":0.0,"phase_name":"approach_to_hover","phase_type":"approach","tcp_position_centroid":[0.44989,-0.00756,0.12377]},{"body_a":"attachment","body_b":"peg_socket","contact_count":16.0,"contact_point_centroid":[0.43399,-0.01349,0.07902],"force_p95":790.9104,"geom_a":"peg_tip","geom_b":"socket_collar_x2","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":false,"max_force":868.55156,"mean_force":296.72172,"phase_index":0.0,"phase_name":"approach_to_hover","phase_type":"approach","tcp_position_centroid":[0.43027,-0.00668,0.08928]},{"body_a":"peg_socket","body_b":"link7","contact_count":1.0,"contact_point_centroid":[0.52679,-0.0133,0.07997],"force_p95":275.9734,"geom_a":"socket_collar_x1","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":false,"max_force":275.9734,"mean_force":275.9734,"phase_index":1.0,"phase_name":"descend_to_contact","phase_type":"contact","tcp_position_centroid":[0.45674,-0.00777,0.13321]}],"total_contact_groups":3},"final_pose_error":0.04994,"key_states":{"actual_goal_position":[0.5,0.0,0.08],"final_object_position":[0.46685,-0.02106,0.025],"final_tcp_position":[0.4568,-0.00776,0.13315],"realised_fixture_position":[0.46685,-0.02106,0.025],"realised_goal_position":[0.5,0.0,0.08],"realised_object_initial_position":[0.50397,-0.0,0.34031],"socket_entry_position":[0.46685,-0.02106,0.08]},"peak_contact_force":1330.5758,"phases":[{"contact_detected":true,"contact_event_count":1.0,"n_steps":513.0,"n_steps_budget":600.0,"object_pos_end":[0.49528,-0.00908,0.12256],"object_pos_start":[0.50397,-0.0,0.34031],"object_to_goal_dist_end":0.04378,"object_to_goal_dist_start":0.26034,"object_z_max":0.344,"peak_contact_force":308.12238,"phase_name":"approach_to_hover","phase_peak_obstacle_force":0.0,"phase_type":"approach","raw_contact_event_count":438.0,"raw_peak_contact_force":1330.5758,"subtask_id":"reach_pre_contact","tcp_end":[0.45674,-0.00777,0.13321],"tcp_start":[0.49985,-0.0,0.30052],"tcp_to_object_dist_end":0.04,"terminated_normally":false,"termination_reason":"step_budget"},{"contact_detected":true,"contact_event_count":1.0,"n_steps":1.0,"n_steps_budget":600.0,"object_pos_end":[0.49534,-0.00907,0.12252],"object_pos_start":[0.49528,-0.00908,0.12256],"object_to_goal_dist_end":0.04373,"object_to_goal_dist_start":0.04378,"object_z_max":0.12256,"peak_contact_force":275.9734,"phase_name":"descend_to_contact","phase_peak_obstacle_force":0.0,"phase_type":"contact","raw_contact_event_count":1.0,"raw_peak_contact_force":275.9734,"tcp_end":[0.4568,-0.00776,0.13315],"tcp_start":[0.45674,-0.00777,0.13321],"tcp_to_object_dist_end":0.04,"terminated_normally":false,"termination_reason":"guard_failure"}],"success":true}]}
+```
+
+### Configuration 2 of 3
+
+Configuration SHA-256: `3e77e957595308cac760f5f4d0307201511ded613ae0a20d2d9d48ef360ca4f0`; realized-scene SHA-256: `03ab66c73c39e70252b7764557f10cd17ad49cc08b28e1c3cb573bd8dcea88ba`.
+
+<!-- skill-synthesis:realized-scene:v1 -->
+
+Realized scene facts (concise typed schema):
+
+```json
+{"anchors":[{"name":"object","value":[0.50397,-0.0,0.34031]},{"name":"task_object","value":[0.50397,-0.0,0.34031]},{"name":"fixture","value":[0.53544,0.00091,0.025]},{"name":"target","value":[0.53544,0.00091,0.025]},{"name":"socket","value":[0.53544,0.00091,0.025]},{"name":"goal","value":[0.53544,0.00091,0.025]}],"axes":[{"name":"insertion_axis","value":[0.0,0.0,-1.0]}],"fixture_states":[{"name":"peg_socket","state":"static_frozen"}],"fixtures":[{"name":"peg_socket","orientation":[1.0,0.0,0.0,0.0],"position":[0.53544,0.00091,0.025]}],"limits":[{"name":"goal_tolerance_m","value":0.02},{"name":"force_limit_n","value":40.0},{"name":"hole_depth_m","value":0.05},{"name":"force_scale_n","value":5.0}],"object_starts":[{"name":"peg","position":[0.50397,-0.0,0.34031]}],"obstacles":[],"targets":[{"name":"socket_entry","position":[0.53544,0.00091,0.08]}],"task_name":"peg_insert"}
+```
+
+Aligned optimization and replay/contact feedback:
+
+```json
+{"averaged_ik_statistics":{"available":true,"average_failure_count":0.0,"average_failure_rate":0.0,"average_mean_iterations":8.42857,"average_solve_count":21.0,"average_success_count":21.0,"replay_count":1},"omitted_parameter_count":0,"optimized_parameters":{"approach_to_hover.approach_speed":0.12872,"approach_to_hover.arc_height":0.05305,"descend_to_contact.contact_force":5.7381,"insert_into_hole.insertion_depth":0.06847},"optimized_scores":{"best_composite_score":0.15508,"best_fitness_score":0.41508,"best_task_score":0.92283},"replay_outcomes":[{"contacts":{"omitted_contact_groups":0,"reported_contact_groups":[{"body_a":"attachment","body_b":"peg_socket","contact_count":13.0,"contact_point_centroid":[0.48686,0.00058,0.07876],"force_p95":1011.91261,"geom_a":"peg_tip","geom_b":"socket_collar_x2","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":false,"max_force":1069.88987,"mean_force":227.15452,"phase_index":0.0,"phase_name":"approach_to_hover","phase_type":"approach","tcp_position_centroid":[0.4824,0.00056,0.09183]},{"body_a":"peg_socket","body_b":"link7","contact_count":294.0,"contact_point_centroid":[0.59283,0.0042,0.07967],"force_p95":367.01418,"geom_a":"socket_collar_x1","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":false,"max_force":815.30001,"mean_force":234.49579,"phase_index":0.0,"phase_name":"approach_to_hover","phase_type":"approach","tcp_position_centroid":[0.47567,0.00092,0.14481]},{"body_a":"peg_socket","body_b":"link6","contact_count":119.0,"contact_point_centroid":[0.59536,-0.00027,0.07942],"force_p95":309.17556,"geom_a":"socket_collar_x1","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":false,"max_force":362.38975,"mean_force":233.24769,"phase_index":0.0,"phase_name":"approach_to_hover","phase_type":"approach","tcp_position_centroid":[0.47496,0.00113,0.15637]},{"body_a":"peg_socket","body_b":"link7","contact_count":1.0,"contact_point_centroid":[0.59442,0.00564,0.07993],"force_p95":165.34343,"geom_a":"socket_collar_x1","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":false,"max_force":165.34343,"mean_force":165.34343,"phase_index":1.0,"phase_name":"descend_to_contact","phase_type":"contact","tcp_position_centroid":[0.47445,0.0012,0.15566]},{"body_a":"peg_socket","body_b":"link6","contact_count":1.0,"contact_point_centroid":[0.5953,-0.00025,0.07932],"force_p95":100.2251,"geom_a":"socket_collar_x1","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":false,"max_force":100.2251,"mean_force":100.2251,"phase_index":1.0,"phase_name":"descend_to_contact","phase_type":"contact","tcp_position_centroid":[0.47445,0.0012,0.15566]}],"total_contact_groups":5},"final_pose_error":0.05008,"key_states":{"actual_goal_position":[0.5,0.0,0.08],"final_object_position":[0.53544,0.00091,0.025],"final_tcp_position":[0.47442,0.0012,0.15574],"realised_fixture_position":[0.53544,0.00091,0.025],"realised_goal_position":[0.5,0.0,0.08],"realised_object_initial_position":[0.50397,-0.0,0.34031],"socket_entry_position":[0.53544,0.00091,0.08]},"peak_contact_force":1069.88987,"phases":[{"contact_detected":true,"contact_event_count":2.0,"n_steps":438.0,"n_steps_budget":600.0,"object_pos_end":[0.51321,0.00116,0.14579],"object_pos_start":[0.50397,-0.0,0.34031],"object_to_goal_dist_end":0.06712,"object_to_goal_dist_start":0.26034,"object_z_max":0.34624,"peak_contact_force":316.60357,"phase_name":"approach_to_hover","phase_peak_obstacle_force":0.0,"phase_type":"approach","raw_contact_event_count":426.0,"raw_peak_contact_force":1069.88987,"subtask_id":"reach_pre_contact","tcp_end":[0.47445,0.0012,0.15566],"tcp_start":[0.49985,-0.0,0.30052],"tcp_to_object_dist_end":0.04,"terminated_normally":false,"termination_reason":"step_budget"},{"contact_detected":true,"contact_event_count":2.0,"n_steps":1.0,"n_steps_budget":600.0,"object_pos_end":[0.51318,0.00116,0.14585],"object_pos_start":[0.51321,0.00116,0.14579],"object_to_goal_dist_end":0.06717,"object_to_goal_dist_start":0.06712,"object_z_max":0.14579,"peak_contact_force":165.34343,"phase_name":"descend_to_contact","phase_peak_obstacle_force":0.0,"phase_type":"contact","raw_contact_event_count":2.0,"raw_peak_contact_force":165.34343,"tcp_end":[0.47442,0.0012,0.15574],"tcp_start":[0.47445,0.0012,0.15566],"tcp_to_object_dist_end":0.04,"terminated_normally":false,"termination_reason":"guard_failure"}],"success":true}]}
+```
+
+### Configuration 3 of 3
+
+Configuration SHA-256: `f1677605f38c34d5c76967e3b08a88589314d198860b89f86514cd0f3e96f4b3`; realized-scene SHA-256: `3a693f0216d44408acf55cd4ed5e7511210ea06892083b191557e74fdeb42bf8`.
+
+<!-- skill-synthesis:realized-scene:v1 -->
+
+Realized scene facts (concise typed schema):
+
+```json
+{"anchors":[{"name":"object","value":[0.50397,-0.0,0.34031]},{"name":"task_object","value":[0.50397,-0.0,0.34031]},{"name":"fixture","value":[0.5244,0.02464,0.025]},{"name":"target","value":[0.5244,0.02464,0.025]},{"name":"socket","value":[0.5244,0.02464,0.025]},{"name":"goal","value":[0.5244,0.02464,0.025]}],"axes":[{"name":"insertion_axis","value":[0.0,0.0,-1.0]}],"fixture_states":[{"name":"peg_socket","state":"static_frozen"}],"fixtures":[{"name":"peg_socket","orientation":[1.0,0.0,0.0,0.0],"position":[0.5244,0.02464,0.025]}],"limits":[{"name":"goal_tolerance_m","value":0.02},{"name":"force_limit_n","value":40.0},{"name":"hole_depth_m","value":0.05},{"name":"force_scale_n","value":5.0}],"object_starts":[{"name":"peg","position":[0.50397,-0.0,0.34031]}],"obstacles":[],"targets":[{"name":"socket_entry","position":[0.5244,0.02464,0.08]}],"task_name":"peg_insert"}
+```
+
+Aligned optimization and replay/contact feedback:
+
+```json
+{"averaged_ik_statistics":{"available":true,"average_failure_count":0.0,"average_failure_rate":0.0,"average_mean_iterations":7.7619,"average_solve_count":21.0,"average_success_count":21.0,"replay_count":1},"omitted_parameter_count":0,"optimized_parameters":{"approach_to_hover.approach_speed":0.14368,"approach_to_hover.arc_height":0.1241,"descend_to_contact.contact_force":8.39817,"insert_into_hole.insertion_depth":0.06378},"optimized_scores":{"best_composite_score":0.11556,"best_fitness_score":0.37556,"best_task_score":0.8553},"replay_outcomes":[{"contacts":{"omitted_contact_groups":0,"reported_contact_groups":[{"body_a":"peg_socket","body_b":"link6","contact_count":379.0,"contact_point_centroid":[0.58436,0.0161,0.07984],"force_p95":280.20957,"geom_a":"socket_collar_x1","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":false,"max_force":1250.47187,"mean_force":252.51637,"phase_index":0.0,"phase_name":"approach_to_hover","phase_type":"approach","tcp_position_centroid":[0.45505,0.01706,0.16336]},{"body_a":"peg_socket","body_b":"link7","contact_count":45.0,"contact_point_centroid":[0.56446,0.01193,0.07831],"force_p95":798.51214,"geom_a":"socket_collar_x1","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":false,"max_force":1170.64489,"mean_force":280.59988,"phase_index":0.0,"phase_name":"approach_to_hover","phase_type":"approach","tcp_position_centroid":[0.45315,0.01041,0.11366]},{"body_a":"attachment","body_b":"peg_socket","contact_count":9.0,"contact_point_centroid":[0.4654,0.00901,0.07897],"force_p95":1011.66055,"geom_a":"peg_tip","geom_b":"socket_collar_x2","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":false,"max_force":1049.96703,"mean_force":222.68532,"phase_index":0.0,"phase_name":"approach_to_hover","phase_type":"approach","tcp_position_centroid":[0.45735,0.009,0.09117]},{"body_a":"peg_socket","body_b":"link7","contact_count":25.0,"contact_point_centroid":[0.55063,-0.00566,0.07807],"force_p95":954.50238,"geom_a":"socket_collar_y2","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":false,"max_force":1020.37199,"mean_force":173.93408,"phase_index":0.0,"phase_name":"approach_to_hover","phase_type":"approach","tcp_position_centroid":[0.45421,0.00961,0.10062]},{"body_a":"peg_socket","body_b":"link6","contact_count":1.0,"contact_point_centroid":[0.58438,0.0183,0.07994],"force_p95":129.61977,"geom_a":"socket_collar_x1","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":false,"max_force":129.61977,"mean_force":129.61977,"phase_index":1.0,"phase_name":"descend_to_contact","phase_type":"contact","tcp_position_centroid":[0.45777,0.02082,0.17628]}],"total_contact_groups":5},"final_pose_error":0.04994,"key_states":{"actual_goal_position":[0.5,0.0,0.08],"final_object_position":[0.5244,0.02464,0.025],"final_tcp_position":[0.45775,0.02083,0.17622],"realised_fixture_position":[0.5244,0.02464,0.025],"realised_goal_position":[0.5,0.0,0.08],"realised_object_initial_position":[0.50397,-0.0,0.34031],"socket_entry_position":[0.5244,0.02464,0.08]},"peak_contact_force":1250.47187,"phases":[{"contact_detected":true,"contact_event_count":1.0,"n_steps":513.0,"n_steps_budget":600.0,"object_pos_end":[0.49506,0.02077,0.1618],"object_pos_start":[0.50397,-0.0,0.34031],"object_to_goal_dist_end":0.08454,"object_to_goal_dist_start":0.26034,"object_z_max":0.34479,"peak_contact_force":249.94743,"phase_name":"approach_to_hover","phase_peak_obstacle_force":0.0,"phase_type":"approach","raw_contact_event_count":458.0,"raw_peak_contact_force":1250.47187,"subtask_id":"reach_pre_contact","tcp_end":[0.45777,0.02082,0.17628],"tcp_start":[0.49985,-0.0,0.30052],"tcp_to_object_dist_end":0.04,"terminated_normally":false,"termination_reason":"step_budget"},{"contact_detected":true,"contact_event_count":1.0,"n_steps":1.0,"n_steps_budget":600.0,"object_pos_end":[0.49504,0.02078,0.16174],"object_pos_start":[0.49506,0.02077,0.1618],"object_to_goal_dist_end":0.08448,"object_to_goal_dist_start":0.08454,"object_z_max":0.1618,"peak_contact_force":129.61977,"phase_name":"descend_to_contact","phase_peak_obstacle_force":0.0,"phase_type":"contact","raw_contact_event_count":1.0,"raw_peak_contact_force":129.61977,"tcp_end":[0.45775,0.02083,0.17622],"tcp_start":[0.45777,0.02082,0.17628],"tcp_to_object_dist_end":0.04,"terminated_normally":false,"termination_reason":"guard_failure"}],"success":true}]}
+```

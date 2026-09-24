@@ -1,0 +1,59 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: linear_approach
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.12
+      range:
+      - 0.08
+      - 0.2
+      type: scalar
+  subtask_id: approach_clear
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: precise_descend
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.15
+      type: scalar
+  subtask_id: goal_contact
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: pose_tolerance
+  type: descend
+skill: obstacle_reach
+skill_type: arm_gripper
+subtasks:
+- id: approach_clear
+  offset:
+  - 0.0
+  - 0.0
+  - 0.2
+  weight: 0.3
+- id: goal_contact
+  weight: 0.7

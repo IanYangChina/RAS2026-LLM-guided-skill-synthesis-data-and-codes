@@ -1,0 +1,178 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_peg
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  subtask_id: reach_approach
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.05
+    - 0.1
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: descend_contact
+  parameters:
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 2.0
+      range:
+      - 1.0
+      - 5.0
+      type: scalar
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - -0.005
+    - 0.0
+    strategy: offset_target
+  subtask_id: reach_contact
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.03
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: force_exceeded
+  type: descend
+- control: admittance_control
+  generator: impedance_motion
+  guards:
+  - id: push_force_limit
+    on_failure: retry
+    predicate: force_below
+    threshold: 35.0
+    when: during_phase
+  id: push_channel
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.16
+      range:
+      - 0.12
+      - 0.2
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.015
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 2
+    strategy: reduce_speed
+  subtask_id: push_complete
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: channel_axis
+      distance: 0.16
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.1
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: push
+- control: position_control
+  generator: linear_cartesian
+  id: retract_away
+  parameters:
+    retract_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: retract
+skill: peg_channel
+skill_type: arm_gripper
+subtasks:
+- anchor: object
+  id: reach_approach
+  offset:
+  - 0.0
+  - 0.05
+  - 0.1
+  weight: 0.2
+- anchor: object
+  id: reach_contact
+  offset:
+  - 0.0
+  - 0.03
+  - 0.0
+  weight: 0.2
+- anchor: goal
+  id: push_complete
+  metric: goal_progress
+  target_entity: object
+  weight: 0.6

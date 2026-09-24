@@ -1,0 +1,140 @@
+skill: obstacle_reach
+dsl_version: 2
+phases:
+- id: approach_clearance
+  type: approach
+  generator: arc_cartesian
+  control: impedance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - -0.1
+    - 0.3
+    - 0.25
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.15
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    approach_time:
+      type: scalar
+      range:
+      - 1.0
+      - 5.0
+      default: 2.5
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.1
+      - 0.35
+      default: 0.2
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    high_z_offset:
+      type: scalar
+      range:
+      - 0.15
+      - 0.35
+      default: 0.25
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    lateral_y_offset:
+      type: scalar
+      range:
+      - 0.2
+      - 0.4
+      default: 0.3
+      binds_to:
+      - path: target.offset.y
+        mode: replace
+- id: align_lateral
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - -0.1
+    - 0.0
+    - 0.25
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    align_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.15
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    align_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.02
+      default: 0.01
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    high_z_offset:
+      type: scalar
+      range:
+      - 0.15
+      - 0.35
+      default: 0.25
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+- id: push_to_goal
+  type: push
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    push_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.02
+      default: 0.01
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace

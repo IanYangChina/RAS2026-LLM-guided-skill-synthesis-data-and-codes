@@ -1,0 +1,78 @@
+skill: door_push
+dsl_version: 2
+phases:
+- id: approach_handle
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: door_panel
+    offset:
+    - -0.4
+    - -0.02
+    - 0.35
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+- id: push_door
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: door_panel
+    offset:
+    - -0.4
+    - -0.02
+    - 0.35
+    offset_along_axis:
+      distance: 0.15
+      axis: world_y
+      mode: add_to_offset
+      sign: negative
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    pose_tol:
+      type: scalar
+      range:
+      - 0.01
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    push_distance:
+      type: scalar
+      range:
+      - 0.1
+      - 0.4
+      default: 0.25
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace

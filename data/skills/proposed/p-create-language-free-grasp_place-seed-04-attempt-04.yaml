@@ -1,0 +1,231 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  subtask_id: reach_pre_grasp
+  target:
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.08
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_1
+  target:
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.03
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: descend
+- control: position_control
+  end_effector_action: force_grasp
+  guards:
+  - id: bilateral_check
+    on_failure: retry
+    predicate: bilateral_grasp
+    threshold: 0.001
+    when: after_phase
+  id: grasp_1
+  retries:
+    max_attempts: 2
+    strategy: repeat
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: none
+    source: yaml
+  termination: grasp_success
+  type: grasp
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - id: lift_check
+    on_failure: retry
+    predicate: object_lifted
+    threshold: 0.05
+    when: after_phase
+  id: lift_1
+  parameters:
+    lift_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+    lift_z:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.18
+      range:
+      - 0.12
+      - 0.22
+      type: scalar
+  retries:
+    max_attempts: 2
+    strategy: repeat
+  subtask_id: lift_clearance
+  target:
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.18
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: lift
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - id: check_object_lifted
+    on_failure: retry
+    predicate: object_lifted
+    threshold: 0.05
+    when: after_phase
+  id: transport_to_goal
+  parameters:
+    transport_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.08
+      type: scalar
+  retries:
+    max_attempts: 2
+    strategy: reduce_speed
+  subtask_id: reach_pre_place
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.08
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: approach
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - id: check_object_held_before_descend
+    on_failure: retry
+    predicate: object_lifted
+    threshold: 0.05
+    when: before_phase
+  id: descend_2
+  retries:
+    max_attempts: 2
+    strategy: reduce_speed
+  subtask_id: place_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: descend
+- control: position_control
+  end_effector_action: open
+  id: release_1
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: none
+    source: yaml
+  termination: time_limit
+  type: release
+- control: position_control
+  generator: linear_cartesian
+  id: retract_1
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: retract
+skill: grasp_place
+skill_type: arm_gripper
+subtasks:
+- anchor: object
+  id: reach_pre_grasp
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.08
+  target_entity: tcp
+  weight: 0.2
+- anchor: object
+  id: lift_clearance
+  metric: goal_progress
+  offset:
+  - 0.0
+  - 0.0
+  - 0.15
+  target_entity: object
+  weight: 0.2
+- anchor: goal
+  id: reach_pre_place
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.08
+  target_entity: tcp
+  weight: 0.2
+- anchor: goal
+  id: place_goal
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: object
+  weight: 0.4

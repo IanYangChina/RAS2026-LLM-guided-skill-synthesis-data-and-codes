@@ -1,0 +1,206 @@
+skill: peg_insert
+dsl_version: 2
+subtasks:
+- id: reach_above_socket
+  anchor: fixture
+  offset:
+  - 0.0
+  - 0.0
+  - 0.15
+  weight: 0.3
+- id: reach_socket_entry
+  anchor: fixture
+  offset:
+  - 0.0
+  - 0.0
+  - 0.055
+  weight: 0.2
+- id: insertion_depth
+  target_entity: object
+  metric: goal_progress
+  weight: 0.5
+phases:
+- id: approach_to_socket
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    tolerance: 0.01
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: world_z
+      tolerance: 0.05
+  parameters:
+    approach_arc:
+      type: scalar
+      range:
+      - 0.02
+      - 0.08
+      default: 0.05
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    approach_height:
+      type: scalar
+      range:
+      - 0.1
+      - 0.25
+      default: 0.15
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    approach_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    approach_tol:
+      type: scalar
+      range:
+      - 0.005
+      - 0.02
+      default: 0.01
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  subtask_id: reach_above_socket
+- id: descend_to_entry
+  type: descend
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.055
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.03
+      default: 0.01
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    force_threshold:
+      type: scalar
+      range:
+      - 1.0
+      - 15.0
+      default: 5.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+  subtask_id: reach_socket_entry
+- id: insert_peg
+  type: insert
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.055
+      axis: world_z
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      mode: keep_current
+  parameters:
+    force_limit:
+      type: scalar
+      range:
+      - 40.0
+      - 80.0
+      default: 50.0
+      binds_to:
+      - path: guards.force_limit_guard.threshold
+        mode: replace
+    insert_depth:
+      type: scalar
+      range:
+      - 0.03
+      - 0.08
+      default: 0.055
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    insert_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.02
+      default: 0.01
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    insert_tol:
+      type: scalar
+      range:
+      - 0.01
+      - 0.03
+      default: 0.02
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    retry_offset_x:
+      type: scalar
+      range:
+      - 0.003
+      - 0.01
+      default: 0.006
+      binds_to:
+      - path: retry.offset.x
+        mode: replace
+    retry_offset_y:
+      type: scalar
+      range:
+      - 0.003
+      - 0.01
+      default: 0.006
+      binds_to:
+      - path: retry.offset.y
+        mode: replace
+  guards:
+  - id: force_limit_guard
+    when: during_phase
+    predicate: force_below
+    threshold: 50.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.006
+    - 0.006
+    - 0.0
+  subtask_id: insertion_depth

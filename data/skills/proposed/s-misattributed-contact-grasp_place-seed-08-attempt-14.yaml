@@ -1,0 +1,277 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    approach_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.12
+      range:
+      - 0.08
+      - 0.15
+      type: scalar
+    approach_x:
+      binds_to:
+      - mode: replace
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.03
+      - 0.03
+      type: scalar
+    approach_y:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.03
+      - 0.03
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  subtask_id: reach_object
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.12
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_1
+  parameters:
+    descend_x:
+      binds_to:
+      - mode: replace
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.02
+      - 0.02
+      type: scalar
+    descend_y:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.02
+      - 0.02
+      type: scalar
+    descend_z:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.055
+      range:
+      - 0.04
+      - 0.07
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: reach_object
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.055
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: descend
+- control: position_control
+  end_effector_action: force_grasp
+  id: grasp_1
+  subtask_id: reach_object
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: grasp_success
+  type: grasp
+- control: position_control
+  generator: linear_cartesian
+  id: lift_1
+  parameters:
+    lift_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.15
+      range:
+      - 0.12
+      - 0.2
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.15
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  subtask_id: reach_object
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.03
+  termination: pose_tolerance
+  type: lift
+- control: position_control
+  generator: linear_cartesian
+  id: move_above_goal
+  parameters:
+    above_goal_x:
+      binds_to:
+      - mode: replace
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.06
+      - 0.06
+      type: scalar
+    above_goal_y:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.06
+      - 0.06
+      type: scalar
+    above_goal_z:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.08
+      range:
+      - 0.04
+      - 0.12
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.3
+      range:
+      - 0.1
+      - 0.5
+      type: scalar
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.08
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.03
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: place_at_goal
+  parameters:
+    place_x:
+      binds_to:
+      - mode: replace
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.03
+      - 0.03
+      type: scalar
+    place_y:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.03
+      - 0.03
+      type: scalar
+    place_z:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.0
+      range:
+      - -0.02
+      - 0.02
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: descend
+skill: grasp_place
+skill_type: arm_gripper
+subtasks:
+- anchor: object
+  id: reach_object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.15
+  target_entity: tcp
+  weight: 0.4
+- anchor: goal
+  id: reach_goal
+  target_entity: object
+  weight: 0.6

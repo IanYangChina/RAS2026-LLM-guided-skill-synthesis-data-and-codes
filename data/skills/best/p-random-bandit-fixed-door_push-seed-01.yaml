@@ -1,0 +1,56 @@
+skill: door_push
+phases:
+- id: rotate_1
+  type: rotate
+  generator: arc_cartesian
+  control: impedance_control
+  termination: time_limit
+  parameters:
+    param_0:
+      type: scalar
+      range:
+      - 0.13840774964442448
+      - 0.604530122336367
+    yaw_angle:
+      type: angle
+      range:
+      - 0.1
+      - 1.57
+- id: rotate_2
+  type: rotate
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    lateral_offset_x:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+- id: push_1
+  type: push
+  generator: impedance_motion
+  control: position_control
+  termination: time_limit
+  parameters:
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: release_1
+  type: release
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    param_0:
+      type: scalar
+      range:
+      - -0.13446586418989326
+      - 0.524560164915884

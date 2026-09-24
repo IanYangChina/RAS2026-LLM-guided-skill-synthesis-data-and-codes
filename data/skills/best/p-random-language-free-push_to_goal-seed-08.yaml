@@ -1,0 +1,99 @@
+skill: push_to_goal
+dsl_version: 2
+subtasks:
+- id: contact_box
+  anchor: object
+  weight: 0.3
+- id: push_to_goal
+  target_entity: object
+  metric: goal_progress
+  weight: 0.7
+phases:
+- id: descend_behind
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: contact_detected
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.05
+      axis: task_goal_direction
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_distance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    approach_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.15
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: contact_box
+- id: push_to_goal
+  type: push
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.15
+      axis: task_goal_direction
+      mode: add_to_offset
+      sign: positive
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    push_extra:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.15
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: contact_ok
+    when: during_phase
+    predicate: contact_detected
+    threshold: 0.5
+    on_failure: retry
+  retries:
+    max_attempts: 1
+    strategy: reduce_speed
+  subtask_id: push_to_goal

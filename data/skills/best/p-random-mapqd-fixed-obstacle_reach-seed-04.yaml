@@ -1,0 +1,35 @@
+skill: obstacle_reach
+skill_type: arm_gripper
+phases:
+- id: push_1
+  type: push
+  generator: impedance_motion
+  control: position_control
+  termination: time_limit
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: grasp_1
+  type: grasp
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: release_1
+  type: release
+  generator: linear_cartesian
+  control: position_control
+  termination: contact_lost
+  end_effector_action: open

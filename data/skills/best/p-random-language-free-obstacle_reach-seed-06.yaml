@@ -1,0 +1,92 @@
+skill: obstacle_reach
+dsl_version: 2
+skill_type: arm_gripper
+subtasks:
+- id: reach_overhead
+  offset:
+  - 0.0
+  - 0.0
+  - 0.35
+  weight: 0.3
+- id: reach_goal
+  weight: 0.7
+phases:
+- id: approach_over_obstacle
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.35
+    tolerance: 0.01
+    orientation:
+      mode: none
+  parameters:
+    arc_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.25
+      default: 0.15
+      binds_to:
+      - path: generator.arc_height
+        mode: add
+    pose_tolerance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.3
+      default: 0.2
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_overhead
+- id: descend_to_goal
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.01
+    orientation:
+      mode: none
+  parameters:
+    pose_tolerance:
+      type: scalar
+      range:
+      - 0.01
+      - 0.025
+      default: 0.015
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.35
+      default: 0.2
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_goal

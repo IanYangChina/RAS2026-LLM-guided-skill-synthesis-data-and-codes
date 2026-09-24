@@ -1,0 +1,169 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: align_1
+  parameters:
+    lateral_offset_y:
+      binds_to:
+      - mode: add
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.01
+      - 0.01
+      type: scalar
+  subtask_id: align
+  target:
+    anchor: task_goal
+    offset:
+    - 0
+    - 0
+    - 0.15
+    orientation:
+      align_with: insertion_axis
+      axis:
+      - 0
+      - 0
+      - -1
+      mode: align_axis
+    source: yaml
+  termination: pose_tolerance
+  type: align
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  subtask_id: approach
+  target:
+    anchor: task_goal
+    offset:
+    - 0
+    - 0
+    - 0.03
+    orientation:
+      align_with: insertion_axis
+      axis:
+      - 0
+      - 0
+      - -1
+      mode: align_axis
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: contact_1
+  parameters:
+    contact_force:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 5.0
+      range:
+      - 1.0
+      - 20.0
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+  subtask_id: contact
+  target:
+    anchor: task_goal
+    offset:
+    - 0
+    - 0
+    - -0.02
+    orientation:
+      align_with: insertion_axis
+      axis:
+      - 0
+      - 0
+      - -1
+      mode: align_axis
+    source: yaml
+  termination: force_exceeded
+  type: contact
+- control: admittance_control
+  generator: linear_cartesian
+  id: insert_1
+  parameters:
+    insertion_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.04
+      range:
+      - 0.01
+      - 0.06
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.01
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+  subtask_id: insert
+  target:
+    anchor: task_goal
+    offset:
+    - 0
+    - 0
+    - 0
+    offset_along_axis:
+      axis: insertion_axis
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      align_with: insertion_axis
+      axis:
+      - 0
+      - 0
+      - -1
+      mode: align_axis
+    source: yaml
+  termination: pose_tolerance
+  type: insert
+- control: position_control
+  generator: linear_cartesian
+  id: retract_1
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0
+    - 0
+    - 0.15
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: retract
+skill: peg_insert

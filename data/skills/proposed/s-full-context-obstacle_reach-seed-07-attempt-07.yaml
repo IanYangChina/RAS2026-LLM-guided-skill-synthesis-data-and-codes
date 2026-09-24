@@ -1,0 +1,231 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: lift_z
+  parameters:
+    lift_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+    lift_z_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.1
+      range:
+      - 0.05
+      - 0.15
+      type: scalar
+  subtask_id: lift_clear
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: lift
+- control: position_control
+  generator: arc_cartesian
+  id: move_lateral
+  parameters:
+    arc_height:
+      binds_to:
+      - mode: replace
+        path: generator.arc_height
+      default: 0.2
+      range:
+      - 0.1
+      - 0.3
+      type: scalar
+    lateral_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.03
+      - 0.15
+      type: scalar
+    lateral_y:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.25
+      range:
+      - 0.15
+      - 0.35
+      type: scalar
+    lateral_z:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.25
+      range:
+      - 0.15
+      - 0.35
+      type: scalar
+  subtask_id: move_around
+  target:
+    anchor: fixture
+    offset:
+    - 0.0
+    - 0.25
+    - 0.25
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: arc_cartesian
+  guards:
+  - args: {}
+    id: obstacle_contact_guard
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 1.0
+    when: during_phase
+  id: move_forward
+  parameters:
+    forward_retry_y_offset:
+      binds_to:
+      - mode: replace
+        path: retry.offset.y
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    strategy: offset_target
+  subtask_id: approach_goal_lateral
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.2
+    - 0.25
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: align_y
+  parameters:
+    align_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: approach_goal_lateral
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.25
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: descend_obstacle_guard
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 1.0
+    when: during_phase
+  - args: {}
+    id: descend_force_guard
+    on_failure: retry
+    predicate: force_below
+    threshold: 5.0
+    when: during_phase
+  id: descend_to_goal
+  parameters:
+    descend_retry_y_offset:
+      binds_to:
+      - mode: replace
+        path: retry.offset.y
+      default: 0.03
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    descend_retry_z_offset:
+      binds_to:
+      - mode: replace
+        path: retry.offset.z
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    strategy: offset_target
+  subtask_id: final_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+skill: obstacle_reach
+subtasks:
+- anchor: world
+  id: lift_clear
+  offset:
+  - 0.35
+  - 0.0
+  - 0.4
+  weight: 0.1
+- anchor: fixture
+  id: move_around
+  offset:
+  - 0.0
+  - 0.25
+  - 0.25
+  weight: 0.2
+- anchor: goal
+  id: approach_goal_lateral
+  offset:
+  - 0.0
+  - 0.25
+  - 0.25
+  weight: 0.25
+- anchor: goal
+  id: final_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  weight: 0.45

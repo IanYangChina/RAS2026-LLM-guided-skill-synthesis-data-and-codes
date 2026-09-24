@@ -1,0 +1,174 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: rise_above_obstacle
+  parameters:
+    rise_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    rise_z:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.25
+      range:
+      - 0.1
+      - 0.4
+      type: scalar
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.25
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.05
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: lateral_clear
+  parameters:
+    lateral_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    lateral_y:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.2
+      range:
+      - 0.15
+      - 0.35
+      type: scalar
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.2
+    - 0.0
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.05
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: forward_approach
+  parameters:
+    forward_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    forward_y:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.2
+      range:
+      - 0.15
+      - 0.35
+      type: scalar
+    forward_z:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.4
+      range:
+      - 0.3
+      - 0.5
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.2
+    - 0.4
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.05
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: lateral_recenter
+  parameters:
+    recenter_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    recenter_z:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.4
+      range:
+      - 0.3
+      - 0.5
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.4
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.05
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: vertical_descend
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.015
+  termination: pose_tolerance
+  type: descend
+skill: obstacle_reach
+skill_type: arm

@@ -1,0 +1,107 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: lift_1
+  orientation:
+    mode: keep_current
+  parameters:
+    lift_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.2
+      range:
+      - 0.15
+      - 0.3
+      type: scalar
+  subtask_id: clear_obstacle
+  target:
+    anchor: fixture
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    source: yaml
+  termination: pose_tolerance
+  type: lift
+- control: position_control
+  generator: linear_cartesian
+  id: travel_1
+  orientation:
+    mode: keep_current
+  parameters:
+    travel_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.2
+      range:
+      - 0.15
+      - 0.3
+      type: scalar
+  subtask_id: above_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_1
+  orientation:
+    mode: keep_current
+  parameters:
+    descent_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.01
+      - 0.03
+      type: scalar
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: pose_tolerance
+  type: descend
+skill: obstacle_reach
+skill_type: arm_gripper
+subtasks:
+- anchor: fixture
+  id: clear_obstacle
+  metric: distance
+  offset:
+  - 0
+  - 0
+  - 0.23
+  target_entity: tcp
+  weight: 0.2
+- anchor: goal
+  id: above_goal
+  metric: distance
+  offset:
+  - 0
+  - 0
+  - 0.2
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: reach_goal
+  metric: distance
+  offset:
+  - 0
+  - 0
+  - 0.0
+  target_entity: tcp
+  weight: 0.5

@@ -1,0 +1,129 @@
+skill: peg_insert
+dsl_version: 2
+phases:
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.12
+    orientation:
+      mode: keep_current
+  subtask_id: align
+- id: approach_2
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.09
+    orientation:
+      mode: keep_current
+  subtask_id: approach
+- id: contact_1
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+      tolerance: 0.05
+  parameters:
+    force_threshold:
+      type: scalar
+      range:
+      - 2.0
+      - 20.0
+      default: 8.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: contact_detected_guard
+    when: during_phase
+    predicate: contact_detected
+    threshold: 1.0
+    on_failure: continue
+  subtask_id: contact
+- id: insert_1
+  type: insert
+  generator: impedance_motion
+  control: impedance_control
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+      tolerance: 0.05
+  parameters:
+    insert_force_threshold:
+      type: scalar
+      range:
+      - 10.0
+      - 40.0
+      default: 25.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    insert_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.015
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: force_below_guard
+    when: during_phase
+    predicate: force_below
+    threshold: 40.0
+    on_failure: abort
+  subtask_id: insert

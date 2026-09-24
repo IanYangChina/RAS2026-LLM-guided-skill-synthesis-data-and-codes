@@ -1,0 +1,242 @@
+skill: peg_insert
+dsl_version: 2
+subtasks:
+- id: approach_target
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  weight: 0.3
+- id: insert_target
+  metric: goal_progress
+  weight: 0.7
+phases:
+- id: approach_entry
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    orientation:
+      mode: none
+  parameters:
+    approach_height:
+      type: scalar
+      range:
+      - 0.08
+      - 0.18
+      default: 0.12
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    approach_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    approach_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.02
+      default: 0.01
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.15
+      default: 0.08
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+  subtask_id: approach_target
+- id: align_over_hole
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.12
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - -1.0
+      align_with: insertion_axis
+      tolerance: 0.1
+  parameters:
+    align_height:
+      type: scalar
+      range:
+      - 0.08
+      - 0.18
+      default: 0.12
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    align_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.08
+      default: 0.04
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    align_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.015
+      default: 0.008
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    lateral_x:
+      type: scalar
+      range:
+      - -0.02
+      - 0.02
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: replace
+    lateral_y:
+      type: scalar
+      range:
+      - -0.02
+      - 0.02
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: replace
+  subtask_id: approach_target
+- id: descent_into_hole
+  type: contact
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.005
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - -1.0
+      align_with: insertion_axis
+      tolerance: 0.05
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.003
+      - 0.015
+      default: 0.008
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    descend_tolerance:
+      type: scalar
+      range:
+      - 0.002
+      - 0.015
+      default: 0.008
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    guard_force_limit:
+      type: scalar
+      range:
+      - 5.0
+      - 35.0
+      default: 25.0
+      binds_to:
+      - path: guards.high_force.threshold
+        mode: replace
+  guards:
+  - id: high_force
+    when: during_phase
+    predicate: force_below
+    threshold: 25.0
+    on_failure: abort
+  subtask_id: insert_target
+- id: final_insert
+  type: insert
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - -0.055
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - -1.0
+      align_with: insertion_axis
+      tolerance: 0.1
+  parameters:
+    guard_force_limit:
+      type: scalar
+      range:
+      - 5.0
+      - 35.0
+      default: 25.0
+      binds_to:
+      - path: guards.high_force.threshold
+        mode: replace
+    insert_speed:
+      type: scalar
+      range:
+      - 0.003
+      - 0.015
+      default: 0.008
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    insert_tolerance:
+      type: scalar
+      range:
+      - 0.002
+      - 0.015
+      default: 0.008
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  guards:
+  - id: high_force
+    when: during_phase
+    predicate: force_below
+    threshold: 25.0
+    on_failure: abort
+  subtask_id: insert_target

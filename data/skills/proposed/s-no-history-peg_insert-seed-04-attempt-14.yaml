@@ -1,0 +1,192 @@
+dsl_version: 2
+phases:
+- control: position_control
+  end_effector_action: null
+  generator: linear_cartesian
+  guards: []
+  id: approach_1
+  parameters:
+    approach_offset_z:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.03
+      range:
+      - 0.02
+      - 0.08
+      type: scalar
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  retries:
+    max_attempts: 0
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    strategy: repeat
+  subtask_id: approach_pre_insert
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.03
+    offset_along_axis:
+      axis: insertion_axis
+      distance: 0.0
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      align_with: insertion_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.1
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  end_effector_action: null
+  generator: linear_cartesian
+  guards: []
+  id: align_1
+  parameters:
+    align_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.01
+      range:
+      - 0.002
+      - 0.02
+      type: scalar
+    lateral_offset_x:
+      binds_to:
+      - mode: replace
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.015
+      - 0.015
+      type: scalar
+    lateral_offset_y:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.015
+      - 0.015
+      type: scalar
+  retries:
+    max_attempts: 0
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    strategy: repeat
+  subtask_id: approach_pre_insert
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.03
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: align
+- control: impedance_control
+  end_effector_action: null
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: force_guard
+    on_failure: abort
+    predicate: force_below
+    threshold: 40.0
+    when: during_phase
+  id: insert_1
+  parameters:
+    insertion_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.06
+      range:
+      - 0.03
+      - 0.1
+      type: scalar
+    insertion_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 15.0
+      range:
+      - 5.0
+      - 40.0
+      type: scalar
+    insertion_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 0
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    strategy: repeat
+  subtask_id: insertion_complete
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.03
+    offset_along_axis:
+      axis: insertion_axis
+      distance: 0.06
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: force_exceeded
+  type: insert
+skill: peg_insert
+skill_type: arm_gripper
+subtasks:
+- anchor: goal
+  id: approach_pre_insert
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.03
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: insertion_complete
+  metric: goal_progress
+  offset:
+  - 0.0
+  - 0.0
+  - -0.05
+  target_entity: object
+  weight: 0.7

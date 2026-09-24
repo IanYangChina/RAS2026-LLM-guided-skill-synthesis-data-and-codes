@@ -1,0 +1,82 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  subtask_id: approach
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.04
+    - 0.0
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: contact_1
+  parameters:
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 5
+      range:
+      - 1
+      - 20
+      type: scalar
+  subtask_id: contact
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.02
+    - 0.0
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.005
+  termination: force_exceeded
+  type: contact
+- control: impedance_control
+  generator: linear_cartesian
+  id: push_1
+  parameters:
+    push_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 30
+      range:
+      - 10
+      - 40
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  subtask_id: push
+  target:
+    anchor: world
+    offset:
+    - 0.5
+    - -0.08
+    - 0.04
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.02
+  termination: force_exceeded
+  type: push
+skill: peg_channel

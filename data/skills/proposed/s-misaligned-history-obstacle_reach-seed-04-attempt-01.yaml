@@ -1,0 +1,132 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: obstacle_clear
+    on_failure: continue
+    predicate: pose_within_tolerance
+    threshold: 0.02
+    when: during_phase
+  id: ascend_over_obstacle
+  parameters:
+    approach_z:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.35
+      range:
+      - 0.3
+      - 0.4
+      type: scalar
+  retries:
+    max_attempts: 1
+    strategy: reduce_speed
+  subtask_id: clear_obstacle
+  target:
+    anchor: world
+    offset:
+    - 0.5
+    - 0.0
+    - 0.35
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  generators:
+  - arc_cartesian
+  id: forward_to_goal_x
+  parameters:
+    arc_height:
+      binds_to:
+      - mode: replace
+        path: generator.arc_height
+      default: 0.02
+      range:
+      - 0.0
+      - 0.05
+      type: scalar
+    forward_x:
+      binds_to:
+      - mode: replace
+        path: target.offset.x
+      default: 0.72
+      range:
+      - 0.65
+      - 0.78
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - 0.02
+    - 0.0
+    strategy: offset_target
+  subtask_id: clear_obstacle
+  target:
+    anchor: world
+    offset:
+    - 0.72
+    - 0.0
+    - 0.35
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: push
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: near_goal
+    on_failure: continue
+    predicate: pose_within_tolerance
+    threshold: 0.015
+    when: during_phase
+  id: descend_to_goal
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.08
+      type: scalar
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.015
+  termination: pose_tolerance
+  type: approach
+skill: obstacle_reach
+skill_type: arm_gripper
+subtasks:
+- anchor: world
+  id: clear_obstacle
+  metric: distance
+  offset:
+  - 0.5
+  - 0.0
+  - 0.35
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: reach_goal
+  metric: goal_progress
+  target_entity: tcp
+  weight: 0.7

@@ -1,0 +1,105 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: descend_to_door
+  parameters: {}
+  subtask_id: progress_hinge
+  target:
+    anchor: task_object
+    entity: door_panel
+    offset:
+    - -0.4
+    - -0.02
+    - 0.35
+    orientation:
+      mode: none
+    source: yaml
+  termination: contact_detected
+  type: descend
+- control: admittance_control
+  generator: linear_cartesian
+  id: push_contact
+  parameters:
+    force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 25.0
+      range:
+      - 10.0
+      - 30.0
+      type: scalar
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.2
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+  subtask_id: progress_hinge
+  target:
+    anchor: current_tcp
+    offset:
+    - 0
+    - 0
+    - 0
+    offset_along_axis:
+      axis: world_y
+      distance: 0.2
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: force_exceeded
+  type: push
+- control: admittance_control
+  generator: linear_cartesian
+  id: push_further
+  parameters:
+    force_threshold_2:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 25.0
+      range:
+      - 10.0
+      - 30.0
+      type: scalar
+    push_distance_2:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.2
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+  subtask_id: progress_hinge
+  target:
+    anchor: current_tcp
+    offset:
+    - 0
+    - 0
+    - 0
+    offset_along_axis:
+      axis: world_y
+      distance: 0.2
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: force_exceeded
+  type: push
+skill: door_push
+skill_type: arm_gripper
+subtasks:
+- anchor: fixture
+  id: progress_hinge
+  metric: hinge_angle
+  target_entity: hinge
+  weight: 1.0

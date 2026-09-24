@@ -1,0 +1,83 @@
+skill: peg_channel
+dsl_version: 2
+phases:
+- id: approach_peg
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.04
+    - 0.03
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: approach
+- id: contact_peg
+  type: descend
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.02
+    - 0.0
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.06
+      default: 0.03
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: contact
+- id: push_channel
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.08
+      default: 0.04
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: push

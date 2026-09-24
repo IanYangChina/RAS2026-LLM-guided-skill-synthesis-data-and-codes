@@ -1,0 +1,201 @@
+dsl_version: 2
+phases:
+- control: impedance_control
+  generator: impedance_motion
+  guards:
+  - args: {}
+    id: contact_limit
+    on_failure: retry
+    predicate: force_below
+    threshold: 40.0
+    when: during_phase
+  id: push_1
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.12
+      range:
+      - 0.08
+      - 0.18
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.04
+      range:
+      - 0.01
+      - 0.08
+      type: scalar
+  retries:
+    max_attempts: 2
+    strategy: reduce_speed
+  subtask_id: pre_insert
+  target:
+    anchor: fixture
+    entity: null
+    offset:
+    - 0.0
+    - 0.0
+    - 0.06
+    offset_along_axis:
+      axis: world_z
+      distance: 0.12
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      align_with: world_z
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+    tolerance: 0.02
+  termination: time_limit
+  type: push
+- control: position_control
+  generator: linear_cartesian
+  id: align_1
+  parameters:
+    lateral_offset_x:
+      binds_to:
+      - mode: add
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.01
+      - 0.01
+      type: scalar
+    lateral_offset_y:
+      binds_to:
+      - mode: add
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.01
+      - 0.01
+      type: scalar
+  subtask_id: pre_insert
+  target:
+    anchor: fixture
+    entity: null
+    offset:
+    - 0.0
+    - 0.0
+    - 0.06
+    orientation:
+      align_with: world_z
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: align
+- control: impedance_control
+  generator: impedance_motion
+  guards:
+  - args: {}
+    id: insertion_force_guard
+    on_failure: retry
+    predicate: force_below
+    threshold: 35.0
+    when: during_phase
+  id: insert_1
+  parameters:
+    insertion_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.06
+      range:
+      - 0.02
+      - 0.12
+      type: scalar
+    insertion_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.002
+    - 0.002
+    - 0.0
+    strategy: offset_target
+  subtask_id: insert_depth
+  target:
+    anchor: fixture
+    entity: null
+    offset:
+    - 0.0
+    - 0.0
+    - 0.06
+    offset_along_axis:
+      axis: world_z
+      distance: 0.06
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      align_with: world_z
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+    tolerance: 0.015
+  termination: pose_tolerance
+  type: insert
+- control: admittance_control
+  end_effector_action: open
+  generator: linear_cartesian
+  id: release_1
+  subtask_id: insert_depth
+  target:
+    anchor: current_tcp
+    entity: null
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: release
+skill: peg_insert
+skill_type: arm_gripper
+subtasks:
+- anchor: fixture
+  id: pre_insert
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: insert_depth
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.7

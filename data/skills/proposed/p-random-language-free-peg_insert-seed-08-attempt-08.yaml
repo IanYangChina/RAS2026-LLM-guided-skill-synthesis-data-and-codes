@@ -1,0 +1,123 @@
+dsl_version: 2
+phases:
+- control: impedance_control
+  generator: linear_cartesian
+  id: approach_socket
+  parameters:
+    approach_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.15
+      range:
+      - 0.1
+      - 0.25
+      type: scalar
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: approach_socket
+  target:
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      align_with: insertion_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.1
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - id: force_guard
+    on_failure: continue
+    predicate: force_below
+    threshold: 50.0
+    when: during_phase
+  id: insert_peg
+  parameters:
+    force_threshold:
+      binds_to:
+      - mode: replace
+        path: guards.force_guard.threshold
+      default: 50.0
+      range:
+      - 40.0
+      - 60.0
+      type: scalar
+    insertion_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.025
+      range:
+      - 0.005
+      - 0.06
+      type: scalar
+    retry_lateral_x:
+      binds_to:
+      - mode: replace
+        path: retry.offset.x
+      default: 0.002
+      range:
+      - -0.005
+      - 0.005
+      type: scalar
+    retry_lateral_y:
+      binds_to:
+      - mode: replace
+        path: retry.offset.y
+      default: 0.002
+      range:
+      - -0.005
+      - 0.005
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.002
+    - 0.002
+    - 0.0
+    strategy: offset_target
+  subtask_id: insert_peg
+  target:
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.008
+  termination: pose_tolerance
+  type: insert
+skill: peg_insert
+subtasks:
+- anchor: fixture
+  id: approach_socket
+  offset:
+  - 0.0
+  - 0.0
+  - 0.15
+  weight: 0.3
+- anchor: fixture
+  id: insert_peg
+  weight: 0.7

@@ -1,0 +1,220 @@
+skill: grasp_place
+dsl_version: 2
+skill_type: arm_gripper
+subtasks:
+- id: reach_object
+  anchor: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  weight: 0.2
+- id: grasp_contact
+  anchor: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.03
+  weight: 0.2
+- id: lift_clear
+  anchor: object
+  target_entity: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.222
+  weight: 0.1
+- id: place_goal
+  target_entity: object
+  metric: goal_progress
+  weight: 0.5
+phases:
+- id: approach_object
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.25
+      default: 0.1
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    approach_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.15
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  subtask_id: reach_object
+- id: descend_grasp
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.03
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_height:
+      type: scalar
+      range:
+      - 0.01
+      - 0.08
+      default: 0.03
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    descend_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.15
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  subtask_id: grasp_contact
+- id: grasp_1
+  type: grasp
+  control: position_control
+  termination: time_limit
+  end_effector_action: force_grasp
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  parameters:
+    grasp_time:
+      type: scalar
+      range:
+      - 0.2
+      - 2.0
+      default: 0.5
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+  guards:
+  - id: grasp_check
+    when: after_phase
+    predicate: bilateral_grasp
+    threshold: 0.0
+    on_failure: retry
+  retries:
+    max_attempts: 1
+    strategy: repeat
+  subtask_id: grasp_contact
+- id: lift_object
+  type: lift
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.2
+      axis: world_z
+      mode: add_to_offset
+      sign: positive
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    lift_distance:
+      type: scalar
+      range:
+      - 0.1
+      - 0.3
+      default: 0.2
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    lift_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.15
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  subtask_id: lift_clear
+- id: transport_to_goal
+  type: approach
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.02
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    transport_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.15
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    transport_z_offset:
+      type: scalar
+      range:
+      - 0.0
+      - 0.15
+      default: 0.02
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  subtask_id: place_goal

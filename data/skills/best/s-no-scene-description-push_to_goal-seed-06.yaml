@@ -1,0 +1,163 @@
+skill: push_to_goal
+dsl_version: 2
+skill_type: arm_gripper
+subtasks:
+- id: approach_box
+  anchor: object
+  offset:
+  - 0.0
+  - 0.1
+  - 0.1
+  weight: 0.2
+- id: side_contact
+  anchor: object
+  offset:
+  - 0.0
+  - 0.07
+  - 0.0
+  weight: 0.2
+- id: goal_reach
+  weight: 0.6
+phases:
+- id: approach
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.1
+    - 0.1
+  parameters:
+    approach_offset_y:
+      type: scalar
+      range:
+      - 0.06
+      - 0.16
+      default: 0.1
+      binds_to:
+      - path: target.offset.y
+        mode: replace
+    approach_speed:
+      type: scalar
+      range:
+      - 0.08
+      - 0.2
+      default: 0.12
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    approach_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.02
+      default: 0.01
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  subtask_id: approach_box
+- id: contact_side
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.07
+    - 0.0
+  parameters:
+    contact_offset_y:
+      type: scalar
+      range:
+      - 0.04
+      - 0.12
+      default: 0.07
+      binds_to:
+      - path: target.offset.y
+        mode: replace
+    contact_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.08
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    force_threshold:
+      type: scalar
+      range:
+      - 5.0
+      - 15.0
+      default: 10.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+  guards:
+  - id: contact_check
+    when: after_phase
+    predicate: contact_detected
+    threshold: 1.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.02
+    - -0.01
+  subtask_id: side_contact
+- id: push_to_goal
+  type: push
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  parameters:
+    push_force_guard:
+      type: scalar
+      range:
+      - 25.0
+      - 40.0
+      default: 35.0
+      binds_to:
+      - path: guards.force_guard.threshold
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.025
+      - 0.08
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    push_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.02
+      default: 0.01
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  guards:
+  - id: force_guard
+    when: during_phase
+    predicate: force_below
+    threshold: 35.0
+    on_failure: continue
+  subtask_id: goal_reach

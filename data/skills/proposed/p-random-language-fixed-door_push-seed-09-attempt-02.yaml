@@ -1,0 +1,138 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  guards: []
+  id: approach_handle
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  retries:
+    max_attempts: 0
+  target:
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0
+    - 0
+    - 0.05
+    offset_along_axis:
+      axis: world_y
+      distance: 0.22
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: force_safe
+    on_failure: abort
+    predicate: force_below
+    threshold: 30.0
+    when: during_phase
+  id: contact_handle
+  parameters:
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 10.0
+      range:
+      - 5.0
+      - 30.0
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0
+    - 0
+    - 0
+    strategy: reduce_speed
+  target:
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0
+    - 0
+    - 0
+    offset_along_axis:
+      axis: world_y
+      distance: 0.01
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: force_exceeded
+  type: contact
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: force_safe_push
+    on_failure: abort
+    predicate: force_below
+    threshold: 30.0
+    when: during_phase
+  id: push_door
+  parameters:
+    max_time:
+      binds_to:
+      - mode: replace
+        path: termination.max_time
+      default: 5.0
+      range:
+      - 2.0
+      - 10.0
+      type: scalar
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.15
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  retries:
+    max_attempts: 0
+  target:
+    anchor: current_tcp
+    entity: null
+    offset:
+    - 0
+    - 0
+    - 0
+    offset_along_axis:
+      axis: world_y
+      distance: push_distance
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: time_limit
+  type: push
+skill: door_push

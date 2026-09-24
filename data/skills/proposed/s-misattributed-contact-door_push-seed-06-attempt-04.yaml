@@ -1,0 +1,98 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_handle
+  subtask_id: reach_handle
+  target:
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_to_handle
+  target:
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: descend
+- control: admittance_control
+  generator: linear_cartesian
+  id: push_door
+  parameters:
+    push_duration:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 3.0
+      range:
+      - 1.0
+      - 5.0
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    push_stroke:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.35
+      range:
+      - 0.15
+      - 0.6
+      type: scalar
+  subtask_id: push_goal
+  target:
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: world_x
+      distance: 0.35
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.05
+  termination: time_limit
+  type: push
+skill: door_push
+subtasks:
+- anchor: fixture
+  id: reach_handle
+  offset:
+  - -0.4
+  - -0.02
+  - 0.35
+  weight: 0.3
+- id: push_goal
+  metric: hinge_angle
+  target_entity: hinge
+  weight: 0.7

@@ -1,0 +1,105 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_to_push
+  parameters:
+    approach_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.06
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.3
+      range:
+      - 0.05
+      - 0.5
+      type: scalar
+  subtask_id: pre_push
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.025
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.06
+      mode: add_to_offset
+      sign: negative
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: admittance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: check_progress
+    on_failure: retry
+    predicate: object_progress
+    threshold: 0.9
+    when: during_phase
+  id: push_to_goal
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.25
+      range:
+      - 0.15
+      - 0.35
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.15
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - 0.0
+    - 0.005
+    strategy: offset_target
+  subtask_id: push_task
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.025
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.25
+      mode: add_to_offset
+      sign: positive
+    source: yaml
+    tolerance: 0.015
+  termination: pose_tolerance
+  type: push
+skill: push_to_goal
+subtasks:
+- anchor: object
+  id: pre_push
+  offset:
+  - 0.0
+  - 0.0
+  - 0.03
+  weight: 0.3
+- id: push_task
+  metric: goal_progress
+  target_entity: object
+  weight: 0.7

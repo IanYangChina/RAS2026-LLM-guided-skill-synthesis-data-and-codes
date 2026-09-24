@@ -1,0 +1,94 @@
+skill: peg_channel
+dsl_version: 2
+skill_type: arm
+
+phases:
+  - id: align_behind_peg
+    type: align
+    generator: linear_cartesian
+    control: position_control
+    termination: pose_tolerance
+    subtask_id: approach
+    target:
+      source: yaml
+      anchor: task_object
+      offset: [0.0, 0.0, 0.0]
+      offset_along_axis:
+        distance: 0.05
+        axis: task_goal_direction
+        mode: add_to_offset
+        sign: negative
+      tolerance: 0.01
+      orientation: {mode: keep_current}
+
+  - id: contact_peg
+    type: contact
+    generator: linear_cartesian
+    control: force_threshold_switch
+    termination: contact_detected
+    subtask_id: contact
+    target:
+      source: yaml
+      anchor: task_object
+      offset: [0.0, 0.0, 0.0]
+      offset_along_axis:
+        distance: 0.022
+        axis: task_goal_direction
+        mode: add_to_offset
+        sign: negative
+      tolerance: 0.008
+      orientation: {mode: keep_current}
+
+  - id: traverse_channel
+    type: push
+    generator: impedance_motion
+    control: impedance_control
+    termination: pose_tolerance
+    subtask_id: push
+    target:
+      source: yaml
+      anchor: task_goal
+      offset: [0.0, 0.0, 0.0]
+      offset_along_axis:
+        distance: 0.0175
+        axis: task_goal_direction
+        mode: add_to_offset
+        sign: negative
+      tolerance: 0.0103
+      orientation: {mode: keep_current}
+    parameters:
+      trailing_contact_offset:
+        type: scalar
+        range: [0.0165, 0.0185]
+        default: 0.0175
+        binds_to:
+          - {path: target.offset_along_axis.distance, mode: replace}
+      traversal_speed:
+        type: scalar
+        range: [0.02, 0.06]
+        default: 0.04
+        binds_to:
+          - {path: generator.speed, mode: replace}
+    guards:
+      - id: channel_force_limit
+        when: during_phase
+        predicate: force_below
+        args: {scope: body_contact, body: peg}
+        threshold: 40.0
+        on_failure: retry
+    retries:
+      max_attempts: 1
+      strategy: reduce_speed
+      reduce_speed_factor: 0.5
+
+  - id: retract_above_channel
+    type: retract
+    generator: linear_cartesian
+    control: position_control
+    termination: pose_tolerance
+    target:
+      source: yaml
+      anchor: current_tcp
+      offset: [0.0, 0.05, 0.20]
+      tolerance: 0.02
+      orientation: {mode: keep_current}

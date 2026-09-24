@@ -1,0 +1,108 @@
+skill: obstacle_reach
+dsl_version: 2
+subtasks:
+- id: reach_goal
+phases:
+- id: approach_1
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.04
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_tol:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_goal
+- id: final_approach
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    final_speed:
+      type: scalar
+      range:
+      - 0.002
+      - 0.03
+      default: 0.008
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    final_tol:
+      type: scalar
+      range:
+      - 0.005
+      - 0.02
+      default: 0.01
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    z_offset:
+      type: scalar
+      range:
+      - -0.025
+      - 0.005
+      default: -0.01
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+  guards:
+  - id: goal_reached
+    when: after_phase
+    predicate: pose_within_tolerance
+    threshold: 0.02
+    on_failure: retry
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - -0.005
+  subtask_id: reach_goal

@@ -1,0 +1,105 @@
+skill: obstacle_reach
+dsl_version: 2
+subtasks:
+- id: approach_clear
+  offset:
+  - 0.0
+  - 0.0
+  - 0.3
+  weight: 0.2
+- id: lateral_clearance
+  offset:
+  - 0.06
+  - 0.0
+  - 0.3
+  weight: 0.1
+- id: reach_goal
+  weight: 0.7
+phases:
+- id: arc_over_obstacle
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.3
+    tolerance: 0.03
+    orientation:
+      mode: none
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.1
+      - 0.5
+      default: 0.3
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.15
+      - 0.3
+      default: 0.22
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+  subtask_id: approach_clear
+- id: lateral_shift
+  type: push
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.06
+    - 0.0
+    - 0.3
+    tolerance: 0.03
+    orientation:
+      mode: none
+  parameters:
+    lateral_speed:
+      type: scalar
+      range:
+      - 0.1
+      - 0.4
+      default: 0.25
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: lateral_clearance
+- id: descend_to_goal
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: none
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_goal

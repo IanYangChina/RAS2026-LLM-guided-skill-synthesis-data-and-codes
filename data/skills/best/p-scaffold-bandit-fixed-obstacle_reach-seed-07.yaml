@@ -1,0 +1,12 @@
+skill: obstacle_reach
+phases:
+- id: approach_1
+  type: approach
+  generator: arc_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: impedance_control
+  termination: contact_detected

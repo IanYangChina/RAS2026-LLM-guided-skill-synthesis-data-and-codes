@@ -1,0 +1,78 @@
+skill: obstacle_reach
+dsl_version: 2
+phases:
+- id: approach_1
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    orientation:
+      mode: keep_current
+  parameters:
+    arc_height:
+      type: scalar
+      range:
+      - 0.1
+      - 0.4
+      default: 0.25
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    max_time:
+      type: scalar
+      range:
+      - 2.0
+      - 8.0
+      default: 4.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+  parameters:
+    max_time:
+      type: scalar
+      range:
+      - 1.0
+      - 5.0
+      default: 2.5
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace

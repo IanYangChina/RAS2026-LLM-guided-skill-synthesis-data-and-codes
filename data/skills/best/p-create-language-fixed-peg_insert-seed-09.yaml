@@ -1,0 +1,174 @@
+skill: peg_insert
+dsl_version: 2
+phases:
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.12
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+  subtask_id: align
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.09
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+  subtask_id: approach
+- id: contact_1
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+  parameters:
+    contact_speed:
+      type: scalar
+      range:
+      - 0.03
+      - 0.1
+      default: 0.06
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    contact_z:
+      type: scalar
+      range:
+      - 0.03
+      - 0.07
+      default: 0.05
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    force_threshold:
+      type: scalar
+      range:
+      - 5.0
+      - 15.0
+      default: 7.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+  guards:
+  - id: contact_check
+    when: after_phase
+    predicate: contact_detected
+    threshold: 0.5
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.01
+    - 0.01
+    - 0.0
+  subtask_id: contact
+- id: insert_1
+  type: insert
+  generator: impedance_motion
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+    offset_along_axis:
+      distance: 0.025
+      axis: channel_axis
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+  parameters:
+    insert_depth:
+      type: scalar
+      range:
+      - 0.015
+      - 0.04
+      default: 0.025
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    insert_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.02
+      default: 0.008
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    insert_tol:
+      type: scalar
+      range:
+      - 0.005
+      - 0.02
+      default: 0.01
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  guards:
+  - id: force_limit
+    when: during_phase
+    predicate: force_below
+    threshold: 40.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.01
+    - 0.01
+    - 0.0
+  subtask_id: insert

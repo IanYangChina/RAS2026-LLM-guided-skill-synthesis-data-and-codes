@@ -1,0 +1,39 @@
+skill: push_to_goal
+phases:
+- id: rotate_1
+  type: rotate
+  generator: joint_interpolation
+  control: position_control
+  termination: pose_tolerance
+- id: retract_1
+  type: retract
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    retract_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+- id: contact_1
+  type: contact
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+- id: pull_1
+  type: pull
+  generator: arc_cartesian
+  control: impedance_control
+  termination: time_limit
+  parameters:
+    pull_distance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2

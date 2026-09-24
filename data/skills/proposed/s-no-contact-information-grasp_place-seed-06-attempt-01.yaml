@@ -1,0 +1,183 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  orientation:
+    mode: none
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: reach_object
+  target:
+    anchor: task_object
+    offset:
+    - 0
+    - 0
+    - 0.1
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_1
+  orientation:
+    mode: none
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  subtask_id: reach_object
+  target:
+    anchor: task_object
+    offset:
+    - 0
+    - 0
+    - 0.055
+  termination: pose_tolerance
+  type: descend
+- control: position_control
+  end_effector_action: force_grasp
+  generator: null
+  id: grasp_1
+  orientation:
+    mode: keep_current
+  parameters:
+    grasp_duration:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 0.5
+      range:
+      - 0.2
+      - 0.8
+      type: scalar
+  target:
+    anchor: current_tcp
+    offset:
+    - 0
+    - 0
+    - 0
+  termination: time_limit
+  type: grasp
+- control: position_control
+  generator: linear_cartesian
+  id: lift_up
+  orientation:
+    mode: keep_current
+  parameters:
+    lift_height:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.2
+      range:
+      - 0.1
+      - 0.3
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: lift_object
+  target:
+    anchor: current_tcp
+    offset:
+    - 0
+    - 0
+    - 0
+    offset_along_axis:
+      axis: world_z
+      distance: 0.2
+      mode: add_to_offset
+      sign: positive
+  termination: pose_tolerance
+  type: lift
+- control: position_control
+  generator: linear_cartesian
+  id: approach_goal
+  orientation:
+    mode: keep_current
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: deliver_object
+  target:
+    anchor: task_goal
+    offset:
+    - 0
+    - 0
+    - 0
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  end_effector_action: open
+  generator: null
+  id: release_1
+  orientation:
+    mode: none
+  parameters:
+    release_duration:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 0.5
+      range:
+      - 0.2
+      - 0.8
+      type: scalar
+  subtask_id: deliver_object
+  target:
+    anchor: current_tcp
+    offset:
+    - 0
+    - 0
+    - 0
+  termination: time_limit
+  type: release
+skill: grasp_place
+skill_type: arm_gripper
+subtasks:
+- anchor: object
+  id: reach_object
+  metric: distance
+  offset:
+  - 0
+  - 0
+  - 0.05
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: lift_object
+  metric: goal_progress
+  target_entity: object
+  weight: 0.3
+- anchor: goal
+  id: deliver_object
+  metric: distance
+  target_entity: object
+  weight: 0.4

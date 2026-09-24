@@ -1,0 +1,80 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  subtask_id: approach_handle
+  target:
+    anchor: fixture
+    offset:
+    - -0.4
+    - -0.02
+    - 0.35
+    orientation:
+      mode: keep_current
+      tolerance: 0.1
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: admittance_control
+  generator: linear_cartesian
+  id: push_1
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.22
+      range:
+      - 0.15
+      - 0.35
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.04
+      range:
+      - 0.01
+      - 0.08
+      type: scalar
+  subtask_id: push_door_open
+  target:
+    anchor: fixture
+    offset:
+    - -0.4
+    - -0.22
+    - 0.35
+    orientation:
+      mode: keep_current
+      tolerance: 0.1
+    source: yaml
+  termination: pose_tolerance
+  type: push
+skill: door_push
+skill_type: arm_gripper
+subtasks:
+- anchor: fixture
+  id: approach_handle
+  offset:
+  - -0.4
+  - -0.02
+  - 0.35
+  weight: 0.3
+- anchor: fixture
+  id: push_door_open
+  offset:
+  - -0.4
+  - -0.25
+  - 0.35
+  weight: 0.7

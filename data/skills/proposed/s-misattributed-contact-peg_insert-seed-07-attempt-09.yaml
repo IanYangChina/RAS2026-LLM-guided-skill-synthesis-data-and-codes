@@ -1,0 +1,149 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    approach_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.095
+      range:
+      - 0.06
+      - 0.15
+      type: scalar
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  subtask_id: approach_socket
+  target:
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.095
+    orientation:
+      align_with: world_z
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+    tolerance: 0.012
+  termination: pose_tolerance
+  type: approach
+- control: impedance_control
+  generator: linear_cartesian
+  id: align_1
+  parameters:
+    align_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.01
+      range:
+      - 0.005
+      - 0.03
+      type: scalar
+    lateral_x:
+      binds_to:
+      - mode: add
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.01
+      - 0.01
+      type: scalar
+    lateral_y:
+      binds_to:
+      - mode: add
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.01
+      - 0.01
+      type: scalar
+  target:
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.055
+    orientation:
+      align_with: world_z
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+    tolerance: 0.015
+  termination: pose_tolerance
+  type: align
+- control: impedance_control
+  generator: impedance_motion
+  id: insert_1
+  parameters:
+    insert_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 30.0
+      range:
+      - 20.0
+      - 40.0
+      type: scalar
+    insert_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.015
+      range:
+      - 0.005
+      - 0.04
+      type: scalar
+  subtask_id: insert_complete
+  target:
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+    tolerance: 0.005
+  termination: force_exceeded
+  type: insert
+skill: peg_insert
+skill_type: arm_gripper
+subtasks:
+- anchor: fixture
+  id: approach_socket
+  offset:
+  - 0.0
+  - 0.0
+  - 0.095
+  weight: 0.3
+- anchor: fixture
+  id: insert_complete
+  weight: 0.7

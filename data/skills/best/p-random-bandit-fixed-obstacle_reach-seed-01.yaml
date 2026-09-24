@@ -1,0 +1,12 @@
+skill: obstacle_reach
+phases:
+- id: rotate_1
+  type: rotate
+  generator: arc_cartesian
+  control: impedance_control
+  termination: time_limit
+- id: push_1
+  type: push
+  generator: linear_cartesian
+  control: position_control
+  termination: time_limit

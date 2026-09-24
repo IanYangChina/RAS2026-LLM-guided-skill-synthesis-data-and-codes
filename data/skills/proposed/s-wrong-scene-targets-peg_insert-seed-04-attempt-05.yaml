@@ -1,0 +1,92 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    approach_height:
+      binds_to:
+      - mode: add
+        path: target.offset_along_axis.distance
+      default: 0.055
+      range:
+      - 0.03
+      - 0.08
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.002
+    - 0.002
+    - 0
+    strategy: offset_target
+  target:
+    anchor: current_tcp
+    offset:
+    - 0
+    - 0
+    - 0
+    offset_along_axis:
+      axis: world_z
+      distance: null
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      mode: keep_current
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: impedance_control
+  generator: impedance_motion
+  guards:
+  - args: {}
+    id: force_check
+    on_failure: abort
+    predicate: force_below
+    threshold: null
+    when: during_phase
+  id: insert_1
+  parameters:
+    insertion_depth:
+      binds_to:
+      - mode: add
+        path: target.offset_along_axis.distance
+      default: 0.05
+      range:
+      - 0.03
+      - 0.08
+      type: scalar
+    insertion_force:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 15.0
+      range:
+      - 5.0
+      - 30.0
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.002
+    - 0.002
+    - 0
+    strategy: offset_target
+  target:
+    anchor: current_tcp
+    offset:
+    - 0
+    - 0
+    - 0
+    offset_along_axis:
+      axis: world_z
+      distance: null
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      mode: keep_current
+    tolerance: 0.01
+  termination: force_exceeded
+  type: insert
+skill: peg_insert
+skill_type: arm

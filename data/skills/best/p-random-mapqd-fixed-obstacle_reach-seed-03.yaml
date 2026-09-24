@@ -1,0 +1,23 @@
+skill: obstacle_reach
+phases:
+- id: rotate_1
+  type: rotate
+  generator: impedance_motion
+  control: impedance_control
+  termination: pose_tolerance
+- id: retract_1
+  type: retract
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    retract_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance

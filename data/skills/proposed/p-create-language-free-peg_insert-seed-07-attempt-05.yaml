@@ -1,0 +1,141 @@
+skill: peg_insert
+dsl_version: 2
+subtasks:
+- id: approach_target
+  anchor: goal
+  target_entity: tcp
+  offset: [0.0, 0.0, 0.12]
+  weight: 0.3
+- id: insertion_target
+  anchor: goal
+  target_entity: tcp
+  offset: [0.0, 0.0, 0.0]
+  weight: 0.7
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset: [0.0, 0.0, 0.06]
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_speed:
+      type: scalar
+      range: [0.03, 0.15]
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: approach_target
+- id: contact_1
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_goal
+    offset: [0.0, 0.0, -0.01]
+    orientation:
+      mode: align_axis
+      axis: [0.0, 0.0, 1.0]
+      align_with: channel_axis
+  parameters:
+    contact_force:
+      type: scalar
+      range: [2.0, 15.0]
+      default: 5.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    contact_speed:
+      type: scalar
+      range: [0.01, 0.05]
+      default: 0.03
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    contact_retry_x:
+      type: scalar
+      range: [-0.02, 0.02]
+      default: 0.0
+      binds_to:
+      - path: retry.offset.x
+        mode: replace
+    contact_retry_y:
+      type: scalar
+      range: [-0.02, 0.02]
+      default: 0.0
+      binds_to:
+      - path: retry.offset.y
+        mode: replace
+  guards:
+  - id: contact_made
+    when: after_phase
+    predicate: contact_detected
+    args: {}
+    threshold: 0.5
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset: [0.0, 0.0, 0.0]
+- id: insert_1
+  type: insert
+  generator: impedance_motion
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset: [0.0, 0.0, 0.0]
+    offset_along_axis:
+      distance: 0.08
+      axis: channel_axis
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      mode: align_axis
+      axis: [0.0, 0.0, 1.0]
+      align_with: channel_axis
+  parameters:
+    insertion_depth:
+      type: scalar
+      range: [0.02, 0.12]
+      default: 0.08
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    insertion_speed:
+      type: scalar
+      range: [0.005, 0.04]
+      default: 0.015
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: insertion_target
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset: [0.0, 0.0, 0.15]
+    orientation:
+      mode: keep_current
+  parameters:
+    retract_speed:
+      type: scalar
+      range: [0.01, 0.1]
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+```

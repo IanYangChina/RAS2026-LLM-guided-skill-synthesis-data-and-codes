@@ -1,0 +1,119 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  target:
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.1
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: contact_1
+  parameters:
+    contact_force:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 10
+      range:
+      - 5.0
+      - 20.0
+      type: scalar
+  target:
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: force_exceeded
+  type: contact
+- control: impedance_control
+  generator: impedance_motion
+  guards:
+  - args: {}
+    id: push_force_guard
+    on_failure: retry
+    predicate: force_below
+    threshold: 28.0
+    when: during_phase
+  id: push_1
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.25
+      range:
+      - 0.15
+      - 0.4
+      type: scalar
+    push_force_threshold:
+      binds_to:
+      - mode: replace
+        path: guards.push_force_guard.threshold
+      default: 28.0
+      range:
+      - 20.0
+      - 30.0
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  retries:
+    max_attempts: 1
+    strategy: reduce_speed
+  target:
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: world_y
+      distance: 0.25
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.05
+  termination: pose_tolerance
+  type: push
+- control: position_control
+  generator: linear_cartesian
+  id: retract_1
+  target:
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.1
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: retract
+skill: door_push

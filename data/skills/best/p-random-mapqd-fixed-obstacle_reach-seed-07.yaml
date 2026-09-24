@@ -1,0 +1,24 @@
+skill: obstacle_reach
+skill_type: arm_gripper
+phases:
+- id: descend_1
+  type: descend
+  generator: arc_cartesian
+  control: position_control
+  termination: contact_detected
+- id: insert_1
+  type: insert
+  generator: joint_interpolation
+  control: admittance_control
+  termination: pose_tolerance
+  parameters:
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.15
+    insertion_force:
+      type: scalar
+      range:
+      - 1.0
+      - 20.0

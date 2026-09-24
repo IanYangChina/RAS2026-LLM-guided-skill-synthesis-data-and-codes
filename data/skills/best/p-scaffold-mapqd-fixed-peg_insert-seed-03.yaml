@@ -1,0 +1,51 @@
+skill: peg_insert
+phases:
+- id: align_1
+  type: align
+  generator: bezier_curve
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    lateral_offset_y:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+- id: contact_1
+  type: contact
+  generator: impedance_motion
+  control: force_threshold_switch
+  termination: force_exceeded
+  parameters:
+    contact_force:
+      type: scalar
+      range:
+      - 1.0
+      - 20.0
+- id: insert_1
+  type: insert
+  generator: joint_interpolation
+  control: admittance_control
+  termination: contact_detected
+  parameters:
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.15
+- id: retract_1
+  type: retract
+  generator: bezier_curve
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    retract_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1

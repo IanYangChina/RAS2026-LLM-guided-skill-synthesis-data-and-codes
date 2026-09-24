@@ -1,0 +1,123 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  subtask_id: approach
+  target:
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0
+    - 0
+    - 0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.05
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: contact_1
+  parameters:
+    contact_force:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 10
+      range:
+      - 1.0
+      - 20.0
+      type: scalar
+  subtask_id: contact
+  target:
+    anchor: task_object
+    entity: push_box
+    offset:
+    - 0
+    - 0
+    - 0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.025
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      align_with: task_goal_direction
+      axis:
+      - 1
+      - 0
+      - 0
+      mode: align_axis
+      tolerance: 0.1
+    source: yaml
+  termination: force_exceeded
+  type: contact
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: force_limit
+    on_failure: retry
+    predicate: force_below
+    threshold: 25
+    when: during_phase
+  id: push_1
+  parameters:
+    push_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.2
+      range:
+      - 0.1
+      - 0.3
+      type: scalar
+  retries:
+    max_attempts: 2
+    strategy: reduce_speed
+  subtask_id: push
+  target:
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0
+    - 0
+    - 0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.2
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      align_with: task_goal_direction
+      axis:
+      - 1
+      - 0
+      - 0
+      mode: align_axis
+      tolerance: 0.1
+    source: yaml
+  termination: pose_tolerance
+  type: push
+- control: position_control
+  generator: linear_cartesian
+  id: retract_1
+  target:
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0
+    - 0
+    - 0.3
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: retract
+skill: push_to_goal

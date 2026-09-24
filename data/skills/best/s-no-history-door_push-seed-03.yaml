@@ -1,0 +1,86 @@
+skill: door_push
+dsl_version: 2
+skill_type: arm_gripper
+subtasks:
+- id: reach_handle
+  anchor: fixture
+  offset:
+  - -0.4
+  - -0.02
+  - 0.35
+  weight: 0.3
+- id: push_door
+  target_entity: hinge
+  metric: hinge_angle
+  weight: 0.7
+phases:
+- id: approach_handle
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: door_panel
+    offset:
+    - -0.4
+    - -0.02
+    - 0.35
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  retries:
+    max_attempts: 1
+    strategy: repeat
+  subtask_id: reach_handle
+- id: push_door
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: door_panel
+    offset:
+    - -0.339
+    - -0.212
+    - 0.35
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    push_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.15
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: maintain_contact
+    when: during_phase
+    predicate: contact_detected
+    threshold: 1.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.01
+    - 0.0
+  subtask_id: push_door

@@ -1,0 +1,165 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach
+  parameters:
+    approach_offset_y:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.1
+      range:
+      - 0.06
+      - 0.16
+      type: scalar
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.12
+      range:
+      - 0.08
+      - 0.2
+      type: scalar
+    approach_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.01
+      range:
+      - 0.005
+      - 0.02
+      type: scalar
+  subtask_id: approach_box
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.1
+    - 0.1
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - id: contact_check
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 1.0
+    when: after_phase
+  id: descend_to_side
+  parameters:
+    descend_offset_y:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.06
+      range:
+      - 0.03
+      - 0.1
+      type: scalar
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.08
+      type: scalar
+    force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 12.0
+      range:
+      - 8.0
+      - 20.0
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.02
+    - -0.01
+    strategy: offset_target
+  subtask_id: contact_pose
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.06
+    - 0.0
+    source: yaml
+  termination: force_exceeded
+  type: descend
+- control: admittance_control
+  generator: linear_cartesian
+  guards:
+  - id: force_guard
+    on_failure: continue
+    predicate: force_below
+    threshold: 30.0
+    when: during_phase
+  id: push_to_goal
+  parameters:
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.04
+      range:
+      - 0.015
+      - 0.06
+      type: scalar
+    push_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.015
+      range:
+      - 0.005
+      - 0.025
+      type: scalar
+  subtask_id: goal_reach
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: pose_tolerance
+  type: push
+skill: push_to_goal
+skill_type: arm_gripper
+subtasks:
+- anchor: object
+  id: approach_box
+  metric: distance
+  offset:
+  - 0.0
+  - 0.1
+  - 0.1
+  target_entity: tcp
+  weight: 0.3
+- anchor: object
+  id: contact_pose
+  metric: distance
+  offset:
+  - 0.0
+  - 0.06
+  - 0.0
+  target_entity: tcp
+  weight: 0.2
+- anchor: goal
+  id: goal_reach
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.5

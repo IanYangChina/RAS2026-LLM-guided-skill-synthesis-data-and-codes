@@ -1,0 +1,124 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: approach_contact
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 1.0
+    when: after_phase
+  id: approach_behind_object
+  parameters:
+    approach_behind:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.05
+      range:
+      - 0.02
+      - 0.08
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.005
+    - 0.0
+    strategy: offset_target
+  subtask_id: approach_object
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.025
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.05
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: push_contact_maint
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 1.0
+    when: during_phase
+  id: push_object_to_goal
+  parameters:
+    push_overshoot:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: -0.03
+      range:
+      - -0.05
+      - 0.0
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: add
+        path: generator.speed
+      default: 0.07
+      range:
+      - 0.01
+      - 0.15
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    strategy: reduce_speed
+  subtask_id: push_to_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.025
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: -0.03
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      align_with: world_y
+      axis:
+      - 1.0
+      - 0.0
+      - 0.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+    tolerance: 0.015
+  termination: pose_tolerance
+  type: push
+skill: push_to_goal
+skill_type: arm_gripper
+subtasks:
+- anchor: object
+  id: approach_object
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.025
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: push_to_goal
+  metric: goal_progress
+  target_entity: object
+  weight: 0.7

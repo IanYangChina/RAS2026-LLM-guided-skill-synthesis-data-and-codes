@@ -1,0 +1,123 @@
+dsl_version: 2
+phases:
+- control: position_control
+  end_effector_action: open
+  id: release_1
+  parameters:
+    max_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 0.2
+      range:
+      - 0.1
+      - 0.5
+      type: scalar
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: time_limit
+  type: release
+- control: position_control
+  generator: linear_cartesian
+  id: approach_behind
+  parameters:
+    behind_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.02
+      range:
+      - 0.01
+      - 0.08
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  subtask_id: contact_object
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.02
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: push_to_goal
+  parameters:
+    behind_goal_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.02
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.02
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: push
+skill: push_to_goal
+skill_type: arm_gripper
+subtasks:
+- anchor: object
+  id: contact_object
+  weight: 0.3
+- id: reach_goal
+  metric: goal_progress
+  target_entity: object
+  weight: 0.7

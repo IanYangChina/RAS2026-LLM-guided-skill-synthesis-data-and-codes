@@ -1,0 +1,265 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  guards: []
+  id: align_1
+  parameters:
+    align_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.03
+      - 0.15
+      type: scalar
+    lateral_align_offset_x:
+      binds_to:
+      - mode: add
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.04
+      - 0.04
+      type: scalar
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.04
+    - 0.08
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: align
+- control: position_control
+  generator: linear_cartesian
+  guards: []
+  id: approach_1
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.03
+      range:
+      - 0.01
+      - 0.08
+      type: scalar
+    lateral_approach_offset_x:
+      binds_to:
+      - mode: add
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.04
+      - 0.04
+      type: scalar
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  subtask_id: approach
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.0
+    - 0.04
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.008
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  guards:
+  - args:
+      body_a: attachment
+      body_b: channel_left_wall
+    id: wall_contact
+    on_failure: retry
+    predicate: contact_pair
+    threshold: 0
+    when: during_phase
+  - args:
+      body_a: attachment
+      body_b: channel_right_wall
+    id: wall_contact_right
+    on_failure: retry
+    predicate: contact_pair
+    threshold: 0
+    when: during_phase
+  id: contact_1
+  parameters:
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 8.0
+      range:
+      - 3.0
+      - 20.0
+      type: scalar
+    contact_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.01
+      range:
+      - 0.005
+      - 0.03
+      type: scalar
+    lateral_contact_offset_x:
+      binds_to:
+      - mode: add
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.04
+      - 0.04
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - -0.015
+    - 0.0
+    - 0.0
+    strategy: offset_target
+  subtask_id: contact
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.0
+    - 0.04
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.005
+  termination: force_exceeded
+  type: contact
+- control: impedance_control
+  generator: impedance_motion
+  guards:
+  - args: {}
+    id: object_stuck
+    on_failure: retry
+    predicate: object_progress
+    threshold: 0.02
+    when: during_phase
+  id: push_1
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.16
+      range:
+      - 0.08
+      - 0.2
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.025
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - -0.005
+    - 0.0
+    strategy: offset_target
+  subtask_id: push
+  target:
+    anchor: world
+    entity: null
+    offset:
+    - 0.5
+    - -0.08
+    - 0.04
+    offset_along_axis:
+      axis:
+      - 0.0
+      - -1.0
+      - 0.0
+      distance: 0.16
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      mode: none
+    source: yaml
+  termination: time_limit
+  type: push
+- control: position_control
+  generator: linear_cartesian
+  guards: []
+  id: retract_1
+  parameters:
+    retract_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  target:
+    anchor: world
+    entity: null
+    offset:
+    - 0.5
+    - -0.08
+    - 0.12
+    orientation:
+      mode: none
+    source: yaml
+  termination: time_limit
+  type: retract
+skill: peg_channel
+subtasks:
+- anchor: object
+  id: approach
+  metric: distance
+  offset:
+  - 0.0
+  - 0.04
+  - 0.0
+  target_entity: object
+  weight: 1.0
+- anchor: object
+  id: contact
+  metric: distance
+  offset:
+  - 0.0
+  - 0.02
+  - 0.0
+  target_entity: object
+  weight: 1.0
+- anchor: world
+  id: push
+  metric: distance
+  offset:
+  - 0.5
+  - -0.08
+  - 0.04
+  target_entity: object
+  weight: 1.0

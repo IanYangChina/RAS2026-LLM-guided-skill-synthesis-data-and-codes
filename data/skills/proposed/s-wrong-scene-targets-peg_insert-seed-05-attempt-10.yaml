@@ -1,0 +1,95 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  orientation:
+    mode: keep_current
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    approach_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.01
+      range:
+      - 0.005
+      - 0.02
+      type: scalar
+  subtask_id: approach
+  target:
+    anchor: task_object
+    offset:
+    - 0
+    - 0
+    - 0.02
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: impedance_control
+  generator: linear_cartesian
+  id: insert_1
+  orientation:
+    align_with: channel_axis
+    axis:
+    - 0
+    - 0
+    - 1
+    mode: align_axis
+    tolerance: 0.1
+  parameters:
+    force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 30
+      range:
+      - 10
+      - 40
+      type: scalar
+    insert_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+  subtask_id: insertion
+  target:
+    anchor: task_object
+    offset:
+    - 0
+    - 0
+    - -0.055
+    source: yaml
+  termination: force_exceeded
+  type: insert
+skill: peg_insert
+skill_type: arm
+subtasks:
+- anchor: object
+  id: approach
+  offset:
+  - 0
+  - 0
+  - 0.02
+  target_entity: tcp
+  weight: 0.3
+- anchor: object
+  id: insertion
+  offset:
+  - 0
+  - 0
+  - -0.055
+  target_entity: tcp
+  weight: 0.7

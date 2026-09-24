@@ -1,0 +1,226 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: arc_cartesian
+  id: approach_side
+  parameters:
+    arc_height:
+      binds_to:
+      - mode: replace
+        path: generator.arc_height
+      default: 0.6
+      range:
+      - 0.3
+      - 0.8
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.07
+      range:
+      - 0.03
+      - 0.1
+      type: scalar
+    tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.03
+      range:
+      - 0.02
+      - 0.05
+      type: scalar
+  subtask_id: side_approach
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.35
+    - 0.7
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: align_lateral
+  parameters:
+    align_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.025
+      range:
+      - 0.015
+      - 0.04
+      type: scalar
+    lateral_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.06
+      range:
+      - 0.03
+      - 0.1
+      type: scalar
+  subtask_id: above_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.7
+    source: yaml
+  termination: pose_tolerance
+  type: align
+- control: position_control
+  generator: linear_cartesian
+  id: side_step
+  parameters:
+    side_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.06
+      range:
+      - 0.03
+      - 0.1
+      type: scalar
+    side_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.025
+      range:
+      - 0.015
+      - 0.04
+      type: scalar
+  subtask_id: side_high
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.2
+    - 0.7
+    source: yaml
+  termination: pose_tolerance
+  type: push
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - id: descend_contact
+    on_failure: retry
+    predicate: contact_detected
+    when: during_phase
+  id: descend_side
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.03
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+    descend_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.01
+      - 0.03
+      type: scalar
+  retries:
+    max_attempts: 2
+    strategy: reduce_speed
+  subtask_id: side_low
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.2
+    - 0.0
+    source: yaml
+  termination: pose_tolerance
+  type: descend
+- control: position_control
+  generator: linear_cartesian
+  id: lateral_adjust
+  parameters:
+    adjust_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+    adjust_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.01
+      - 0.03
+      type: scalar
+  subtask_id: final_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: pose_tolerance
+  type: push
+skill: obstacle_reach
+subtasks:
+- anchor: goal
+  id: side_approach
+  metric: distance
+  offset:
+  - 0.0
+  - 0.35
+  - 0.7
+  target_entity: tcp
+  weight: 0.15
+- anchor: goal
+  id: above_goal
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.7
+  target_entity: tcp
+  weight: 0.15
+- anchor: goal
+  id: side_high
+  metric: distance
+  offset:
+  - 0.0
+  - 0.2
+  - 0.7
+  target_entity: tcp
+  weight: 0.15
+- anchor: goal
+  id: side_low
+  metric: distance
+  offset:
+  - 0.0
+  - 0.2
+  - 0.0
+  target_entity: tcp
+  weight: 0.2
+- anchor: goal
+  id: final_goal
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.35

@@ -1,0 +1,50 @@
+skill: peg_insert
+phases:
+- id: rotate_1
+  type: rotate
+  generator: impedance_motion
+  control: impedance_control
+  termination: time_limit
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    lateral_offset_x:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+- id: push_1
+  type: push
+  generator: impedance_motion
+  control: impedance_control
+  termination: pose_tolerance
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+- id: align_2
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    param_0:
+      type: scalar
+      range:
+      - 0.11290864530486688
+      - 0.6751559513251457
+- id: pull_1
+  type: pull
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: insert_1
+  type: insert
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance

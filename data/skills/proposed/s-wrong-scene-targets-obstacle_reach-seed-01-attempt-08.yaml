@@ -1,0 +1,106 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_above
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.15
+      range:
+      - 0.08
+      - 0.25
+      type: scalar
+  subtask_id: pre_contact
+  target:
+    anchor: fixture
+    offset:
+    - 0.0
+    - 0.0
+    - 0.17
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.03
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_near
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  subtask_id: near_goal
+  target:
+    anchor: fixture
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.03
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: final_descend
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.07
+      range:
+      - 0.03
+      - 0.15
+      type: scalar
+  subtask_id: contact_goal
+  target:
+    anchor: fixture
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.03
+  termination: pose_tolerance
+  type: approach
+skill: obstacle_reach
+subtasks:
+- anchor: fixture
+  id: pre_contact
+  offset:
+  - 0.0
+  - 0.0
+  - 0.17
+  target_entity: tcp
+  weight: 0.3
+- anchor: fixture
+  id: near_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.05
+  target_entity: tcp
+  weight: 0.3
+- anchor: fixture
+  id: contact_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.4

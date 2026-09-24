@@ -1,0 +1,168 @@
+skill: peg_insert
+dsl_version: 2
+skill_type: arm_gripper
+subtasks:
+- id: approach_socket
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  weight: 0.2
+- id: contact_rim
+  offset:
+  - 0.0
+  - 0.0
+  - 0.055
+  weight: 0.2
+- id: insert_peg
+  weight: 0.6
+phases:
+- id: approach_approx
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    tolerance: 0.02
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+      tolerance: 0.2
+  parameters:
+    pose_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.025
+      default: 0.015
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.03
+      - 0.15
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: approach_socket
+- id: approach_entry
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.055
+    tolerance: 0.015
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+      tolerance: 0.2
+  parameters:
+    pose_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.025
+      default: 0.015
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: contact_rim
+- id: insert_full
+  type: insert
+  generator: linear_cartesian
+  control: impedance_control
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.06
+      axis: channel_axis
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+      tolerance: 0.08
+  parameters:
+    force_threshold:
+      type: scalar
+      range:
+      - 10.0
+      - 30.0
+      default: 20.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.05
+      - 0.075
+      default: 0.06
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.03
+      default: 0.015
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: force_high
+    when: during_phase
+    predicate: force_below
+    threshold: 40.0
+    on_failure: abort
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.008
+    - 0.008
+    - 0.0
+  subtask_id: insert_peg

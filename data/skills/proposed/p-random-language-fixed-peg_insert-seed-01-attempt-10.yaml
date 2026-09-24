@@ -1,0 +1,41 @@
+dsl_version: 2
+phases:
+- control: impedance_control
+  generator: impedance_motion
+  id: rotate_1
+  termination: time_limit
+  type: rotate
+- control: position_control
+  generator: linear_cartesian
+  id: align_1
+  parameters:
+    lateral_offset_x:
+      range:
+      - -0.01
+      - 0.01
+      type: scalar
+  termination: pose_tolerance
+  type: align
+- control: impedance_control
+  generator: impedance_motion
+  id: push_1
+  parameters:
+    push_distance:
+      range:
+      - 0.02
+      - 0.2
+      type: scalar
+  termination: pose_tolerance
+  type: push
+- control: position_control
+  generator: linear_cartesian
+  id: align_2
+  parameters:
+    lateral_offset_x:
+      range:
+      - -0.01
+      - 0.01
+      type: scalar
+  termination: pose_tolerance
+  type: align
+skill: peg_insert

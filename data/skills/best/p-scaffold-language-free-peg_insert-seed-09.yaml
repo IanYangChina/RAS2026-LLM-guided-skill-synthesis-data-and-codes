@@ -1,0 +1,165 @@
+skill: peg_insert
+dsl_version: 2
+subtasks:
+- id: align_xy
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  weight: 0.2
+- id: approach_entry
+  weight: 0.2
+- id: contact_descent
+  offset:
+  - 0.0
+  - 0.0
+  - -0.01
+  weight: 0.1
+- id: insert_depth
+  offset:
+  - 0.0
+  - 0.0
+  - -0.03
+  weight: 0.3
+- id: retract_up
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  weight: 0.2
+phases:
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: channel_axis
+      tolerance: 0.1
+  parameters:
+    lateral_offset_x:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: replace
+    lateral_offset_y:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: replace
+  subtask_id: align_xy
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: approach_entry
+- id: contact_1
+  type: contact
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - -0.01
+    orientation:
+      mode: keep_current
+  subtask_id: contact_descent
+- id: insert_1
+  type: insert
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.05
+      axis: channel_axis
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+  parameters:
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.15
+      default: 0.05
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+  subtask_id: insert_depth
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    orientation:
+      mode: keep_current
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: retract_up

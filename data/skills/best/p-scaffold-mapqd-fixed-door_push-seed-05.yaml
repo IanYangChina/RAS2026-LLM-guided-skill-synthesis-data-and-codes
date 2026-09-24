@@ -1,0 +1,39 @@
+skill: door_push
+phases:
+- id: approach_1
+  type: approach
+  generator: arc_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+- id: contact_1
+  type: contact
+  generator: bezier_curve
+  control: impedance_control
+  termination: contact_detected
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+- id: contact_2
+  type: contact
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: push_1
+  type: push
+  generator: impedance_motion
+  control: impedance_control
+  termination: pose_tolerance
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    retract_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2

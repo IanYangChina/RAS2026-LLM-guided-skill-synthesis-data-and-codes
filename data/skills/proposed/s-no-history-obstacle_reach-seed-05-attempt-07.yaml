@@ -1,0 +1,127 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: lift
+  parameters:
+    lift_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.23
+      range:
+      - 0.15
+      - 0.35
+      type: scalar
+    max_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 2.0
+      range:
+      - 0.5
+      - 5.0
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.2
+      range:
+      - 0.05
+      - 0.5
+      type: scalar
+  subtask_id: reach_high
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.23
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: time_limit
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: forward
+  parameters:
+    lift_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.23
+      range:
+      - 0.15
+      - 0.35
+      type: scalar
+    max_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 2.0
+      range:
+      - 0.5
+      - 5.0
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.2
+      range:
+      - 0.05
+      - 0.5
+      type: scalar
+  subtask_id: reach_high
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.23
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: time_limit
+  type: push
+- control: position_control
+  generator: linear_cartesian
+  id: descend
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.2
+      range:
+      - 0.05
+      - 0.5
+      type: scalar
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+skill: obstacle_reach
+skill_type: arm_gripper
+subtasks:
+- id: reach_high
+  offset:
+  - 0.0
+  - 0.0
+  - 0.23
+  weight: 0.2
+- id: reach_goal
+  weight: 0.8

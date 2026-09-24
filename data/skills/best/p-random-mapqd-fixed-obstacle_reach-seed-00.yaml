@@ -1,0 +1,93 @@
+skill: obstacle_reach
+phases:
+- id: insert_1
+  type: insert
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  parameters:
+    insertion_force:
+      type: scalar
+      range:
+      - 1.0
+      - 20.0
+- id: insert_2
+  type: insert
+  generator: impedance_motion
+  control: impedance_control
+  termination: pose_tolerance
+  parameters:
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.15
+- id: approach_1
+  type: approach
+  generator: arc_cartesian
+  control: force_threshold_switch
+  termination: pose_tolerance
+  parameters:
+    approach_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: push_1
+  type: push
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+- id: lift_1
+  type: lift
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    lift_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: insert_3
+  type: insert
+  generator: impedance_motion
+  control: admittance_control
+  termination: pose_tolerance
+  parameters:
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.15
+    param_0:
+      type: scalar
+      range:
+      - -0.5157856897960678
+      - -0.36590630448384576
+- id: push_2
+  type: push
+  generator: impedance_motion
+  control: impedance_control
+  termination: time_limit

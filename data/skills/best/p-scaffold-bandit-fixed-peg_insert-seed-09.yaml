@@ -1,0 +1,67 @@
+skill: peg_insert
+phases:
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    lateral_offset_x:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: pose_tolerance
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: contact_1
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  parameters:
+    contact_force:
+      type: scalar
+      range:
+      - 1.0
+      - 20.0
+- id: insert_1
+  type: insert
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  parameters:
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.15
+    insertion_force:
+      type: scalar
+      range:
+      - 1.0
+      - 20.0
+    param_0:
+      type: scalar
+      range:
+      - -0.4657311567881792
+      - 0.22643046637344244
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1

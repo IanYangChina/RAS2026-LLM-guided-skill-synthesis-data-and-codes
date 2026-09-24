@@ -1,0 +1,155 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_behind
+  parameters:
+    approach_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.06
+      range:
+      - 0.04
+      - 0.1
+      type: scalar
+    approach_lateral:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+    speed_approach:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.12
+      range:
+      - 0.05
+      - 0.25
+      type: scalar
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.06
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.05
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: descend_contact
+  parameters:
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 5.0
+      range:
+      - 2.0
+      - 10.0
+      type: scalar
+    descend_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: -0.055
+      range:
+      - -0.08
+      - -0.03
+      type: scalar
+    speed_descend:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+  subtask_id: make_contact
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - -0.055
+    offset_along_axis:
+      axis: world_z
+      distance: 0.0
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: force_exceeded
+  type: contact
+- control: admittance_control
+  generator: linear_cartesian
+  id: push_to_goal
+  parameters:
+    max_time_push:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 5.0
+      range:
+      - 2.0
+      - 10.0
+      type: scalar
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.25
+      range:
+      - 0.1
+      - 0.4
+      type: scalar
+    speed_push:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.02
+      - 0.2
+      type: scalar
+  subtask_id: push_to_goal
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.25
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: time_limit
+  type: push
+skill: push_to_goal
+subtasks:
+- anchor: object
+  id: make_contact
+  metric: contact
+  weight: 0.3
+- id: push_to_goal
+  metric: goal_progress
+  target_entity: object
+  weight: 0.7

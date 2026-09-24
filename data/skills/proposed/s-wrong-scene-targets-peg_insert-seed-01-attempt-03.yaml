@@ -1,0 +1,171 @@
+dsl_version: 2
+phases:
+- control: impedance_control
+  generator: impedance_motion
+  id: rotate_1
+  parameters:
+    approach_z_offset:
+      binds_to:
+      - mode: add
+        path: target.offset.z
+      default: 0.055
+      range:
+      - 0.03
+      - 0.08
+      type: scalar
+  subtask_id: approach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.055
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0.0
+      - 0.0
+      - -1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: rotate
+- control: position_control
+  generator: linear_cartesian
+  id: align_1
+  parameters:
+    align_lateral_x:
+      binds_to:
+      - mode: add
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.01
+      - 0.01
+      type: scalar
+  subtask_id: approach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.03
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0.0
+      - 0.0
+      - -1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: align
+- control: impedance_control
+  generator: impedance_motion
+  guards:
+  - args: {}
+    id: force_safe
+    on_failure: retry
+    predicate: force_below
+    threshold: 40.0
+    when: during_phase
+  id: push_1
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.04
+      range:
+      - 0.02
+      - 0.06
+      type: scalar
+    push_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 30.0
+      range:
+      - 10.0
+      - 40.0
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.002
+    - 0.002
+    - 0.0
+    strategy: offset_target
+  subtask_id: insertion
+  target:
+    anchor: task_goal
+    offset_along_axis:
+      axis: channel_axis
+      distance: 0.04
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0.0
+      - 0.0
+      - -1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+  termination: force_exceeded
+  type: push
+- control: position_control
+  generator: linear_cartesian
+  id: align_2
+  parameters:
+    align_lateral_x_final:
+      binds_to:
+      - mode: add
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.01
+      - 0.01
+      type: scalar
+  subtask_id: insertion
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - -0.01
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0.0
+      - 0.0
+      - -1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: align
+skill: peg_insert
+subtasks:
+- anchor: object
+  id: approach_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.3
+- anchor: object
+  id: insertion
+  offset:
+  - 0.0
+  - 0.0
+  - -0.055
+  target_entity: tcp
+  weight: 0.7

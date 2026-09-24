@@ -1,0 +1,17 @@
+skill: push_to_goal
+phases:
+- id: rotate_1
+  type: rotate
+  generator: impedance_motion
+  control: impedance_control
+  termination: time_limit
+- id: align_1
+  type: align
+  generator: impedance_motion
+  control: position_control
+  termination: pose_tolerance
+- id: push_1
+  type: push
+  generator: impedance_motion
+  control: impedance_control
+  termination: pose_tolerance

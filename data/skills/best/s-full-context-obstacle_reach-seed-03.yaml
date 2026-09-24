@@ -1,0 +1,91 @@
+skill: obstacle_reach
+dsl_version: 2
+subtasks:
+- id: high_waypoint
+  offset:
+  - 0.0
+  - 0.0
+  - 0.35
+  weight: 0.3
+- id: reach_goal
+  weight: 0.7
+phases:
+- id: lift_over_obstacle
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.35
+    orientation:
+      mode: keep_current
+      tolerance: 0.15
+  parameters:
+    arc_height:
+      type: scalar
+      range:
+      - 0.0
+      - 0.3
+      default: 0.2
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.1
+      - 0.5
+      default: 0.3
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    tolerance:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.15
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  subtask_id: high_waypoint
+- id: descend_to_goal
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+      tolerance: 0.15
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.15
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    tolerance:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.02
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  subtask_id: reach_goal

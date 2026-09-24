@@ -1,0 +1,118 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: align_1
+  subtask_id: align
+  target:
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.12
+    orientation:
+      align_with: insertion_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+    source: yaml
+  termination: pose_tolerance
+  type: align
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  subtask_id: approach
+  target:
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.09
+    orientation:
+      align_with: insertion_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: contact_1
+  parameters:
+    contact_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.055
+      range:
+      - 0.04
+      - 0.07
+      type: scalar
+  subtask_id: contact
+  target:
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.055
+    orientation:
+      align_with: insertion_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+    source: yaml
+  termination: force_exceeded
+  type: contact
+- control: impedance_control
+  duration:
+    max_time: 1.5
+  generator: impedance_motion
+  id: insert_1
+  parameters:
+    insert_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.03
+      range:
+      - 0.02
+      - 0.05
+      type: scalar
+    insert_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 1.5
+      range:
+      - 0.5
+      - 3.0
+      type: scalar
+  subtask_id: insert
+  target:
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.03
+    orientation:
+      align_with: insertion_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+    source: yaml
+  termination: time_limit
+  type: insert
+skill: peg_insert

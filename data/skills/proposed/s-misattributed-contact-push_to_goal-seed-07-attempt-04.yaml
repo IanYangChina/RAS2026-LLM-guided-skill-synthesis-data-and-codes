@@ -1,0 +1,168 @@
+skill: push_to_goal
+dsl_version: 2
+subtasks:
+- id: reach_object
+  anchor: object
+  target_entity: tcp
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  weight: 0.3
+- id: push_to_goal
+  anchor: goal
+  target_entity: tcp
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  weight: 0.7
+phases:
+- id: descend_behind
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    offset_along_axis:
+      distance: 0.2
+      axis: task_goal_direction
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      mode: keep_current
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.2
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_object
+- id: lower_to_contact
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.03
+    offset_along_axis:
+      distance: 0.2
+      axis: task_goal_direction
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      mode: keep_current
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.15
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_object
+- id: push_to_goal
+  type: push
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.025
+    offset_along_axis:
+      distance: 0.3
+      axis: task_goal_direction
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      mode: keep_current
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.03
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    stroke:
+      type: scalar
+      range:
+      - 0.15
+      - 0.5
+      default: 0.3
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    force_below_threshold:
+      type: scalar
+      range:
+      - 1.0
+      - 10.0
+      default: 5.0
+      binds_to:
+      - path: guards.contact_lost.threshold
+        mode: replace
+  guards:
+  - id: contact_lost
+    when: during_phase
+    predicate: force_below
+    threshold: 5.0
+    on_failure: abort
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.01
+  subtask_id: push_to_goal
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    orientation:
+      mode: keep_current
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.2
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+```

@@ -1,0 +1,299 @@
+skill: grasp_place
+dsl_version: 2
+skill_type: arm_gripper
+subtasks:
+- id: reach_object
+  anchor: object
+  target_entity: tcp
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.15
+  weight: 0.2
+- id: grasp_success
+  anchor: object
+  target_entity: tcp
+  metric: contact
+  weight: 0.2
+- id: lift_clearance
+  anchor: object
+  target_entity: object
+  metric: goal_progress
+  offset:
+  - 0.0
+  - 0.0
+  - 0.15
+  weight: 0.2
+- id: transport_accuracy
+  anchor: goal
+  target_entity: tcp
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  weight: 0.2
+- id: place_accuracy
+  anchor: goal
+  target_entity: object
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  weight: 0.2
+phases:
+- id: approach_object
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: contact_before_approach
+    when: before_phase
+    predicate: contact_detected
+    args: {}
+    threshold: 1.0
+    on_failure: continue
+  subtask_id: reach_object
+- id: descend_grasp
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    grasp_z_offset:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+      default: 0.0
+      binds_to:
+      - path: target.offset.z
+        mode: add
+  subtask_id: grasp_success
+- id: grasp_1
+  type: grasp
+  generator: null
+  control: position_control
+  termination: time_limit
+  end_effector_action: force_grasp
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  parameters:
+    grasp_duration:
+      type: scalar
+      range:
+      - 0.5
+      - 2.0
+      default: 1.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+  guards:
+  - id: bilateral_grasp_check
+    when: after_phase
+    predicate: bilateral_grasp
+    args: {}
+    threshold: 0.5
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - -0.005
+  subtask_id: grasp_success
+- id: lift_1
+  type: lift
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: grasp_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    lift_height:
+      type: scalar
+      range:
+      - 0.08
+      - 0.25
+      default: 0.15
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    lift_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.08
+      default: 0.04
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: object_lifted_check
+    when: after_phase
+    predicate: object_lifted
+    args: {}
+    threshold: 0.05
+    on_failure: abort
+  subtask_id: lift_clearance
+- id: transport_to_goal
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.25
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    transport_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.07
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: transport_accuracy
+- id: descend_place
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.005
+    orientation:
+      mode: keep_current
+  parameters:
+    place_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.03
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    place_z_fine:
+      type: scalar
+      range:
+      - -0.005
+      - 0.01
+      default: 0.0
+      binds_to:
+      - path: target.offset.z
+        mode: add
+  subtask_id: place_accuracy
+- id: release_1
+  type: release
+  generator: null
+  control: position_control
+  termination: time_limit
+  end_effector_action: open
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  parameters:
+    release_duration:
+      type: scalar
+      range:
+      - 0.3
+      - 1.0
+      default: 0.5
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+  subtask_id: place_accuracy
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    retract_height:
+      type: scalar
+      range:
+      - 0.15
+      - 0.3
+      default: 0.25
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+```

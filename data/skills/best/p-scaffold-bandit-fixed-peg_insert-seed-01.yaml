@@ -1,0 +1,33 @@
+skill: peg_insert
+phases:
+- id: align_1
+  type: align
+  generator: joint_interpolation
+  control: position_control
+  termination: pose_tolerance
+- id: contact_1
+  type: contact
+  generator: impedance_motion
+  control: admittance_control
+  termination: contact_detected
+- id: insert_1
+  type: insert
+  generator: impedance_motion
+  control: admittance_control
+  termination: force_exceeded
+  parameters:
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.15
+    insertion_force:
+      type: scalar
+      range:
+      - 1.0
+      - 20.0
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance

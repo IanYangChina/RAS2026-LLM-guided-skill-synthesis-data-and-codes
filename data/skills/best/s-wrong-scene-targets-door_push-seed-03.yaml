@@ -1,0 +1,84 @@
+skill: door_push
+dsl_version: 2
+subtasks:
+- id: hinge_progress
+  anchor: fixture
+  target_entity: hinge
+  metric: hinge_angle
+phases:
+- id: approach_handle
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+    tolerance: 0.02
+  retries:
+    max_attempts: 0
+    strategy: repeat
+- id: push_door
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.2
+      axis: task_goal_direction
+      mode: add_to_offset
+      sign: negative
+    tolerance: 0.015
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.05
+      - 0.4
+      default: 0.2
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+  guards:
+  - id: contact_guard
+    when: during_phase
+    predicate: contact_detected
+    threshold: 1.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - -0.02
+    - 0.0
+  subtask_id: hinge_progress
+- id: retract_after_push
+  type: retract
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    tolerance: 0.02
+  retries:
+    max_attempts: 0
+    strategy: repeat

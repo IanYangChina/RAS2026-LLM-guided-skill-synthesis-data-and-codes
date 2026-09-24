@@ -1,0 +1,133 @@
+skill: push_to_goal
+dsl_version: 2
+subtasks:
+- id: approach_tcp
+  anchor: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.05
+  weight: 0.3
+- id: push_goal
+  target_entity: object
+  weight: 0.7
+phases:
+- id: approach_over_object
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+  parameters:
+    approach_height:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    approach_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.15
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+  subtask_id: approach_tcp
+- id: descend_to_precontact
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.025
+    offset_along_axis:
+      distance: -0.02
+      axis: task_goal_direction
+      mode: replace_offset_projection
+      sign: positive
+  parameters:
+    descend_lateral_offset:
+      type: scalar
+      range:
+      - -0.05
+      - -0.005
+      default: -0.02
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+  guards:
+  - id: contact_established
+    when: after_phase
+    predicate: contact_detected
+    threshold: 1.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - -0.01
+    - 0.0
+    - 0.0
+  subtask_id: approach_tcp
+- id: push_to_goal
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.3
+      axis: task_goal_direction
+      mode: add_to_offset
+      sign: positive
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.15
+      - 0.45
+      default: 0.3
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    push_pose_tolerance:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  subtask_id: push_goal

@@ -1,0 +1,147 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_overhead
+  parameters:
+    overhead_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.2
+      range:
+      - 0.1
+      - 0.35
+      type: scalar
+    overhead_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.03
+      range:
+      - 0.015
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 1
+    strategy: repeat
+  subtask_id: reach_peg
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.08
+    - 0.15
+    source: yaml
+    tolerance: 0.03
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  guards:
+  - id: force_limit
+    on_failure: abort
+    predicate: force_below
+    threshold: 40.0
+    when: during_phase
+  id: contact_peg
+  parameters:
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 15.0
+      range:
+      - 5.0
+      - 30.0
+      type: scalar
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.06
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+  retries:
+    max_attempts: 1
+    strategy: repeat
+  subtask_id: reach_peg
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.03
+    - 0.0
+    source: yaml
+    tolerance: 0.02
+  termination: force_exceeded
+  type: descend
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - id: contact_maintained
+    on_failure: retry
+    predicate: force_below
+    threshold: 1.0
+    when: during_phase
+  id: push_through_channel
+  parameters:
+    push_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 25.0
+      range:
+      - 10.0
+      - 40.0
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.04
+      - 0.2
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - -0.005
+    - 0.0
+    strategy: offset_target
+  subtask_id: push_to_exit
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0.0
+      - 1.0
+      - 0.0
+      mode: align_axis
+    source: yaml
+    tolerance: 0.02
+  termination: force_exceeded
+  type: push
+skill: peg_channel
+subtasks:
+- anchor: object
+  id: reach_peg
+  offset:
+  - 0.0
+  - 0.03
+  - 0.01
+  weight: 0.3
+- anchor: goal
+  id: push_to_exit
+  metric: goal_progress
+  target_entity: tcp
+  weight: 0.7

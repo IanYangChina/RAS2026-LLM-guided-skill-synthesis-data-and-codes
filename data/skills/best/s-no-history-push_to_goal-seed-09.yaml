@@ -1,0 +1,106 @@
+skill: push_to_goal
+dsl_version: 2
+subtasks:
+- id: pre_push
+  anchor: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.05
+  weight: 0.3
+- id: push_to_goal
+  target_entity: object
+  weight: 0.7
+phases:
+- id: approach_box
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    tolerance: 0.05
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.1
+      - 0.5
+      default: 0.3
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: pre_push
+- id: descend_to_contact
+  type: descend
+  generator: linear_cartesian
+  control: impedance_control
+  termination: contact_detected
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.04
+      axis: task_goal_direction
+      mode: add_to_offset
+      sign: negative
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    pre_push_offset:
+      type: scalar
+      range:
+      - 0.02
+      - 0.08
+      default: 0.04
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+  subtask_id: pre_push
+- id: push_to_goal
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    push_speed:
+      type: scalar
+      range:
+      - 0.03
+      - 0.12
+      default: 0.06
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: push_to_goal

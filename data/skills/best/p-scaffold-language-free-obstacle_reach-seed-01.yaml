@@ -1,0 +1,181 @@
+skill: obstacle_reach
+dsl_version: 2
+subtasks:
+- id: side_approach
+  offset:
+  - 0.0
+  - 0.25
+  - 0.5
+  weight: 0.15
+- id: side_descent
+  offset:
+  - 0.0
+  - 0.2
+  - 0.0
+  weight: 0.35
+- id: lateral_push
+  weight: 0.5
+phases:
+- id: approach_side
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.25
+    - 0.5
+    orientation:
+      mode: keep_current
+  parameters:
+    arc_height:
+      type: scalar
+      range:
+      - 0.2
+      - 0.5
+      default: 0.35
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.03
+      - 0.1
+      default: 0.07
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    tolerance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.05
+      default: 0.03
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  subtask_id: side_approach
+- id: shift_right
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.2
+    - 0.5
+    orientation:
+      mode: keep_current
+  parameters:
+    shift_speed:
+      type: scalar
+      range:
+      - 0.03
+      - 0.1
+      default: 0.06
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    shift_tolerance:
+      type: scalar
+      range:
+      - 0.01
+      - 0.03
+      default: 0.02
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  subtask_id: side_approach
+- id: descend_side
+  type: descend
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.2
+    - 0.0
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.06
+      default: 0.04
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    descend_tolerance:
+      type: scalar
+      range:
+      - 0.01
+      - 0.03
+      default: 0.02
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  guards:
+  - id: force_guard
+    when: during_phase
+    predicate: force_below
+    threshold: 5.0
+    on_failure: abort
+  retries:
+    max_attempts: 1
+    strategy: reduce_speed
+  subtask_id: side_descent
+- id: push_lateral
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+  parameters:
+    push_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.05
+      default: 0.03
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    push_tolerance:
+      type: scalar
+      range:
+      - 0.01
+      - 0.02
+      default: 0.015
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  guards:
+  - id: push_force_guard
+    when: during_phase
+    predicate: force_below
+    threshold: 5.0
+    on_failure: abort
+  retries:
+    max_attempts: 1
+    strategy: reduce_speed
+  subtask_id: lateral_push

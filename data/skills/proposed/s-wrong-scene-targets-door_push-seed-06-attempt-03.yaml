@@ -1,0 +1,105 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_handle
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.15
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+  subtask_id: reach_handle
+  target:
+    anchor: task_goal
+    offset:
+    - 0
+    - 0
+    - 0.05
+    orientation:
+      align_with: world_x
+      axis:
+      - 1
+      - 0
+      - 0
+      mode: align_axis
+      tolerance: 0.1
+    source: yaml
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: approach
+- control: admittance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: door_closed
+    on_failure: retry
+    predicate: hinge_delta_reached
+    threshold: 0.45
+    when: during_phase
+  id: push_close
+  parameters:
+    push_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.2
+      range:
+      - 0.15
+      - 0.35
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - -0.02
+    - 0
+    - 0
+    strategy: offset_target
+  subtask_id: push_door
+  target:
+    anchor: task_goal
+    offset_along_axis:
+      axis: world_x
+      distance: 0.2
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: push
+skill: door_push
+skill_type: arm
+subtasks:
+- anchor: goal
+  id: reach_handle
+  metric: distance
+  offset:
+  - 0
+  - 0
+  - 0.05
+  target_entity: tcp
+  weight: 0.3
+- anchor: fixture
+  id: push_door
+  metric: hinge_angle
+  offset:
+  - 0
+  - 0
+  - 0
+  target_entity: hinge
+  weight: 0.7

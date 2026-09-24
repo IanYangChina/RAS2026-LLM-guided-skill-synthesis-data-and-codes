@@ -1,0 +1,92 @@
+skill: door_push
+dsl_version: 2
+subtasks:
+- id: reach_handle
+  anchor: fixture
+  offset:
+  - -0.4
+  - -0.02
+  - 0.35
+  weight: 0.2
+- id: contact
+  anchor: fixture
+  metric: contact
+  weight: 0.3
+- id: push_target
+  target_entity: hinge
+  metric: hinge_angle
+  weight: 0.5
+phases:
+- id: approach_handle
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: door_panel
+    offset:
+    - -0.4
+    - -0.02
+    - 0.35
+    orientation:
+      mode: keep_current
+  subtask_id: reach_handle
+- id: descend_contact
+  type: descend
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: fixture
+    entity: door_panel
+    offset:
+    - -0.4
+    - -0.02
+    - 0.35
+    orientation:
+      mode: keep_current
+  parameters:
+    contact_force:
+      type: scalar
+      range:
+      - 2.0
+      - 10.0
+      default: 5.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+  subtask_id: contact
+- id: push_door
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: door_panel
+    offset:
+    - -0.4
+    - -0.02
+    - 0.35
+    offset_along_axis:
+      distance: 0.25
+      axis: world_y
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      mode: keep_current
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.15
+      - 0.5
+      default: 0.25
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+  subtask_id: push_target

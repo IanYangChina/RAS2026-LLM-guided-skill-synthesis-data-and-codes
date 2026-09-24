@@ -1,0 +1,182 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_behind_1
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.15
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+  subtask_id: approach_behind
+  target:
+    anchor: task_object
+    offset:
+    - -0.02
+    - 0.05
+    - 0.1
+    source: yaml
+    tolerance: 0.03
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: descend_to_ground
+  parameters:
+    descend_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 5.0
+      range:
+      - 3.0
+      - 10.0
+      type: scalar
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.25
+      type: scalar
+  target:
+    anchor: task_object
+    offset:
+    - -0.02
+    - 0.05
+    - 0.0
+    source: yaml
+  termination: force_exceeded
+  type: descend
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: contact_object
+  parameters:
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 5.0
+      range:
+      - 3.0
+      - 10.0
+      type: scalar
+    contact_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  target:
+    anchor: task_object
+    offset:
+    - -0.02
+    - 0.05
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.04
+      mode: add_to_offset
+      sign: positive
+    source: yaml
+  termination: force_exceeded
+  type: contact
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - id: force_guard
+    on_failure: retry
+    predicate: force_below
+    threshold: 24.0
+    when: during_phase
+  - id: progress_guard
+    on_failure: retry
+    predicate: object_progress
+    threshold: 0.02
+    when: during_phase
+  id: push_to_goal
+  parameters:
+    force_guard_threshold:
+      binds_to:
+      - mode: replace
+        path: guards.force_guard.threshold
+      default: 24.0
+      range:
+      - 20.0
+      - 25.0
+      type: scalar
+    progress_threshold:
+      binds_to:
+      - mode: replace
+        path: guards.progress_guard.threshold
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.15
+      range:
+      - 0.1
+      - 0.2
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.005
+    - 0.005
+    - 0.0
+    strategy: offset_target
+  subtask_id: push_to_goal
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.15
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: time_limit
+  type: push
+skill: push_to_goal
+skill_type: arm_gripper
+subtasks:
+- anchor: object
+  id: approach_behind
+  offset:
+  - 0.0
+  - 0.0
+  - 0.06
+  weight: 0.2
+- id: push_to_goal
+  metric: goal_progress
+  target_entity: object
+  weight: 0.8

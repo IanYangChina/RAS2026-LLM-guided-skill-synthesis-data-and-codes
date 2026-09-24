@@ -1,0 +1,46 @@
+skill: obstacle_reach
+dsl_version: 2
+skill_type: arm
+
+phases:
+  - id: arc_over_obstacle
+    type: approach
+    generator: arc_cartesian
+    control: position_control
+    termination: pose_tolerance
+    target:
+      source: yaml
+      anchor: task_goal
+      offset: [0.0, 0.0, 0.18]
+      tolerance: 0.02
+      orientation: {mode: keep_current}
+    parameters:
+      obstacle_clearance_arc:
+        type: scalar
+        range: [0.32, 0.44]
+        default: 0.38
+        binds_to:
+          - {path: generator.arc_height, mode: replace}
+    guards:
+      - id: avoid_obstacle_contact
+        when: during_phase
+        predicate: force_below
+        args: {scope: task_obstacle}
+        threshold: 5.0
+        on_failure: retry
+    retries:
+      max_attempts: 1
+      strategy: offset_target
+      offset: [0.0, 0.0, 0.05]
+
+  - id: descend_to_goal
+    type: descend
+    generator: linear_cartesian
+    control: position_control
+    termination: pose_tolerance
+    target:
+      source: yaml
+      anchor: task_goal
+      offset: [0.0, 0.0, 0.0]
+      tolerance: 0.02
+      orientation: {mode: keep_current}

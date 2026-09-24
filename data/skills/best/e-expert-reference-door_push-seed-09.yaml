@@ -1,0 +1,79 @@
+skill: door_push
+dsl_version: 2
+skill_type: arm
+
+phases:
+  - id: approach_handle
+    type: approach
+    generator: arc_cartesian
+    control: position_control
+    termination: pose_tolerance
+    target:
+      source: yaml
+      anchor: site
+      entity: door_handle
+      offset: [0.0, 0.06, 0.0]
+      tolerance: 0.015
+      orientation: {mode: keep_current}
+    parameters:
+      approach_arc_height:
+        type: scalar
+        range: [0.03, 0.09]
+        default: 0.05
+        binds_to:
+          - {path: generator.arc_height, mode: replace}
+
+  - id: contact_handle
+    type: contact
+    generator: linear_cartesian
+    control: force_threshold_switch
+    termination: contact_detected
+    target:
+      source: yaml
+      anchor: site
+      entity: door_handle
+      offset: [0.0, 0.0, 0.0]
+      tolerance: 0.01
+      orientation: {mode: keep_current}
+
+  - id: push_handle_arc_chord
+    type: push
+    generator: linear_cartesian
+    control: impedance_control
+    termination: time_limit
+    target:
+      source: yaml
+      anchor: site
+      entity: door_handle
+      offset: [0.065, -0.20, 0.0]
+      tolerance: 0.025
+      orientation: {mode: keep_current}
+    parameters:
+      push_time:
+        type: scalar
+        range: [2.0, 4.0]
+        default: 3.0
+        binds_to:
+          - {path: duration.max_time, mode: replace}
+    guards:
+      - id: door_opened
+        when: after_phase
+        predicate: hinge_delta_reached
+        args: {joint: door_hinge, mode: delta_from_initial}
+        threshold: 0.45
+        on_failure: retry
+    retries:
+      max_attempts: 1
+      strategy: repeat
+
+  - id: retract_from_door
+    type: retract
+    generator: linear_cartesian
+    control: position_control
+    termination: pose_tolerance
+    target:
+      source: yaml
+      anchor: current_tcp
+      offset: [0.0, 0.10, 0.10]
+      tolerance: 0.02
+      orientation: {mode: keep_current}

@@ -1,0 +1,126 @@
+skill: obstacle_reach
+dsl_version: 2
+subtasks:
+- id: above_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.17
+  weight: 0.3
+- id: goal
+  weight: 0.7
+phases:
+- id: approach_with_offset
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.185
+    - 0.17
+    tolerance: 0.02
+    orientation:
+      mode: none
+  parameters:
+    approach_tolerance:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.025
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    arc_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.5
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: above_goal
+- id: align_above_goal
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.17
+    tolerance: 0.02
+    orientation:
+      mode: none
+  parameters:
+    align_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.4
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    align_tolerance:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.025
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  subtask_id: above_goal
+- id: descend_to_goal
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: none
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.4
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    descend_tolerance:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.025
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  subtask_id: goal

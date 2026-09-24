@@ -1,0 +1,109 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: arc_cartesian
+  id: approach_handle
+  parameters:
+    approach_arc_height:
+      binds_to:
+      - mode: replace
+        path: generator.arc_height
+      default: 0.05
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.01
+      - 0.15
+      type: scalar
+  target:
+    anchor: fixture
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: admittance_control
+  duration:
+    max_time: 15.0
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: check_force
+    on_failure: abort
+    predicate: force_below
+    threshold: 30.0
+    when: during_phase
+  - id: check_hinge_angle
+    on_failure: continue
+    predicate: hinge_delta_reached
+    threshold: 0.524
+    when: after_phase
+  id: push_door
+  parameters:
+    max_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 15.0
+      range:
+      - 5.0
+      - 30.0
+      type: scalar
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.3
+      range:
+      - 0.1
+      - 0.5
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.03
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  retries:
+    max_attempts: 1
+    strategy: reduce_speed
+  subtask_id: hinge_progress
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: world_y
+      distance: 0.3
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.05
+  termination: time_limit
+  type: push
+skill: door_push
+subtasks:
+- anchor: fixture
+  id: hinge_progress
+  metric: hinge_angle
+  target_entity: hinge

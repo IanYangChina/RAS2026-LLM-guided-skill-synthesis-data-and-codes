@@ -1,0 +1,40 @@
+skill: peg_insert
+phases:
+- id: rotate_1
+  type: rotate
+  generator: impedance_motion
+  control: position_control
+  termination: pose_tolerance
+- id: retract_1
+  type: retract
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    retract_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  parameters:
+    depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: pull_1
+  type: pull
+  generator: arc_cartesian
+  control: impedance_control
+  termination: time_limit
+  parameters:
+    pull_distance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2

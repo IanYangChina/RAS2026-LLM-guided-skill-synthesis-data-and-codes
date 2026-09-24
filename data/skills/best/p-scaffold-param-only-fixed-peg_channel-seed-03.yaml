@@ -1,0 +1,62 @@
+skill: peg_channel
+phases:
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    lateral_offset_y:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    approach_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: contact_1
+  type: contact
+  generator: impedance_motion
+  control: force_threshold_switch
+  termination: force_exceeded
+  parameters:
+    contact_force:
+      type: scalar
+      range:
+      - 1.0
+      - 20.0
+- id: push_1
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  parameters:
+    push_depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1

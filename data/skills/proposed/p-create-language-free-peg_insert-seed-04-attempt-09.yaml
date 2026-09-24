@@ -1,0 +1,120 @@
+skill: peg_insert
+dsl_version: 2
+subtasks:
+- id: reach_standoff
+  anchor: fixture
+  target_entity: tcp
+  offset:
+  - 0.0
+  - 0.0
+  - 0.06
+  weight: 0.3
+- id: reach_insertion
+  anchor: goal
+  target_entity: object
+  weight: 0.7
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.06
+    tolerance: 0.02
+    orientation:
+      mode: none
+  parameters:
+    approach_time:
+      type: scalar
+      range:
+      - 500.0
+      - 1500.0
+      default: 1000.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+  subtask_id: reach_standoff
+- id: insert_1
+  type: insert
+  generator: impedance_motion
+  control: impedance_control
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.08
+      axis: channel_axis
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: channel_axis
+      tolerance: 0.05
+  parameters:
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.05
+      - 0.15
+      default: 0.08
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    insertion_force:
+      type: scalar
+      range:
+      - 20.0
+      - 45.0
+      default: 35.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.005
+    - 0.0
+    - 0.0
+  subtask_id: reach_insertion
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.08
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    retract_time:
+      type: scalar
+      range:
+      - 500.0
+      - 1000.0
+      default: 720.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+```

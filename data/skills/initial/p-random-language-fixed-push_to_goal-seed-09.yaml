@@ -1,0 +1,61 @@
+skill: push_to_goal
+skill_type: arm_gripper
+phases:
+- id: rotate_1
+  type: rotate
+  generator: arc_cartesian
+  control: impedance_control
+  termination: time_limit
+- id: pull_1
+  type: pull
+  generator: arc_cartesian
+  control: impedance_control
+  termination: time_limit
+  parameters:
+    pull_distance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+- id: push_1
+  type: push
+  generator: impedance_motion
+  control: position_control
+  termination: time_limit
+  parameters:
+    push_depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+    push_distance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+- id: descend_2
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: contact_detected
+- id: grasp_1
+  type: grasp
+  control: position_control
+  termination: grasp_success
+  end_effector_action: force_grasp
+  parameters:
+    grip_force:
+      type: scalar
+      range:
+      - 5.0
+      - 30.0

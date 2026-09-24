@@ -1,0 +1,12 @@
+skill: obstacle_reach
+phases:
+- id: approach_1
+  type: approach
+  generator: bezier_curve
+  control: admittance_control
+  termination: grasp_success
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance

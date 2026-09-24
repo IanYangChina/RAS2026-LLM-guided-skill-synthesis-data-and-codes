@@ -1,0 +1,134 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_push_point
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  subtask_id: reach_push_point
+  target:
+    anchor: body
+    entity: door_panel
+    offset:
+    - 0.2
+    - 0.01
+    - 0.45
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_to_push_point
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  target:
+    anchor: body
+    entity: door_panel
+    offset:
+    - 0.2
+    - 0.01
+    - 0.35
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: descend
+- control: admittance_control
+  generator: linear_cartesian
+  guards:
+  - id: force_guard
+    on_failure: retry
+    predicate: force_below
+    threshold: 25.0
+    when: during_phase
+  id: push_door
+  parameters:
+    force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 28.0
+      range:
+      - 15.0
+      - 30.0
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    push_stroke:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.2
+      range:
+      - 0.15
+      - 0.6
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.01
+    - 0.0
+    - 0.0
+    strategy: offset_target
+  subtask_id: push_goal
+  target:
+    anchor: body
+    entity: door_panel
+    offset:
+    - 0.2
+    - 0.01
+    - 0.35
+    offset_along_axis:
+      axis: world_y
+      distance: 0.2
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.05
+  termination: force_exceeded
+  type: push
+skill: door_push
+subtasks:
+- anchor: fixture
+  id: reach_push_point
+  metric: distance
+  offset:
+  - 0.2
+  - 0.01
+  - 0.35
+  target_entity: tcp
+  weight: 0.3
+- anchor: fixture
+  id: push_goal
+  metric: hinge_angle
+  target_entity: hinge
+  weight: 0.7

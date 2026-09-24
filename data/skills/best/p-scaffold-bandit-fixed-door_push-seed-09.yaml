@@ -1,0 +1,24 @@
+skill: door_push
+phases:
+- id: contact_1
+  type: contact
+  generator: arc_cartesian
+  control: admittance_control
+  termination: force_exceeded
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+- id: push_1
+  type: push
+  generator: linear_cartesian
+  control: position_control
+  termination: time_limit
+  parameters:
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1

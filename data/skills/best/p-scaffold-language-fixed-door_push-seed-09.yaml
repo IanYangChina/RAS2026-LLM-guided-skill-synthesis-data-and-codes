@@ -1,0 +1,152 @@
+skill: door_push
+dsl_version: 2
+subtasks:
+- id: hinge_progress
+  target_entity: hinge
+  metric: hinge_angle
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.12
+    tolerance: 0.05
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_offset_z:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.12
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.06
+      binds_to:
+      - path: generator.speed
+        mode: replace
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.05
+    orientation:
+      mode: keep_current
+  parameters:
+    contact_offset_x:
+      type: scalar
+      range:
+      - -0.05
+      - 0.05
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: replace
+- id: push_1
+  type: push
+  generator: linear_cartesian
+  control: admittance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.2
+      axis: world_y
+      mode: add_to_offset
+      sign: negative
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.1
+      - 0.3
+      default: 0.2
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: force_limit
+    when: during_phase
+    predicate: force_below
+    threshold: 28.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.08
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    retract_offset_z:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.08
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace

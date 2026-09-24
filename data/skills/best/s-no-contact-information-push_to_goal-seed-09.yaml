@@ -1,0 +1,94 @@
+skill: push_to_goal
+dsl_version: 2
+subtasks:
+- id: contact_object
+  anchor: object
+  offset:
+  - 0.0
+  - 0.06
+  - 0.0
+  weight: 0.3
+- id: move_to_goal
+  target_entity: object
+  metric: goal_progress
+  weight: 0.7
+phases:
+- id: approach_side
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.06
+    - 0.0
+    tolerance: 0.015
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    lateral_offset_x:
+      type: scalar
+      range:
+      - 0.0
+      - 0.06
+      default: 0.02
+      binds_to:
+      - path: target.offset.x
+        mode: replace
+    lateral_offset_y:
+      type: scalar
+      range:
+      - 0.04
+      - 0.08
+      default: 0.06
+      binds_to:
+      - path: target.offset.y
+        mode: replace
+  subtask_id: contact_object
+- id: push
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.005
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    push_height_offset:
+      type: scalar
+      range:
+      - 0.0
+      - 0.02
+      default: 0.005
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.15
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: move_to_goal

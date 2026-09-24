@@ -1,0 +1,100 @@
+dsl_version: 2
+phases:
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 15.0
+      range:
+      - 5.0
+      - 25.0
+      type: scalar
+    speed:
+      binds_to:
+      - mode: add
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+  subtask_id: reach_handle
+  target:
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: force_exceeded
+  type: approach
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - id: force_limit
+    on_failure: abort
+    predicate: force_below
+    threshold: 30.0
+    when: during_phase
+  id: push_1
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.25
+      range:
+      - 0.05
+      - 0.4
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: add
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+  retries:
+    max_attempts: 2
+    strategy: reduce_speed
+  subtask_id: open_door
+  target:
+    anchor: site
+    entity: door_handle
+    offset_along_axis:
+      axis: world_y
+      distance: 0.25
+      mode: add_to_offset
+      sign: negative
+    source: yaml
+    tolerance: 0.05
+  termination: time_limit
+  type: push
+skill: door_push
+skill_type: arm
+subtasks:
+- anchor: fixture
+  id: reach_handle
+  metric: distance
+  offset:
+  - -0.4
+  - -0.02
+  - 0.35
+  target_entity: tcp
+  weight: 0.3
+- anchor: fixture
+  id: open_door
+  metric: hinge_angle
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: hinge
+  weight: 0.7

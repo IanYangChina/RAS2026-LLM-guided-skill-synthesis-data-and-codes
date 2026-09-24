@@ -1,0 +1,170 @@
+skill: push_to_goal
+dsl_version: 2
+subtasks:
+- id: approach
+  anchor: object
+  offset:
+  - 0.0
+  - 0.08
+  - 0.0
+- id: contact
+  anchor: object
+  offset:
+  - 0.0
+  - 0.03
+  - 0.0
+- id: push
+  metric: goal_progress
+  offset:
+  - 0.0
+  - 0.03
+  - 0.0
+phases:
+- id: approach_behind
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.025
+    offset_along_axis:
+      distance: 0.08
+      axis: task_goal_direction
+      mode: add_to_offset
+      sign: negative
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.15
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: approach
+- id: contact_approach
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.025
+    offset_along_axis:
+      distance: 0.02
+      axis: task_goal_direction
+      mode: add_to_offset
+      sign: negative
+  parameters:
+    contact_force_threshold:
+      type: scalar
+      range:
+      - 3.0
+      - 10.0
+      default: 5.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    contact_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.005
+    - 0.0
+    - 0.0
+  subtask_id: contact
+- id: push_to_goal
+  type: push
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  parameters:
+    push_lateral_y:
+      type: scalar
+      range:
+      - -0.03
+      - 0.05
+      default: 0.01
+      binds_to:
+      - path: target.offset.y
+        mode: add
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.03
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    push_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  guards:
+  - id: contact_maintained
+    when: during_phase
+    predicate: contact_detected
+    threshold: 0.5
+    on_failure: retry
+  retries:
+    max_attempts: 3
+    strategy: offset_target
+    offset:
+    - 0.005
+    - 0.0
+    - 0.0
+  subtask_id: push
+- id: retract_up
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+  parameters:
+    retract_height:
+      type: scalar
+      range:
+      - 0.1
+      - 0.3
+      default: 0.2
+      binds_to:
+      - path: target.offset.z
+        mode: replace

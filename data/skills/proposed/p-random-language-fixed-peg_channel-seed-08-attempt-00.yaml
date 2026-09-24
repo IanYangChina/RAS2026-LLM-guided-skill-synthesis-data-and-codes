@@ -1,0 +1,113 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    approach_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.01
+      range:
+      - 0.005
+      - 0.02
+      type: scalar
+  subtask_id: approach
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.04
+    - 0.0
+    orientation:
+      mode: keep_current
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: contact_1
+  parameters:
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 3.0
+      range:
+      - 0.5
+      - 10.0
+      type: scalar
+    contact_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  subtask_id: contact
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.02
+    - 0.0
+    orientation:
+      mode: keep_current
+  termination: force_exceeded
+  type: contact
+- control: impedance_control
+  duration:
+    max_time: 2.0
+  generator: linear_cartesian
+  id: push_1
+  parameters:
+    push_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: -0.08
+      range:
+      - -0.15
+      - -0.02
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.03
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    push_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 2.0
+      range:
+      - 0.5
+      - 5.0
+      type: scalar
+  target:
+    anchor: world
+    offset:
+    - 0.5
+    - -0.08
+    - 0.04
+    orientation:
+      mode: keep_current
+  termination: time_limit
+  type: push
+skill: peg_channel
+skill_type: arm

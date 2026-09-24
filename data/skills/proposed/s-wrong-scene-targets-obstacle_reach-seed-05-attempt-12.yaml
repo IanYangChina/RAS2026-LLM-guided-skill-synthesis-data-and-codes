@@ -1,0 +1,46 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: stay_at_goal
+  parameters:
+    speed:
+      binds_to:
+      - mode: add
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    tolerance:
+      binds_to:
+      - mode: add
+        path: termination.pose_tolerance
+      default: 0.01
+      range:
+      - 0.005
+      - 0.02
+      type: scalar
+  subtask_id: reach_goal
+  target:
+    anchor: world
+    offset:
+    - 0.7305
+    - 0.0308
+    - 0.15
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+skill: obstacle_reach
+subtasks:
+- anchor: world
+  id: reach_goal
+  metric: distance
+  offset:
+  - 0.7305
+  - 0.0308
+  - 0.15
+  target_entity: tcp
+  weight: 1.0

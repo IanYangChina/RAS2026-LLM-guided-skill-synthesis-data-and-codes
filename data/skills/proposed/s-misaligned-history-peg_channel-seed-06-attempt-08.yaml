@@ -1,0 +1,201 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_behind
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+  retries:
+    max_attempts: 0
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    strategy: repeat
+  subtask_id: reach_peg
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.03
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_to_peg
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.005
+    - 0.0
+    strategy: offset_target
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.03
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: descend
+- control: position_control
+  generator: linear_cartesian
+  id: align_channel
+  parameters: {}
+  retries:
+    max_attempts: 0
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    strategy: repeat
+  target:
+    anchor: current_tcp
+    entity: null
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.1
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: align
+- control: impedance_control
+  generator: impedance_motion
+  guards:
+  - args:
+      group: contact
+    id: force_guard
+    on_failure: retry
+    predicate: force_below
+    threshold: 10.0
+    when: during_phase
+  id: push_channel
+  parameters:
+    force_limit:
+      binds_to:
+      - mode: replace
+        path: guards.force_guard.threshold
+      default: 10.0
+      range:
+      - 5.0
+      - 20.0
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  retries:
+    max_attempts: 5
+    offset:
+    - -0.005
+    - -0.005
+    - 0.0
+    strategy: offset_target
+  subtask_id: push_progress
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.16
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: push
+- control: position_control
+  generator: linear_cartesian
+  id: lift_away
+  parameters:
+    lift_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.03
+      - 0.15
+      type: scalar
+  retries:
+    max_attempts: 0
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    strategy: repeat
+  target:
+    anchor: task_goal
+    entity: channel_exit
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: lift
+skill: peg_channel
+subtasks:
+- anchor: object
+  id: reach_peg
+  offset:
+  - 0.0
+  - 0.03
+  - 0.0
+  weight: 0.3
+- id: push_progress
+  metric: goal_progress
+  target_entity: object
+  weight: 0.7

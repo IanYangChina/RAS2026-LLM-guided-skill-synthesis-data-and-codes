@@ -1,0 +1,126 @@
+skill: obstacle_reach
+dsl_version: 2
+subtasks:
+- id: reach_high
+  offset:
+  - 0.0
+  - 0.0
+  - 0.35
+  weight: 0.3
+- id: reach_final
+  weight: 0.7
+phases:
+- id: arc_to_goal
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.35
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    arc_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.25
+      default: 0.15
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    arc_time:
+      type: scalar
+      range:
+      - 2.0
+      - 4.0
+      default: 3.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.1
+      - 0.5
+      default: 0.25
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_high
+- id: descend_to_goal
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.25
+      default: 0.15
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    descend_time:
+      type: scalar
+      range:
+      - 3.0
+      - 8.0
+      default: 6.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+  subtask_id: reach_final
+- id: fine_approach
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.015
+    orientation:
+      mode: keep_current
+  parameters:
+    fine_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.03
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    fine_time:
+      type: scalar
+      range:
+      - 1.0
+      - 4.0
+      default: 2.5
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+  subtask_id: reach_final

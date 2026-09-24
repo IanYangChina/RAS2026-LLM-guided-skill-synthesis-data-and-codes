@@ -1,0 +1,247 @@
+skill: peg_insert
+dsl_version: 2
+subtasks:
+- id: align
+  anchor: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.12
+- id: approach
+  anchor: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.09
+- id: contact
+  anchor: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.07
+- id: insert
+  anchor: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.06
+phases:
+- id: approach_above
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    tolerance: 0.01
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: channel_axis
+      tolerance: 0.05
+  parameters:
+    approach_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  retries:
+    max_attempts: 1
+    strategy: repeat
+- id: align_xy
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.02
+    tolerance: 0.005
+    orientation:
+      mode: keep_current
+  parameters:
+    lateral_offset_x:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: add
+    lateral_offset_y:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: add
+  retries:
+    max_attempts: 1
+    strategy: repeat
+- id: descend_to_contact
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.06
+      axis: channel_axis
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      mode: keep_current
+  parameters:
+    contact_force_threshold:
+      type: scalar
+      range:
+      - 1.0
+      - 5.0
+      default: 2.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    descend_depth:
+      type: scalar
+      range:
+      - 0.04
+      - 0.08
+      default: 0.06
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.03
+      default: 0.01
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - -0.002
+- id: insert_down
+  type: insert
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.055
+      axis: channel_axis
+      mode: replace_offset_projection
+      sign: positive
+    tolerance: 0.005
+    orientation:
+      mode: keep_current
+  parameters:
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.04
+      - 0.07
+      default: 0.055
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    insertion_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.03
+      default: 0.015
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: contact_maintained
+    when: during_phase
+    predicate: contact_detected
+    threshold: 0.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: reduce_speed
+- id: retract_up
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.12
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    retract_height:
+      type: scalar
+      range:
+      - 0.08
+      - 0.2
+      default: 0.12
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    retract_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  retries:
+    max_attempts: 1
+    strategy: repeat

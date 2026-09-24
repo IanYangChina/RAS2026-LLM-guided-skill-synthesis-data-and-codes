@@ -1,0 +1,217 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_peg
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: add
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: reach_above_peg
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.12
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: align_contact
+  parameters:
+    align_offset_x:
+      binds_to:
+      - mode: add
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.02
+      - 0.02
+      type: scalar
+    align_offset_y:
+      binds_to:
+      - mode: add
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.02
+      - 0.02
+      type: scalar
+    contact_force:
+      binds_to:
+      - mode: add
+        path: termination.force_threshold
+      default: 5.0
+      range:
+      - 1.0
+      - 15.0
+      type: scalar
+  subtask_id: contact_peg
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+    tolerance: 0.005
+  termination: force_exceeded
+  type: contact
+- control: position_control
+  end_effector_action: force_grasp
+  generator: null
+  guards:
+  - args: {}
+    id: grasp_check
+    on_failure: retry
+    predicate: bilateral_grasp
+    threshold: 0.5
+    when: after_phase
+  id: grasp_peg
+  parameters: {}
+  retries:
+    max_attempts: 2
+    strategy: repeat
+  subtask_id: contact_peg
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: grasp_success
+  type: grasp
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: force_guard
+    on_failure: continue
+    predicate: force_below
+    threshold: 35.0
+    when: during_phase
+  id: push_insert
+  parameters:
+    insertion_force:
+      binds_to:
+      - mode: add
+        path: termination.force_threshold
+      default: 15.0
+      range:
+      - 5.0
+      - 30.0
+      type: scalar
+    push_distance:
+      binds_to:
+      - mode: add
+        path: target.offset_along_axis.distance
+      default: 0.12
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: add
+        path: generator.speed
+      default: 0.03
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - -0.005
+    - 0.0
+    strategy: offset_target
+  subtask_id: insertion_depth
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.12
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.005
+  termination: force_exceeded
+  type: insert
+- control: position_control
+  end_effector_action: open
+  generator: linear_cartesian
+  id: retract
+  parameters:
+    retract_speed:
+      binds_to:
+      - mode: add
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.03
+      - 0.1
+      type: scalar
+  subtask_id: insertion_depth
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: retract
+skill: peg_channel
+skill_type: arm_gripper
+subtasks:
+- anchor: object
+  id: reach_above_peg
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.12
+  target_entity: tcp
+  weight: 0.3
+- anchor: object
+  id: contact_peg
+  metric: contact
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: insertion_depth
+  metric: goal_progress
+  target_entity: object
+  weight: 0.4

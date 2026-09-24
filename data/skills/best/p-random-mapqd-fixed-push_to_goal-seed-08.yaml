@@ -1,0 +1,56 @@
+skill: push_to_goal
+phases:
+- id: pull_1
+  type: pull
+  generator: arc_cartesian
+  control: impedance_control
+  termination: time_limit
+  parameters:
+    pull_angle:
+      type: angle
+      range:
+      - 0.1
+      - 1.2
+- id: insert_1
+  type: insert
+  generator: impedance_motion
+  control: impedance_control
+  termination: pose_tolerance
+  parameters:
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.15
+    insertion_force:
+      type: scalar
+      range:
+      - 1.0
+      - 20.0
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: impedance_control
+  termination: contact_detected
+  parameters:
+    depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: push_1
+  type: push
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: contact_1
+  type: contact
+  generator: arc_cartesian
+  control: impedance_control
+  termination: force_exceeded
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05

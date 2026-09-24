@@ -1,0 +1,102 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: arc_cartesian
+  id: approach_1
+  parameters:
+    approach_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.07
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+    arc_height:
+      binds_to:
+      - mode: replace
+        path: generator.arc_height
+      default: 0.06
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+  subtask_id: approach_sub
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.07
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      align_with: task_goal_direction
+      axis:
+      - 1.0
+      - 0.0
+      - 0.0
+      mode: align_axis
+      tolerance: 0.1
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: admittance_control
+  generator: linear_cartesian
+  id: push_1
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.2
+      range:
+      - 0.05
+      - 0.35
+      type: scalar
+  subtask_id: push_sub
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.2
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      align_with: task_goal_direction
+      axis:
+      - 1.0
+      - 0.0
+      - 0.0
+      mode: align_axis
+      tolerance: 0.1
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: push
+skill: push_to_goal
+skill_type: arm
+subtasks:
+- anchor: object
+  id: approach_sub
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.05
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: push_sub
+  metric: goal_progress
+  target_entity: object
+  weight: 1.0

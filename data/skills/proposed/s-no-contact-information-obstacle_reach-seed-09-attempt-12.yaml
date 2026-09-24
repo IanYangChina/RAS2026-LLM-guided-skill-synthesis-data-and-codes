@@ -1,0 +1,136 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: arc_cartesian
+  id: arc_to_goal
+  parameters:
+    arc_height:
+      binds_to:
+      - mode: replace
+        path: generator.arc_height
+      default: 0.15
+      range:
+      - 0.05
+      - 0.25
+      type: scalar
+    arc_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 3.0
+      range:
+      - 2.0
+      - 4.0
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.25
+      range:
+      - 0.1
+      - 0.5
+      type: scalar
+  subtask_id: reach_high
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.35
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: time_limit
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_to_goal
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.15
+      range:
+      - 0.05
+      - 0.25
+      type: scalar
+    descend_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 4.0
+      range:
+      - 2.0
+      - 6.0
+      type: scalar
+  subtask_id: reach_final
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: time_limit
+  type: descend
+- control: position_control
+  generator: linear_cartesian
+  id: fine_approach
+  parameters:
+    fine_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.04
+      range:
+      - 0.02
+      - 0.08
+      type: scalar
+    fine_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.01
+      range:
+      - 0.005
+      - 0.02
+      type: scalar
+  subtask_id: reach_final
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.015
+  termination: pose_tolerance
+  type: approach
+skill: obstacle_reach
+subtasks:
+- anchor: goal
+  id: reach_high
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.35
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: reach_final
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.7

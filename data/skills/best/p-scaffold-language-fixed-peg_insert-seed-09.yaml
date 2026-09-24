@@ -1,0 +1,155 @@
+skill: peg_insert
+dsl_version: 2
+phases:
+- id: align_to_socket
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.12
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - -1.0
+      align_with: channel_axis
+      tolerance: 0.05
+  parameters:
+    lateral_x:
+      type: scalar
+      range:
+      - -0.02
+      - 0.02
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: add
+    lateral_y:
+      type: scalar
+      range:
+      - -0.02
+      - 0.02
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: add
+  subtask_id: align
+- id: descend_to_entry
+  type: approach
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.08
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - -1.0
+      align_with: channel_axis
+      tolerance: 0.08
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.08
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: approach
+- id: insert_into_hole
+  type: insert
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.03
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - -1.0
+      align_with: channel_axis
+      tolerance: 0.05
+  parameters:
+    insert_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.02
+      default: 0.01
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.02
+      - 0.04
+      default: 0.03
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+  guards:
+  - id: force_guard
+    when: during_phase
+    predicate: force_below
+    threshold: 25.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.005
+    - 0.0
+    - 0.0
+  subtask_id: insert
+- id: retract_from_hole
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    orientation:
+      mode: keep_current
+  parameters:
+    retract_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.15
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace

@@ -1,0 +1,128 @@
+skill: obstacle_reach
+dsl_version: 2
+subtasks:
+- id: reach_above_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.2
+  weight: 0.3
+- id: reach_goal
+  weight: 0.7
+phases:
+- id: approach_over
+  type: approach
+  generator: arc_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+      tolerance: 0.3
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.1
+      - 0.5
+      default: 0.3
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.25
+      default: 0.12
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    force_threshold:
+      type: scalar
+      range:
+      - 3.0
+      - 8.0
+      default: 5.0
+      binds_to:
+      - path: guards.force_limit.threshold
+        mode: replace
+  guards:
+  - id: force_limit
+    when: during_phase
+    predicate: force_below
+    threshold: 5.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.02
+    - 0.03
+  subtask_id: reach_above_goal
+- id: descend_to_goal
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - -0.025
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+      tolerance: 0.3
+  parameters:
+    descend_force_threshold:
+      type: scalar
+      range:
+      - 3.0
+      - 8.0
+      default: 5.0
+      binds_to:
+      - path: guards.force_limit_descend.threshold
+        mode: replace
+    descend_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.15
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    goal_tolerance:
+      type: scalar
+      range:
+      - 0.01
+      - 0.03
+      default: 0.015
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  guards:
+  - id: force_limit_descend
+    when: during_phase
+    predicate: force_below
+    threshold: 5.0
+    on_failure: retry
+  retries:
+    max_attempts: 1
+    strategy: reduce_speed
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  subtask_id: reach_goal

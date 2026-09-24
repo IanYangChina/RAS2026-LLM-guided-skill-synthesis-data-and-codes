@@ -1,0 +1,95 @@
+{
+  "manuscript_edits": [
+    {
+      "file": "docs/latex/main.tex",
+      "green_add": "8.3\\% to 35.0\\%",
+      "kind": "prose",
+      "line": 672,
+      "red_remove": "11.7\\% to 35.0\\%"
+    },
+    {
+      "file": "docs/latex/main.tex",
+      "green_add": "fraction of runs in which the last evaluated skill program's canonical score exactly equalled the selected-best score",
+      "kind": "caption_semantics",
+      "line_end": 681,
+      "line_start": 680,
+      "red_remove": "fraction of runs in which the last evaluated skill program retained the selected best"
+    },
+    {
+      "condition": "Scaffold-Bandit FixedST",
+      "file": "docs/latex/main.tex",
+      "green_add": "10.0\\%",
+      "kind": "table_cell",
+      "line": 697,
+      "red_remove": "16.7\\%"
+    },
+    {
+      "condition": "Scaffold-MAP-QD FixedST",
+      "file": "docs/latex/main.tex",
+      "green_add": "8.3\\%",
+      "kind": "table_cell",
+      "line": 698,
+      "red_remove": "15.0\\%"
+    },
+    {
+      "condition": "Random-Bandit FixedST",
+      "file": "docs/latex/main.tex",
+      "green_add": "18.3\\%",
+      "kind": "table_cell",
+      "line": 703,
+      "red_remove": "25.0\\%"
+    },
+    {
+      "condition": "Random-MAP-QD FixedST",
+      "file": "docs/latex/main.tex",
+      "green_add": "21.7\\%",
+      "kind": "table_cell",
+      "line": 704,
+      "red_remove": "26.7\\%"
+    }
+  ],
+  "method_aggregate_changes": [
+    {
+      "method": "BanditRefine",
+      "n_cells": 180,
+      "new_exact": {
+        "create_equal_task_mean": 0.11666666666666667,
+        "equal_initialization_equal_task_mean": 0.13333333333333333,
+        "initialization_task_mean_sample_sd": 0.13719886811400708,
+        "random_equal_task_mean": 0.18333333333333335,
+        "scaffold_equal_task_mean": 0.1
+      },
+      "old_tolerance": {
+        "create_equal_task_mean": 0.11666666666666667,
+        "equal_initialization_equal_task_mean": 0.17777777777777778,
+        "initialization_task_mean_sample_sd": 0.21572192218784417,
+        "random_equal_task_mean": 0.25,
+        "scaffold_equal_task_mean": 0.16666666666666666
+      },
+      "subtask_mode": "FixedST"
+    },
+    {
+      "method": "MAP-QD",
+      "n_cells": 180,
+      "new_exact": {
+        "create_equal_task_mean": 0.15,
+        "equal_initialization_equal_task_mean": 0.15,
+        "initialization_task_mean_sample_sd": 0.16179144164088313,
+        "random_equal_task_mean": 0.21666666666666667,
+        "scaffold_equal_task_mean": 0.08333333333333334
+      },
+      "old_tolerance": {
+        "create_equal_task_mean": 0.15,
+        "equal_initialization_equal_task_mean": 0.18888888888888888,
+        "initialization_task_mean_sample_sd": 0.20548046676563256,
+        "random_equal_task_mean": 0.26666666666666666,
+        "scaffold_equal_task_mean": 0.15
+      },
+      "subtask_mode": "FixedST"
+    }
+  ],
+  "schema_version": 1,
+  "semantics": "exact score equality; no reporting tolerance",
+  "source": "data/paper_results/trajectories/retained_best_changes.json",
+  "supplement_edits": []
+}

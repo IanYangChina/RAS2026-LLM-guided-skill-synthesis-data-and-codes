@@ -1,0 +1,110 @@
+skill: push_to_goal
+dsl_version: 2
+subtasks:
+- id: reach_prepush
+  anchor: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.02
+  weight: 0.3
+- id: push_to_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.02
+  weight: 0.7
+phases:
+- id: approach_behind
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    offset_along_axis:
+      distance: -0.1
+      axis: task_goal_direction
+      mode: replace_offset_projection
+      sign: positive
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_offset_distance:
+      type: scalar
+      range:
+      - -0.15
+      - -0.05
+      default: -0.1
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+  subtask_id: reach_prepush
+- id: descend
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.02
+    offset_along_axis:
+      distance: -0.1
+      axis: task_goal_direction
+      mode: replace_offset_projection
+      sign: positive
+    tolerance: 0.015
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_z_offset:
+      type: scalar
+      range:
+      - 0.015
+      - 0.03
+      default: 0.02
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+  subtask_id: reach_prepush
+- id: push_to_goal
+  type: push
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.02
+    offset_along_axis:
+      distance: 0.05
+      axis: task_goal_direction
+      mode: replace_offset_projection
+      sign: positive
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    push_forward_distance:
+      type: scalar
+      range:
+      - 0.0
+      - 0.2
+      default: 0.05
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+  subtask_id: push_to_goal

@@ -1,0 +1,232 @@
+skill: peg_insert
+dsl_version: 2
+skill_type: arm_gripper
+subtasks:
+- id: reach_socket
+  anchor: goal
+  target_entity: tcp
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.05
+  weight: 0.3
+- id: insert_peg
+  anchor: goal
+  target_entity: object
+  metric: goal_progress
+  weight: 0.7
+phases:
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: channel_axis
+      tolerance: 0.02
+  parameters:
+    lateral_offset_x:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: add
+    lateral_offset_y:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: add
+  subtask_id: reach_socket
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.03
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_height:
+      type: scalar
+      range:
+      - 0.02
+      - 0.08
+      default: 0.03
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    approach_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.03
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_socket
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.05
+      axis: channel_axis
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_distance:
+      type: scalar
+      range:
+      - 0.03
+      - 0.07
+      default: 0.05
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    descend_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.025
+      default: 0.015
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: insert_peg
+- id: insert_1
+  type: insert
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.08
+      axis: channel_axis
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: channel_axis
+      tolerance: 0.02
+  parameters:
+    insert_distance:
+      type: scalar
+      range:
+      - 0.05
+      - 0.12
+      default: 0.08
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    insert_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.02
+      default: 0.01
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    retry_lateral_x:
+      type: scalar
+      range:
+      - -0.003
+      - 0.003
+      default: 0.0
+      binds_to:
+      - path: retry.offset.x
+        mode: replace
+    retry_lateral_y:
+      type: scalar
+      range:
+      - -0.003
+      - 0.003
+      default: 0.0
+      binds_to:
+      - path: retry.offset.y
+        mode: replace
+  guards:
+  - id: insertion_force_guard
+    when: during_phase
+    predicate: force_below
+    threshold: 80.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  subtask_id: insert_peg
+- id: grasp_1
+  type: grasp
+  generator: null
+  control: position_control
+  termination: time_limit
+  end_effector_action: force_grasp
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  parameters:
+    grasp_duration:
+      type: scalar
+      range:
+      - 0.5
+      - 2.0
+      default: 1.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+```

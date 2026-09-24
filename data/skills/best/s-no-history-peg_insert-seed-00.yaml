@@ -1,0 +1,136 @@
+skill: peg_insert
+dsl_version: 2
+subtasks:
+- id: reach_entry
+  anchor: fixture
+  offset:
+  - 0.0
+  - 0.0
+  - 0.055
+  weight: 0.3
+- id: insert_task
+  anchor: fixture
+  target_entity: object
+  metric: goal_progress
+  weight: 0.7
+phases:
+- id: approach_and_align
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.055
+    tolerance: 0.01
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+      tolerance: 0.2
+  parameters:
+    align_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.025
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    approach_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    lateral_offset_x:
+      type: scalar
+      range:
+      - -0.02
+      - 0.02
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: add
+    lateral_offset_y:
+      type: scalar
+      range:
+      - -0.02
+      - 0.02
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: add
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.005
+    - 0.005
+    - 0.0
+  subtask_id: reach_entry
+- id: insert_into_hole
+  type: insert
+  generator: linear_cartesian
+  control: impedance_control
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.055
+    offset_along_axis:
+      distance: 0.065
+      axis: channel_axis
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+  parameters:
+    insert_force:
+      type: scalar
+      range:
+      - 20.0
+      - 35.0
+      default: 28.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    insert_speed:
+      type: scalar
+      range:
+      - 0.003
+      - 0.015
+      default: 0.008
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: force_guard
+    when: during_phase
+    predicate: force_below
+    threshold: 38.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.008
+    - 0.008
+    - 0.0
+  subtask_id: insert_task

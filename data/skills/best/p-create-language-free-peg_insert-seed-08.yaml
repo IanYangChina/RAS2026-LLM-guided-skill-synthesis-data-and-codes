@@ -1,0 +1,127 @@
+skill: peg_insert
+dsl_version: 2
+subtasks:
+- id: standoff
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  weight: 0.2
+- id: hole_entry
+  anchor: fixture
+  metric: contact
+  weight: 0.2
+- id: full_insertion
+  target_entity: object
+  offset:
+  - 0.0
+  - 0.0
+  - -0.05
+  weight: 0.6
+phases:
+- id: align_1
+  type: align
+  generator: joint_interpolation
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    tolerance: 0.02
+    orientation:
+      mode: none
+  subtask_id: standoff
+- id: contact_1
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - -0.08
+  parameters:
+    contact_force:
+      type: scalar
+      range:
+      - 1.0
+      - 10.0
+      default: 3.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+  subtask_id: hole_entry
+- id: insert_1
+  type: insert
+  generator: impedance_motion
+  control: impedance_control
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.05
+      axis: channel_axis
+      mode: add_to_offset
+      sign: positive
+    tolerance: 0.015
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: channel_axis
+      tolerance: 0.02
+  parameters:
+    insert_force:
+      type: scalar
+      range:
+      - 10.0
+      - 60.0
+      default: 30.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.08
+      default: 0.05
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    insertion_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.01
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: full_insertion
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1

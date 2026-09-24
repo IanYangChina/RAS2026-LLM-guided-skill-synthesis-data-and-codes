@@ -1,0 +1,30 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: null
+  id: stay
+  parameters: {}
+  subtask_id: stay_at_goal
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+skill: obstacle_reach
+subtasks:
+- anchor: goal
+  id: stay_at_goal
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 1.0

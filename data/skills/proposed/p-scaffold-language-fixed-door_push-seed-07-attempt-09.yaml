@@ -1,0 +1,87 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    max_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 8.0
+      range:
+      - 2.0
+      - 10.0
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  target:
+    anchor: task_goal
+    entity: ''
+    offset:
+    - 0.02
+    - 0.05
+    - 0.15
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.02
+  termination: time_limit
+  type: approach
+- control: admittance_control
+  generator: linear_cartesian
+  id: push_1
+  parameters:
+    max_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 12.0
+      range:
+      - 2.0
+      - 15.0
+      type: scalar
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.19
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  target:
+    anchor: task_goal
+    entity: ''
+    offset:
+    - 0.02
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: world_y
+      distance: 0.19
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.02
+  termination: time_limit
+  type: push
+skill: door_push

@@ -1,0 +1,214 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: lift_z
+  parameters:
+    lift_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+    lift_z_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.13
+      range:
+      - 0.08
+      - 0.18
+      type: scalar
+  subtask_id: lift_clear
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.13
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: lift
+- control: position_control
+  generator: linear_cartesian
+  id: move_side
+  parameters:
+    side_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+    side_y:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.25
+      range:
+      - 0.2
+      - 0.35
+      type: scalar
+    side_z:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.45
+      range:
+      - 0.35
+      - 0.55
+      type: scalar
+  subtask_id: go_side
+  target:
+    anchor: world
+    offset:
+    - 0.5
+    - 0.25
+    - 0.45
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: move_forward
+  parameters:
+    forward_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+    forward_y:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.21
+      range:
+      - 0.16
+      - 0.3
+      type: scalar
+    forward_z:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.3
+      range:
+      - 0.25
+      - 0.4
+      type: scalar
+  subtask_id: go_forward
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.21
+    - 0.3
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: align_y
+  parameters:
+    align_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: align_y
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.3
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_to_goal
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.04
+      range:
+      - 0.02
+      - 0.1
+      type: scalar
+  subtask_id: final_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+skill: obstacle_reach
+subtasks:
+- anchor: world
+  id: lift_clear
+  metric: distance
+  offset:
+  - 0.35
+  - 0.0
+  - 0.45
+  target_entity: tcp
+  weight: 0.1
+- anchor: world
+  id: go_side
+  metric: distance
+  offset:
+  - 0.5
+  - 0.25
+  - 0.45
+  target_entity: tcp
+  weight: 0.2
+- anchor: goal
+  id: go_forward
+  metric: distance
+  offset:
+  - 0.0
+  - 0.21
+  - 0.3
+  target_entity: tcp
+  weight: 0.2
+- anchor: goal
+  id: align_y
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.3
+  target_entity: tcp
+  weight: 0.2
+- anchor: goal
+  id: final_goal
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.3

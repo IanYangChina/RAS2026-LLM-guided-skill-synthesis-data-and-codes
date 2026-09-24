@@ -1,0 +1,68 @@
+skill: peg_channel
+skill_type: arm_gripper
+phases:
+- id: push_1
+  type: push
+  generator: impedance_motion
+  control: impedance_control
+  termination: time_limit
+  parameters:
+    param_0:
+      type: scalar
+      range:
+      - -0.445042419952717
+      - 0.41632497651680467
+    push_distance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    lateral_offset_x:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+    lateral_offset_y:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+- id: release_1
+  type: release
+  generator: linear_cartesian
+  control: admittance_control
+  termination: contact_detected
+  end_effector_action: open
+  parameters:
+    param_0:
+      type: scalar
+      range:
+      - 0.14473360337178298
+      - 0.7646344797575799
+- id: insert_1
+  type: insert
+  generator: impedance_motion
+  control: impedance_control
+  termination: force_exceeded
+  parameters:
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.15
+    insertion_force:
+      type: scalar
+      range:
+      - 1.0
+      - 20.0

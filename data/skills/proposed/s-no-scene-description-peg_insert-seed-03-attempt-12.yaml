@@ -1,0 +1,203 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    clearance_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.15
+      range:
+      - 0.1
+      - 0.2
+      type: scalar
+  subtask_id: reach_above
+  target:
+    anchor: fixture
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      align_with: world_z
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.05
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: align_1
+  parameters:
+    align_tolerance:
+      binds_to:
+      - mode: replace
+        path: target.orientation.tolerance
+      default: 0.03
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    pre_contact_z:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.12
+      range:
+      - 0.08
+      - 0.15
+      type: scalar
+  subtask_id: reach_above
+  target:
+    anchor: fixture
+    offset:
+    - 0.0
+    - 0.0
+    - 0.12
+    orientation:
+      align_with: world_z
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.03
+    source: yaml
+  termination: pose_tolerance
+  type: align
+- control: admittance_control
+  generator: linear_cartesian
+  id: descend_1
+  parameters:
+    descend_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.08
+      range:
+      - 0.05
+      - 0.12
+      type: scalar
+    force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 25.0
+      range:
+      - 10.0
+      - 40.0
+      type: scalar
+  subtask_id: descend_to_contact
+  target:
+    anchor: fixture
+    offset:
+    - 0.0
+    - 0.0
+    - 0.04
+    offset_along_axis:
+      axis: world_z
+      distance: 0.08
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: force_exceeded
+  type: descend
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: contact_force_limit
+    on_failure: retry
+    predicate: force_below
+    threshold: 35.0
+    when: during_phase
+  id: insert_1
+  parameters:
+    force_limit:
+      binds_to:
+      - mode: replace
+        path: guards.contact_force_limit.threshold
+      default: 35.0
+      range:
+      - 25.0
+      - 45.0
+      type: scalar
+    retry_x:
+      binds_to:
+      - mode: replace
+        path: retries.offset.x
+      default: 0.005
+      range:
+      - 0.002
+      - 0.015
+      type: scalar
+    retry_y:
+      binds_to:
+      - mode: replace
+        path: retries.offset.y
+      default: 0.005
+      range:
+      - 0.002
+      - 0.015
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.005
+    - 0.005
+    - 0.0
+    strategy: offset_target
+  subtask_id: insert_fully
+  target:
+    anchor: fixture
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: world_z
+      distance: 0.12
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: time_limit
+  type: insert
+skill: peg_insert
+subtasks:
+- anchor: fixture
+  id: reach_above
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.12
+  target_entity: tcp
+  weight: 0.3
+- anchor: fixture
+  id: descend_to_contact
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.04
+  target_entity: tcp
+  weight: 0.3
+- anchor: fixture
+  id: insert_fully
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - -0.06
+  target_entity: tcp
+  weight: 0.4

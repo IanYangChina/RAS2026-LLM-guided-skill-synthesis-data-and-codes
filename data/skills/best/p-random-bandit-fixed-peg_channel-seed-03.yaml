@@ -1,0 +1,29 @@
+skill: peg_channel
+phases:
+- id: retract_1
+  type: retract
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    retract_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: pose_tolerance
+  parameters:
+    depth:
+      type: scalar
+      range:
+      - 0.0009999999999999992
+      - 0.091
+- id: pull_1
+  type: pull
+  generator: linear_cartesian
+  control: impedance_control
+  termination: time_limit

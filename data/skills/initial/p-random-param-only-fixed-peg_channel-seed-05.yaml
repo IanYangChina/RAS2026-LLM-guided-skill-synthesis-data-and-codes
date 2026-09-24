@@ -1,0 +1,58 @@
+skill: peg_channel
+skill_type: arm_gripper
+phases:
+- id: push_1
+  type: push
+  generator: linear_cartesian
+  control: position_control
+  termination: time_limit
+  parameters:
+    push_depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: release_1
+  type: release
+  control: position_control
+  termination: time_limit
+  end_effector_action: open
+- id: pull_1
+  type: pull
+  generator: arc_cartesian
+  control: impedance_control
+  termination: time_limit
+  parameters:
+    pull_distance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+- id: release_2
+  type: release
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  end_effector_action: open
+- id: release_3
+  type: release
+  generator: linear_cartesian
+  control: position_control
+  termination: time_limit
+  end_effector_action: open
+- id: grasp_1
+  type: grasp
+  control: position_control
+  termination: time_limit
+  end_effector_action: force_grasp
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1

@@ -1,0 +1,207 @@
+skill: obstacle_reach
+dsl_version: 2
+phases:
+- id: lift_and_side_move
+  type: approach
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.25
+    - 0.15
+  parameters:
+    clearance_z:
+      type: scalar
+      range:
+      - 0.1
+      - 0.4
+      default: 0.25
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    lateral_y:
+      type: scalar
+      range:
+      - 0.15
+      - 0.35
+      default: 0.25
+      binds_to:
+      - path: target.offset.y
+        mode: replace
+    lift_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.15
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    lift_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.03
+      default: 0.01
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+- id: arc_above_goal
+  type: approach
+  generator: arc_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.25
+    - 0.25
+  parameters:
+    arc_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.35
+      default: 0.2
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    arc_speed:
+      type: scalar
+      range:
+      - 0.1
+      - 0.5
+      default: 0.3
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    arc_tolerance:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    arc_y_offset:
+      type: scalar
+      range:
+      - 0.15
+      - 0.35
+      default: 0.25
+      binds_to:
+      - path: target.offset.y
+        mode: replace
+- id: side_align_to_goal_xy
+  type: align
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.1
+    - 0.25
+  parameters:
+    side_align_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.15
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    side_align_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.02
+      default: 0.01
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+- id: lateral_to_goal_y
+  type: approach
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.25
+  parameters:
+    lateral_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.12
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    lateral_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.02
+      default: 0.01
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+- id: descend_to_goal
+  type: descend
+  generator: linear_cartesian
+  control: admittance_control
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  parameters:
+    descend_force_threshold:
+      type: scalar
+      range:
+      - 1.0
+      - 5.0
+      default: 4.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    descend_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.15
+      default: 0.06
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: descend_contact_guard
+    when: during_phase
+    predicate: force_below
+    threshold: 5.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.03
+    - 0.0

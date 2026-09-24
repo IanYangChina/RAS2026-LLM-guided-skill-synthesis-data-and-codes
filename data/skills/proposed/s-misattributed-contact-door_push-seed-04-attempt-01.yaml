@@ -1,0 +1,177 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_handle
+  orientation:
+    mode: keep_current
+  parameters:
+    approach_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.45
+      range:
+      - 0.4
+      - 0.5
+      type: scalar
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.2
+      type: scalar
+    approach_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+  subtask_id: reach_handle
+  target:
+    anchor: fixture
+    entity: door_panel
+    offset:
+    - -0.4
+    - -0.02
+    - 0.45
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: contact_made
+    predicate: contact_detected
+    threshold: 0.5
+    when: after_phase
+  id: descend_to_contact
+  orientation:
+    mode: keep_current
+  parameters:
+    descend_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 8.0
+      range:
+      - 2.0
+      - 15.0
+      type: scalar
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.0
+    - 0.01
+    strategy: offset_target
+  target:
+    anchor: fixture
+    entity: door_panel
+    offset:
+    - -0.4
+    - -0.02
+    - 0.35
+    source: yaml
+    tolerance: 0.01
+  termination: force_exceeded
+  type: descend
+- control: impedance_control
+  duration:
+    max_time: 8.0
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: hinge_moved
+    predicate: hinge_delta_reached
+    threshold: 0.3
+    when: during_phase
+  id: push_door
+  orientation:
+    mode: keep_current
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.3
+      range:
+      - 0.1
+      - 0.5
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.15
+      type: scalar
+    push_time:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 8.0
+      range:
+      - 2.0
+      - 15.0
+      type: scalar
+  retries:
+    max_attempts: 1
+    strategy: increase_force_limit
+  subtask_id: open_door
+  target:
+    anchor: fixture
+    entity: door_panel
+    offset:
+    - -0.4
+    - -0.02
+    - 0.35
+    offset_along_axis:
+      axis: world_y
+      distance: 0.3
+      mode: add_to_offset
+      sign: negative
+    source: yaml
+    tolerance: 0.05
+  termination: time_limit
+  type: push
+skill: door_push
+skill_type: arm_gripper
+subtasks:
+- anchor: fixture
+  id: reach_handle
+  metric: distance
+  offset:
+  - -0.4
+  - -0.02
+  - 0.35
+  target_entity: object
+  weight: 0.3
+- anchor: fixture
+  id: open_door
+  metric: hinge_angle
+  offset:
+  - 0
+  - 0
+  - 0
+  target_entity: hinge
+  weight: 1.0

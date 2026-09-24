@@ -1,0 +1,178 @@
+skill: obstacle_reach
+dsl_version: 2
+subtasks:
+- id: reach_lift
+  anchor: fixture
+  offset:
+  - 0.0
+  - 0.0
+  - 0.25
+  weight: 0.15
+- id: reach_above_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.2
+  weight: 0.25
+- id: reach_goal
+  weight: 0.6
+phases:
+- id: lift_1
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: body
+    entity: obstacle_block
+    offset:
+    - 0.0
+    - 0.0
+    - 0.25
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    lift_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.5
+      default: 0.25
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    lift_z_offset:
+      type: scalar
+      range:
+      - 0.15
+      - 0.35
+      default: 0.25
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+  subtask_id: reach_lift
+- id: translate_1
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    above_z_offset:
+      type: scalar
+      range:
+      - 0.1
+      - 0.3
+      default: 0.2
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.25
+      default: 0.12
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    translate_speed:
+      type: scalar
+      range:
+      - 0.1
+      - 0.7
+      default: 0.4
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    translate_tolerance:
+      type: scalar
+      range:
+      - 0.025
+      - 0.05
+      default: 0.035
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  subtask_id: reach_above_goal
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.5
+      default: 0.2
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    descend_tolerance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.06
+      default: 0.035
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  subtask_id: reach_goal
+- id: fine_tune_1
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    fine_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.2
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    fine_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.03
+      default: 0.01
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  subtask_id: reach_goal

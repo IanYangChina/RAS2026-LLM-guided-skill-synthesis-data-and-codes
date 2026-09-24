@@ -1,0 +1,176 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_above
+  orientation:
+    mode: keep_current
+  parameters:
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  subtask_id: reach_peg
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.08
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: admittance_control
+  generator: linear_cartesian
+  id: descend_contact
+  orientation:
+    mode: keep_current
+  parameters:
+    force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 15.0
+      range:
+      - 5.0
+      - 30.0
+      type: scalar
+  subtask_id: reach_peg
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.01
+    source: yaml
+  termination: force_exceeded
+  type: descend
+- control: position_control
+  end_effector_action: force_grasp
+  id: grasp_peg
+  orientation:
+    mode: keep_current
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: grasp_success
+  type: grasp
+- control: position_control
+  generator: linear_cartesian
+  id: align_entry
+  orientation:
+    align_with: world_y
+    axis:
+    - 0
+    - 0
+    - 1
+    mode: align_axis
+    tolerance: 0.05
+  parameters:
+    lateral_x:
+      binds_to:
+      - mode: add
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.01
+      - 0.01
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: pose_tolerance
+  type: align
+- control: admittance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: force_abort
+    on_failure: abort
+    predicate: force_below
+    threshold: 40.0
+    when: during_phase
+  id: push_through
+  orientation:
+    mode: keep_current
+  parameters:
+    force_limit:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 20.0
+      range:
+      - 5.0
+      - 35.0
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.03
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.002
+    - 0.0
+    strategy: offset_target
+  subtask_id: push_progress
+  target:
+    anchor: current_tcp
+    offset_along_axis:
+      axis: world_y
+      distance: 0.2
+      mode: replace_offset_projection
+      sign: negative
+    source: yaml
+  termination: force_exceeded
+  type: push
+- control: position_control
+  generator: linear_cartesian
+  id: retract_lift
+  orientation:
+    mode: keep_current
+  target:
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    source: yaml
+  termination: pose_tolerance
+  type: retract
+skill: peg_channel
+skill_type: arm_gripper
+subtasks:
+- anchor: object
+  id: reach_peg
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.08
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: push_progress
+  metric: goal_progress
+  target_entity: object
+  weight: 0.7

@@ -1,0 +1,136 @@
+skill: door_push
+dsl_version: 2
+subtasks:
+- id: hinge_progress
+  anchor: fixture
+  target_entity: hinge
+  metric: hinge_angle
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.05
+    - 0.0
+    tolerance: 0.025
+    orientation:
+      mode: keep_current
+- id: contact_1
+  type: contact
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+  parameters:
+    contact_force:
+      type: scalar
+      range:
+      - 5.0
+      - 20.0
+      default: 10.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+- id: push_1
+  type: push
+  generator: arc_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: door_panel
+    offset:
+    - -0.337
+    - -0.216
+    - 0.35
+    tolerance: 0.03
+    orientation:
+      mode: keep_current
+  parameters:
+    arc_height:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.015
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    pose_tol:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.03
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.03
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    target_x_offset:
+      type: scalar
+      range:
+      - -0.05
+      - 0.05
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: add
+    target_y_offset:
+      type: scalar
+      range:
+      - -0.05
+      - 0.05
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: add
+  subtask_id: hinge_progress
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.05
+    - 0.0
+    tolerance: 0.025
+    orientation:
+      mode: keep_current

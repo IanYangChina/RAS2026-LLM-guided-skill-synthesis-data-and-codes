@@ -1,0 +1,168 @@
+skill: peg_channel
+dsl_version: 2
+subtasks:
+- id: approach
+  anchor: object
+  offset:
+  - 0.0
+  - 0.04
+  - 0.0
+- id: contact
+  anchor: object
+  offset:
+  - 0.0
+  - 0.02
+  - 0.0
+- id: push
+  anchor: world
+  offset:
+  - 0.5
+  - -0.08
+  - 0.04
+phases:
+- id: align_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.04
+    - 0.05
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  subtask_id: approach
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.02
+    - -0.01
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    lateral_offset_x:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: replace
+    lateral_offset_y:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.03
+      binds_to:
+      - path: generator.speed
+        mode: replace
+- id: push_1
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: world
+    offset:
+    - 0.5
+    - -0.08
+    - 0.04
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    push_depth:
+      type: scalar
+      range:
+      - -0.04
+      - 0.04
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: add
+    speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.08
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: force_check
+    when: during_phase
+    predicate: force_below
+    threshold: 30.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.005
+    - 0.0
+    - 0.0
+  subtask_id: push
+- id: retract_1
+  type: retract
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    tolerance: 0.05
+    orientation:
+      mode: none
+  parameters:
+    retract_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.15
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace

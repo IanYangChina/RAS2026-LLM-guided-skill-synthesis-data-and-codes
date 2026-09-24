@@ -1,0 +1,204 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: align_1
+  parameters:
+    align_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.01
+      - 0.2
+      type: scalar
+    lateral_offset_x:
+      binds_to:
+      - mode: add
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.04
+      - 0.04
+      type: scalar
+    lateral_offset_y:
+      binds_to:
+      - mode: add
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.04
+      - 0.04
+      type: scalar
+  subtask_id: reach_above
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.05
+    - 0.08
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: pose_tolerance
+  type: align
+- control: admittance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: wall_guard
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 0.2
+    when: during_phase
+  id: descend_1
+  parameters:
+    contact_force:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 10.0
+      range:
+      - 2.0
+      - 25.0
+      type: scalar
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+  subtask_id: reach_contact
+  target:
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.05
+    - 0.04
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.005
+  termination: force_exceeded
+  type: descend
+- control: impedance_control
+  generator: impedance_motion
+  guards:
+  - args:
+      axis: channel_axis
+    id: progress_guard
+    on_failure: retry
+    predicate: object_progress
+    threshold: 0.15
+    when: during_phase
+  id: push_1
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.12
+      range:
+      - 0.08
+      - 0.2
+      type: scalar
+    push_force:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 20.0
+      range:
+      - 5.0
+      - 40.0
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.005
+    - 0.0
+    - 0.0
+    strategy: offset_target
+  subtask_id: push_through
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.12
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: time_limit
+  type: push
+- control: position_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: clearance_guard
+    on_failure: continue
+    predicate: force_below
+    threshold: 10.0
+    when: after_phase
+  id: retract_1
+  parameters:
+    retract_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+  target:
+    anchor: world
+    offset:
+    - 0.5
+    - -0.05
+    - 0.3
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.05
+  termination: pose_tolerance
+  type: retract
+skill: peg_channel
+subtasks:
+- anchor: object
+  id: reach_above
+  metric: distance
+  offset:
+  - 0.0
+  - 0.05
+  - 0.08
+  target_entity: tcp
+  weight: 0.2
+- anchor: object
+  id: reach_contact
+  metric: distance
+  offset:
+  - 0.0
+  - 0.05
+  - 0.04
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: push_through
+  metric: goal_progress
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.5

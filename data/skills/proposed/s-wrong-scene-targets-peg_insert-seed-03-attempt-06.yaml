@@ -1,0 +1,41 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: impedance_motion
+  id: rotate_1
+  termination: pose_tolerance
+  type: rotate
+- control: position_control
+  generator: arc_cartesian
+  id: retract_1
+  parameters:
+    retract_height:
+      range:
+      - 0.05
+      - 0.2
+      type: scalar
+  termination: pose_tolerance
+  type: retract
+- control: admittance_control
+  generator: linear_cartesian
+  id: descend_1
+  parameters:
+    depth:
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  termination: pose_tolerance
+  type: descend
+- control: impedance_control
+  generator: arc_cartesian
+  id: pull_1
+  parameters:
+    pull_distance:
+      range:
+      - 0.02
+      - 0.2
+      type: scalar
+  termination: time_limit
+  type: pull
+skill: peg_insert

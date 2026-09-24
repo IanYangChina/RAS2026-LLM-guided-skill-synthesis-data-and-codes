@@ -1,0 +1,50 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  target:
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - -0.1
+    - 0.1
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.05
+  termination: pose_tolerance
+  type: approach
+- control: impedance_control
+  generator: linear_cartesian
+  id: push_1
+  parameters:
+    push_duration:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 10.0
+      range:
+      - 2.0
+      - 15.0
+      type: scalar
+  target:
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: world_y
+      distance: 0.21
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.05
+  termination: time_limit
+  type: push
+skill: door_push

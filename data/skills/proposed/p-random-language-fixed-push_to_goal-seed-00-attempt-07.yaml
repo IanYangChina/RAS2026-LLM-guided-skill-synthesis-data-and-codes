@@ -1,0 +1,81 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  subtask_id: approach
+  target:
+    anchor: task_object
+    offset:
+    - 0
+    - 0.08
+    - 0
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: contact_1
+  parameters:
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 15
+      range:
+      - 5
+      - 25
+      type: scalar
+  subtask_id: contact
+  target:
+    anchor: task_object
+    offset:
+    - 0
+    - 0.03
+    - 0
+  termination: force_exceeded
+  type: contact
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: push_1
+  orientation:
+    mode: keep_current
+  parameters:
+    push_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 20
+      range:
+      - 10
+      - 22
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  subtask_id: push
+  target:
+    anchor: task_goal
+    offset:
+    - 0
+    - 0.03
+    - 0
+  termination: force_exceeded
+  type: push
+skill: push_to_goal

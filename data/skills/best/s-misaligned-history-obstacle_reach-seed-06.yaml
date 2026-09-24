@@ -1,0 +1,138 @@
+skill: obstacle_reach
+dsl_version: 2
+skill_type: arm_gripper
+subtasks:
+- id: reach_above_obstacle
+  offset:
+  - 0.0
+  - 0.0
+  - 0.3
+  weight: 0.3
+- id: reach_goal
+  weight: 0.7
+phases:
+- id: raise_clear
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: world
+    offset:
+    - 0.35
+    - 0.0
+    - 0.45
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    lift_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    raise_height:
+      type: scalar
+      range:
+      - 0.1
+      - 0.2
+      default: 0.13
+      binds_to:
+      - path: target.offset.z
+        mode: add
+  retries:
+    max_attempts: 0
+    strategy: repeat
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+- id: move_over_above
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.3
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.0
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+  retries:
+    max_attempts: 0
+    strategy: repeat
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  subtask_id: reach_above_obstacle
+- id: descend_to_goal
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.03
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    descend_z_offset:
+      type: scalar
+      range:
+      - -0.02
+      - 0.0
+      default: -0.01
+      binds_to:
+      - path: target.offset.z
+        mode: add
+  retries:
+    max_attempts: 0
+    strategy: repeat
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  subtask_id: reach_goal

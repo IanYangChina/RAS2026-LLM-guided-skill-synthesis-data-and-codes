@@ -1,0 +1,29 @@
+skill: obstacle_reach
+phases:
+- id: insert_1
+  type: insert
+  generator: joint_interpolation
+  control: force_control
+  termination: pose_tolerance
+  parameters:
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.15
+    param_0:
+      type: scalar
+      range:
+      - -0.029801037398234698
+      - 0.5180485996602668
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: contact_detected
+  parameters:
+    depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1

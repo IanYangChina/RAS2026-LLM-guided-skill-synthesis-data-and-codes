@@ -1,0 +1,319 @@
+## Search State
+
+- **Seed**: 4
+- **Iteration**: 1 / 15
+
+### Mutation History (most recent first)
+
+| Iter | Phase Sequence | Generators | Controls | Terminations | Params | Q | task_score | Result |
+|---|---|---|---|---|---|---|---|---|
+| 0 | approach → descend → grasp → lift → release | linear_cartesian | linear_cartesian | — | linear_cartesian | linear_cartesian | force_threshold_switch | position_control | position_control | position_control | admittance_control | pose_tolerance | pose_tolerance | time_limit | pose_tolerance | time_limit | 4 | 0.3576 | 0.37 | ✅ accepted |
+
+**Proposal policy**: task_score is 0.37 — NOT near-perfect (target ≥ 0.9). Do NOT hold or make cosmetic tweaks. Make any coherent updates needed to address the diagnosed failure while preserving useful working structure. Use the Mutation History above to avoid repeating failed edits. - task_score ≈ 0: add or repair missing prerequisites, targets, guard/retry logic, generator/control choices, subtasks, or phase-ordering errors that block task progress.
+- task_score stagnant: change coupled targets, parameters, terminations, phase types, controls, subtasks, or ordering when evidence shows they need to change together.
+A HOLD wastes an iteration when task_score is below 0.9.
+
+## Optimisation Objective
+
+Your goal is to **maximise task_score first, then composite score Q**:
+
+> **Primary objective: task_score** — the fraction of episodes where the robot successfully completes the task. This is the most important metric. **Never propose a simpler or shorter skill if it reduces task_score.**
+
+> **Q = fitness_score + termination_fidelity − complexity_penalty**
+
+- `fitness_score`: shaped task reward (includes phase progress for contact-rich tasks)
+- `termination_fidelity`: fraction of phases that terminated by designed condition (not timeout)
+- `complexity_penalty`: cost for over-parameterised or over-phased designs
+
+**Warning**: Do not reduce phases or parameters to lower complexity if doing so reduces task_score. Structure complexity is only penalised when it adds no performance gain.
+
+# Proposal Context
+
+## Task Specification
+
+- Task name: grasp_place
+- Frozen realised-scene SHA-256: `1959b3932a54fd3d3850620783d44a63a35b8fa059f78d939fdbdef5fbfc64e8`
+- Frozen object start: [0.5443056105572368, 0.0011327552814361583, 0.03]
+- Frozen task target: [0.6476243705707704, 0.15808360238956023, 0.19110337479925443]
+- Goal object position: (0.6476243705707704, 0.15808360238956023, 0.19110337479925443)
+- place_goal_position (task success criterion — final object 3D position must be close to the realised airborne target here): (0.6476243705707704, 0.15808360238956023, 0.19110337479925443)
+- Grasp/lift components are optimiser fitness diagnostics only; canonical task_score is final object-to-realised-target proximity.
+- Object initial pose: (0.5443056105572368, 0.0011327552814361583, 0.03)
+- Goal tolerance: 0.02 m
+- Expressivity sigma: 0.15 m
+- Expressivity threshold: 0.3
+- Force limit: 20.0 N
+- Robot initial TCP position: (0.5, 0.0, 0.3)
+- Robot initial gripper state: **open** (gripper starts fully open; ensure a `grasp`/`force_grasp` phase closes it before lifting)
+- Phase navigation guidance: the task `phase_target_map` may provide internal predefined TCP waypoint aliases / semantic phase ids. These names are not DSL phase types and are intentionally not enumerated here to avoid confusing ids with types. Phase `id` may be semantic, but phase `type` must be exactly one of the DSL enum values listed in the prompt.
+- Primary evaluation target: **final object-to-realised-airborne-3D-target proximity. Grasp/lift signals are optimiser fitness diagnostics only; they do not gate the canonical task_score.**
+
+## Scene Entities
+
+robot:
+  model: panda_full
+  tcp_site: attachment_site
+  gripper: franka_hand
+  tcp_initial_world: [0.5, 0, 0.3]
+objects:
+  - name: grasp_target
+    role: manipulated_object
+    dynamics: free
+    geometry: box
+    dimensions_m: [0.04, 0.04, 0.06]
+    mass_kg: 0.05
+  - name: placement_surface
+    role: goal_area
+    dynamics: static
+    geometry: point
+task_landmarks:
+  frozen_object_start: [0.5443, 0.0011, 0.03]
+  frozen_task_target: [0.6476, 0.1581, 0.1911]
+  frozen_object_starts: {'grasp_target': [0.5443056105572368, 0.0011327552814361583, 0.03]}
+  frozen_targets: {'place_target': [0.6476243705707704, 0.15808360238956023, 0.19110337479925443]}
+  goal_tolerance_m: 0.02
+  force_limit_n: 20
+  force_scale_n: 5
+  realized_scene_sha256: 1959b3932a54fd3d3850620783d44a63a35b8fa059f78d939fdbdef5fbfc64e8
+
+## Subtask Layer
+
+**Mode**: free (you define subtask targets; use `subtasks:` block in your YAML)
+
+Define subtasks in a `subtasks:` block **before** `phases:`. Each subtask specifies an intermediate optimisation target.
+
+**Required fields** — always include both, never omit:
+- `anchor` (**required**): fixture | goal | object | world
+- `target_entity` (**required**): hinge | object | tcp
+
+Subtask anchors are separate from phase `target.anchor` vocabulary: subtasks use `world | object | goal | fixture`, while phase targets use `world | task_goal | task_object | fixture | body | site | current_tcp`.
+
+Optional fields:
+- `metric`: contact | distance | goal_progress | hinge_angle (default: distance)
+- `offset`: [x, y, z] in metres relative to anchor (default: [0, 0, 0])
+- `param_offset_key`: CMA-ES parameter added to offset at runtime (optional)
+- `weight`: scoring weight [0.1, 1.0] (default: 1.0)
+
+**Anchor resolution for this task** — choose anchor so the resolved position is meaningful:
+| Anchor | Resolves to | Best used for |
+|--------|-------------|---------------|
+| `world` | absolute world-frame coordinate | fixed reference points not tied to objects |
+| `object` | offset from object initial position (0.5443056105572368, 0.0011327552814361583, 0.03) | approach/contact targets near object start |
+| `goal` | offset from task goal position (0.6476243705707704, 0.15808360238956023, 0.19110337479925443) | final destination targets |
+| `fixture` | offset from fixture pose (if defined, else world) | targets near fixture |
+
+Annotate each phase with `subtask_id: <id>` to bind it to a subtask.
+Only the **last phase** bound to a given subtask contributes to subtask scoring.
+
+Example (two subtasks — one near object start, one at goal):
+```yaml
+subtasks:
+  - id: reach_pre_contact
+    anchor: object         # resolved to object initial position (see table above)
+    target_entity: tcp     # score TCP distance to this target
+    metric: distance
+    offset: [0.0, 0.0, 0.10]  # 10 cm above object start position
+    weight: 0.3
+  - id: reach_goal
+    anchor: goal           # resolved to task goal position (see table above)
+    target_entity: tcp
+    metric: distance
+    offset: [0.0, 0.0, 0.0]
+    weight: 0.7
+phases:
+  - id: approach_1
+    type: approach
+    subtask_id: reach_pre_contact
+    ...
+  - id: push_1
+    type: push
+    subtask_id: reach_goal
+    ...
+```
+
+## Current Skill (Q=0.358) — your mutation base
+
+```yaml
+skill: grasp_place
+skill_type: arm_gripper
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: pose_tolerance
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: grasp_1
+  type: grasp
+  control: position_control
+  termination: time_limit
+  end_effector_action: force_grasp
+  parameters:
+    grip_force:
+      type: scalar
+      range:
+      - 5.0
+      - 30.0
+- id: lift_1
+  type: lift
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: release_1
+  type: release
+  generator: linear_cartesian
+  control: admittance_control
+  termination: time_limit
+  end_effector_action: open
+
+```
+
+## Design Metrics
+
+- **Composite score**: 0.358
+- **task_score** (E): 0.367
+- **fitness_score**: 0.648  *(CMA-ES inner optimisation target; = task_score for most tasks; includes phase progress bonus for contact-rich tasks)*
+- **Termination Fidelity** (C): 0.000
+  → phases frequently time out instead of reaching designed conditions
+- **Force Compliance**: 1.000
+- **Complexity Penalty**: 0.290
+
+## Per-Phase Performance
+
+| Phase | Normal Term. Rate | Contact Rate | Mean Displacement (m) |
+|-------|-------------------|--------------|------------------------|
+| approach_1 | 1.00 | 1.00 | 0.1664 |
+| descend_1 | 1.00 | 1.00 | 0.0834 |
+| grasp_1 | 1.00 | 1.00 | 0.0131 |
+| lift_1 | 0.33 | 1.00 | 0.1170 |
+| release_1 | 1.00 | 1.00 | 0.1615 |
+
+## Last Optimised Execution State
+
+Mean phase-boundary state across the latest CMA-ES optimised traces (up to 8 phases; values rounded to 3 decimals).
+
+| Phase | Type | Normal / reason | TCP start→end | Object start→end | Obj→goal start→end | Contact rate / events | Peak force | Raw peak force |
+|---|---|---|---|---|---|---|---|---|
+| approach_1 | approach | 1.00 / step_budget | (0.500, -0.000, 0.301)→(0.520, 0.005, 0.137) | (0.526, 0.005, 0.030)→(0.526, 0.005, 0.026) | 0.246→0.249 | 1.00 / 4.000 | 0.123 | 0.138 |
+| descend_1 | descend | 1.00 / step_budget | (0.520, 0.005, 0.137)→(0.521, 0.005, 0.054) | (0.526, 0.005, 0.026)→(0.526, 0.005, 0.026) | 0.249→0.249 | 1.00 / 4.000 | 0.123 | 0.123 |
+| grasp_1 | grasp | 1.00 / step_budget | (0.521, 0.005, 0.054)→(0.512, 0.005, 0.044) | (0.526, 0.005, 0.026)→(0.526, 0.005, 0.026) | 0.249→0.249 | 1.00 / 46.000 | 0.139 | 0.174 |
+| lift_1 | lift | 0.33 / step_budget | (0.512, 0.005, 0.044)→(0.518, 0.005, 0.161) | (0.526, 0.005, 0.026)→(0.524, 0.005, 0.136) | 0.249→0.204 | 1.00 / 38.000 | 0.079 | 0.432 |
+| release_1 | release | 1.00 / time_limit | (0.518, 0.005, 0.161)→(0.588, 0.140, 0.191) | (0.524, 0.005, 0.136)→(0.585, 0.149, 0.025) | 0.204→0.163 | 1.00 / 3.667 | 0.181 | 1.412 |
+
+## Task Sub-Scores
+
+These are diagnostics / optimiser fitness-shaping signals, not a guaranteed decomposition of canonical task_score.
+
+- grasp_success_rate: 1.000
+- place_accuracy: 0.000
+- lift_clearance: 1.000
+- transport_retention: None
+- terminal_score: 0.571
+- phase_score: 0.330
+- phase_breakdown.transport_arc_score: 0.000
+- phase_breakdown.release_1_score: 0.583
+- phase_breakdown.grasp_1_score: 1.000
+- phase_breakdown.descend_1_score: 0.870
+- phase_breakdown.approach_1_score: 0.117
+- grasp_place_fitness: 0.749
+
+## CMA-ES Diagnostics
+
+- **Best shaped reward** (fitness_score): 0.749
+  *(shaped task+phase signal; this is the CMA-ES objective)*
+- **Best task_score**: 0.571
+- **Median Q (composite search score)**: 0.336
+- **K-run variance**: 0.0058
+- **Stagnated**: no
+- **Stop reason**: budget_exhausted
+- **Mean generations**: 9.0
+- **Final σ (mean)**: 0.224
+
+
+## Frozen randomized evaluation bank (shared across every structure)
+
+Bank SHA-256: `104d9d5641b6f93313b49acc931f841aa27a6ce63eca9eff4a16c33838e2c9c3`. Stable order: configuration 1 to configuration 3.
+
+### Nominal task randomization distribution and ranges
+
+These nominal ranges define how the fixed bank was sampled and remain valid alongside the realized facts below.
+
+```json
+{"distribution":"independent_uniform","parameters":{"enabled":true,"goal_xy_delta":[0.05,0.05],"goal_z_delta":0.15,"object_xy_delta":[0.05,0.05]},"range_semantics":{"*_xy_delta":"independent per-axis draws in [-delta, +delta]","goal_z_delta":"draw in [0, max_delta]","hinge_delta_deg":"draw in [-delta_deg, +delta_deg]"}}
+```
+
+### Configuration 1 of 3
+
+Configuration SHA-256: `9de75aa839370ff688dada9a37e29517e2f368ed4f09f6a013379103594581cf`; realized-scene SHA-256: `1959b3932a54fd3d3850620783d44a63a35b8fa059f78d939fdbdef5fbfc64e8`.
+
+<!-- skill-synthesis:realized-scene:v1 -->
+
+Realized scene facts (concise typed schema):
+
+```json
+{"anchors":[{"name":"object","value":[0.54431,0.00113,0.03]},{"name":"goal","value":[0.64762,0.15808,0.1911]}],"axes":[],"fixture_states":[],"fixtures":[],"limits":[{"name":"goal_tolerance_m","value":0.02},{"name":"force_limit_n","value":20.0},{"name":"force_scale_n","value":5.0}],"object_starts":[{"name":"grasp_target","orientation":[1.0,0.0,0.0,0.0],"position":[0.54431,0.00113,0.03]}],"obstacles":[],"targets":[{"name":"place_target","orientation":[1.0,0.0,0.0,0.0],"position":[0.64762,0.15808,0.1911]}],"task_name":"grasp_place"}
+```
+
+Aligned optimization and replay/contact feedback:
+
+```json
+{"averaged_ik_statistics":{"available":true,"average_failure_count":0.0,"average_failure_rate":0.0,"average_mean_iterations":3.91304,"average_solve_count":138.0,"average_success_count":138.0,"replay_count":1},"omitted_parameter_count":0,"optimized_parameters":{"approach_1.speed":0.08197,"descend_1.depth":0.07122,"grasp_1.grip_force":22.02834,"lift_1.speed":0.08583},"optimized_scores":{"best_composite_score":0.33648,"best_fitness_score":0.62648,"best_task_score":0.32382},"replay_outcomes":[{"contacts":{"omitted_contact_groups":0,"reported_contact_groups":[{"body_a":"world","body_b":"grasp_target","contact_count":239.0,"contact_point_centroid":[0.61662,0.14157,-0.00602],"force_p95":0.91398,"geom_a":"table","geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":1.59487,"mean_force":0.29074,"phase_index":4.0,"phase_name":"release_1","phase_type":"release","tcp_position_centroid":[0.62386,0.13224,0.19777]},{"body_a":"world","body_b":"grasp_target","contact_count":168.0,"contact_point_centroid":[0.54095,0.0009,-0.00115],"force_p95":0.26618,"geom_a":"table","geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":0.46079,"mean_force":0.08204,"phase_index":3.0,"phase_name":"lift_1","phase_type":"lift","tcp_position_centroid":[0.52819,0.0008,0.04507]},{"body_a":"right_finger","body_b":"grasp_target","contact_count":19875.0,"contact_point_centroid":[0.53186,0.02002,0.1122],"force_p95":0.07369,"geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":0.29874,"mean_force":0.05131,"phase_index":3.0,"phase_name":"lift_1","phase_type":"lift","tcp_position_centroid":[0.53113,0.00087,0.10943]},{"body_a":"left_finger","body_b":"grasp_target","contact_count":20414.0,"contact_point_centroid":[0.53155,-0.01826,0.10993],"force_p95":0.07424,"geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":0.28603,"mean_force":0.0502,"phase_index":3.0,"phase_name":"lift_1","phase_type":"lift","tcp_position_centroid":[0.53099,0.00087,0.10753]},{"body_a":"right_finger","body_b":"grasp_target","contact_count":17925.0,"contact_point_centroid":[0.57551,0.08128,0.17853],"force_p95":0.08734,"geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":0.2756,"mean_force":0.05534,"phase_index":4.0,"phase_name":"release_1","phase_type":"release","tcp_position_centroid":[0.57721,0.06249,0.17809]},{"body_a":"left_finger","body_b":"grasp_target","contact_count":16485.0,"contact_point_centroid":[0.57594,0.04028,0.17767],"force_p95":0.10789,"geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":0.26154,"mean_force":0.06051,"phase_index":4.0,"phase_name":"release_1","phase_type":"release","tcp_position_centroid":[0.57501,0.05935,0.17797]},{"body_a":"world","body_b":"grasp_target","contact_count":1800.0,"contact_point_centroid":[0.54431,0.00117,-0.00204],"force_p95":0.13182,"geom_a":"table","geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":0.15585,"mean_force":0.12567,"phase_index":2.0,"phase_name":"grasp_1","phase_type":"grasp","tcp_position_centroid":[0.5309,0.00086,0.04504]},{"body_a":"world","body_b":"grasp_target","contact_count":2232.0,"contact_point_centroid":[0.54431,0.00113,-0.00194],"force_p95":0.13176,"geom_a":"table","geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":0.13845,"mean_force":0.12284,"phase_index":0.0,"phase_name":"approach_1","phase_type":"approach","tcp_position_centroid":[0.51707,0.00047,0.21785]},{"body_a":"world","body_b":"grasp_target","contact_count":1012.0,"contact_point_centroid":[0.54431,0.00113,-0.00199],"force_p95":0.12263,"geom_a":"table","geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":0.12263,"mean_force":0.12263,"phase_index":1.0,"phase_name":"descend_1","phase_type":"descend","tcp_position_centroid":[0.53636,0.00097,0.09492]},{"body_a":"right_finger","body_b":"grasp_target","contact_count":4152.0,"contact_point_centroid":[0.5309,0.02013,0.04612],"force_p95":0.0764,"geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":0.09578,"mean_force":0.05211,"phase_index":2.0,"phase_name":"grasp_1","phase_type":"grasp","tcp_position_centroid":[0.52965,0.00083,0.04356]},{"body_a":"left_finger","body_b":"grasp_target","contact_count":5327.0,"contact_point_centroid":[0.53025,-0.0182,0.04618],"force_p95":0.06273,"geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":0.08995,"mean_force":0.04076,"phase_index":2.0,"phase_name":"grasp_1","phase_type":"grasp","tcp_position_centroid":[0.52965,0.00083,0.04356]}],"total_contact_groups":11},"final_pose_error":0.03411,"key_states":{"actual_goal_position":[0.64762,0.15808,0.1911],"final_object_position":[0.61765,0.14075,0.02555],"final_tcp_position":[0.62686,0.13293,0.18114],"realised_goal_position":[0.64762,0.15808,0.1911],"realised_object_initial_position":[0.54431,0.00113,0.03]},"peak_contact_force":1.59487,"phases":[{"contact_detected":true,"contact_event_count":4.0,"n_steps":559.0,"n_steps_budget":1000.0,"object_pos_end":[0.54431,0.00113,0.02602],"object_pos_start":[0.54431,0.00113,0.03],"object_to_goal_dist_end":0.25012,"object_to_goal_dist_start":0.24751,"object_z_max":0.03,"peak_contact_force":0.12263,"phase_name":"approach_1","phase_peak_obstacle_force":0.0,"phase_type":"approach","raw_contact_event_count":2232.0,"raw_peak_contact_force":0.13845,"tcp_end":[0.53693,0.00098,0.13654],"tcp_start":[0.49977,-0.0,0.30085],"tcp_to_object_dist_end":0.11076,"terminated_normally":true,"termination_reason":"step_budget"},{"contact_detected":true,"contact_event_count":4.0,"n_steps":253.0,"n_steps_budget":1000.0,"object_pos_end":[0.54431,0.00113,0.02602],"object_pos_start":[0.54431,0.00113,0.02602],"object_to_goal_dist_end":0.25012,"object_to_goal_dist_start":0.25012,"object_z_max":0.02602,"peak_contact_force":0.12263,"phase_name":"descend_1","phase_peak_obstacle_force":0.0,"phase_type":"descend","raw_contact_event_count":1012.0,"raw_peak_contact_force":0.12263,"tcp_end":[0.53833,0.00101,0.05399],"tcp_start":[0.53693,0.00098,0.13654],"tcp_to_object_dist_end":0.0286,"terminated_normally":true,"termination_reason":"step_budget"},{"contact_detected":true,"contact_event_count":43.0,"n_steps":50.0,"n_steps_budget":50.0,"object_pos_end":[0.54422,0.00112,0.02585],"object_pos_start":[0.54431,0.00113,0.02602],"object_to_goal_dist_end":0.25028,"object_to_goal_dist_start":0.25012,"object_z_max":0.02602,"peak_contact_force":0.13149,"phase_name":"grasp_1","phase_peak_obstacle_force":0.0,"phase_type":"grasp","raw_contact_event_count":11279.0,"raw_peak_contact_force":0.15585,"tcp_end":[0.52962,0.00083,0.04352],"tcp_start":[0.53833,0.00101,0.05399],"tcp_to_object_dist_end":0.02292,"terminated_normally":true,"termination_reason":"step_budget"},{"contact_detected":true,"contact_event_count":38.0,"n_steps":1000.0,"n_steps_budget":1000.0,"object_pos_end":[0.54474,0.00113,0.15688],"object_pos_start":[0.54422,0.00112,0.02585],"object_to_goal_dist_end":0.19077,"object_to_goal_dist_start":0.25028,"object_z_max":0.15672,"peak_contact_force":0.07812,"phase_name":"lift_1","phase_peak_obstacle_force":0.0,"phase_type":"lift","raw_contact_event_count":40457.0,"raw_peak_contact_force":0.46079,"tcp_end":[0.5373,0.00099,0.18095],"tcp_start":[0.52962,0.00083,0.04352],"tcp_to_object_dist_end":0.02518,"terminated_normally":true,"termination_reason":"step_budget"},{"contact_detected":true,"contact_event_count":4.0,"n_steps":1000.0,"n_steps_budget":1000.0,"object_pos_end":[0.61765,0.14075,0.02555],"object_pos_start":[0.54474,0.00113,0.15688],"object_to_goal_dist_end":0.16914,"object_to_goal_dist_start":0.19077,"object_z_max":0.15699,"peak_contact_force":0.08897,"phase_name":"release_1","phase_peak_obstacle_force":0.0,"phase_type":"release","raw_contact_event_count":34649.0,"raw_peak_contact_force":1.59487,"tcp_end":[0.6238,0.1322,0.20677],"tcp_start":[0.5373,0.00099,0.18095],"tcp_to_object_dist_end":0.18152,"terminated_normally":true,"termination_reason":"time_limit"}],"success":true}]}
+```
+
+### Configuration 2 of 3
+
+Configuration SHA-256: `349f925163f8e9284ad51ad55d38356f2e3c8deb4dc54e8ff12260e5f6d4b0f8`; realized-scene SHA-256: `e32d7866764afb23ec7c7faebb4bcca0aa39fbf2f1ab61f3c9c527b297153af9`.
+
+<!-- skill-synthesis:realized-scene:v1 -->
+
+Realized scene facts (concise typed schema):
+
+```json
+{"anchors":[{"name":"object","value":[0.5305,0.03079,0.03]},{"name":"goal","value":[0.60153,0.17858,0.10809]}],"axes":[],"fixture_states":[],"fixtures":[],"limits":[{"name":"goal_tolerance_m","value":0.02},{"name":"force_limit_n","value":20.0},{"name":"force_scale_n","value":5.0}],"object_starts":[{"name":"grasp_target","orientation":[1.0,0.0,0.0,0.0],"position":[0.5305,0.03079,0.03]}],"obstacles":[],"targets":[{"name":"place_target","orientation":[1.0,0.0,0.0,0.0],"position":[0.60153,0.17858,0.10809]}],"task_name":"grasp_place"}
+```
+
+Aligned optimization and replay/contact feedback:
+
+```json
+{"averaged_ik_statistics":{"available":true,"average_failure_count":0.0,"average_failure_rate":0.0,"average_mean_iterations":3.77536,"average_solve_count":138.0,"average_success_count":138.0,"replay_count":1},"omitted_parameter_count":0,"optimized_parameters":{"approach_1.speed":0.08288,"descend_1.depth":0.05943,"grasp_1.grip_force":19.15547,"lift_1.speed":0.06674},"optimized_scores":{"best_composite_score":0.45947,"best_fitness_score":0.74947,"best_task_score":0.57066},"replay_outcomes":[{"contacts":{"omitted_contact_groups":0,"reported_contact_groups":[{"body_a":"world","body_b":"grasp_target","contact_count":368.0,"contact_point_centroid":[0.58244,0.17874,-0.00325],"force_p95":0.5554,"geom_a":"table","geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":0.82331,"mean_force":0.18485,"phase_index":4.0,"phase_name":"release_1","phase_type":"release","tcp_position_centroid":[0.58879,0.1677,0.11583]},{"body_a":"world","body_b":"grasp_target","contact_count":175.0,"contact_point_centroid":[0.52655,0.02884,-0.0012],"force_p95":0.27353,"geom_a":"table","geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":0.42925,"mean_force":0.08156,"phase_index":3.0,"phase_name":"lift_1","phase_type":"lift","tcp_position_centroid":[0.51469,0.02942,0.04551]},{"body_a":"right_finger","body_b":"grasp_target","contact_count":16703.0,"contact_point_centroid":[0.5479,0.1096,0.12788],"force_p95":0.09685,"geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":0.32219,"mean_force":0.05895,"phase_index":4.0,"phase_name":"release_1","phase_type":"release","tcp_position_centroid":[0.55056,0.09097,0.12763]},{"body_a":"right_finger","body_b":"grasp_target","contact_count":19291.0,"contact_point_centroid":[0.5167,0.04866,0.09994],"force_p95":0.07467,"geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":0.27942,"mean_force":0.05221,"phase_index":3.0,"phase_name":"lift_1","phase_type":"lift","tcp_position_centroid":[0.51648,0.02948,0.09701]},{"body_a":"left_finger","body_b":"grasp_target","contact_count":21074.0,"contact_point_centroid":[0.51763,0.01039,0.09646],"force_p95":0.07612,"geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":0.26401,"mean_force":0.04857,"phase_index":3.0,"phase_name":"lift_1","phase_type":"lift","tcp_position_centroid":[0.51629,0.02947,0.09465]},{"body_a":"left_finger","body_b":"grasp_target","contact_count":15338.0,"contact_point_centroid":[0.55137,0.07082,0.12696],"force_p95":0.1094,"geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":0.25954,"mean_force":0.06514,"phase_index":4.0,"phase_name":"release_1","phase_type":"release","tcp_position_centroid":[0.54993,0.08974,0.12805]},{"body_a":"world","body_b":"grasp_target","contact_count":1800.0,"contact_point_centroid":[0.53054,0.03083,-0.00211],"force_p95":0.15292,"geom_a":"table","geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":0.20405,"mean_force":0.13089,"phase_index":2.0,"phase_name":"grasp_1","phase_type":"grasp","tcp_position_centroid":[0.51743,0.02961,0.04533]},{"body_a":"left_finger","body_b":"grasp_target","contact_count":5782.0,"contact_point_centroid":[0.51715,0.01038,0.04658],"force_p95":0.06401,"geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":0.14103,"mean_force":0.0381,"phase_index":2.0,"phase_name":"grasp_1","phase_type":"grasp","tcp_position_centroid":[0.5162,0.02953,0.04391]},{"body_a":"world","body_b":"grasp_target","contact_count":2184.0,"contact_point_centroid":[0.5305,0.03079,-0.00193],"force_p95":0.13205,"geom_a":"table","geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":0.13845,"mean_force":0.12285,"phase_index":0.0,"phase_name":"approach_1","phase_type":"approach","tcp_position_centroid":[0.51075,0.01383,0.21815]},{"body_a":"world","body_b":"grasp_target","contact_count":1024.0,"contact_point_centroid":[0.5305,0.03079,-0.00199],"force_p95":0.12263,"geom_a":"table","geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":0.12263,"mean_force":0.12263,"phase_index":1.0,"phase_name":"descend_1","phase_type":"descend","tcp_position_centroid":[0.52318,0.02906,0.09511]},{"body_a":"right_finger","body_b":"grasp_target","contact_count":4698.0,"contact_point_centroid":[0.51634,0.04885,0.0476],"force_p95":0.07521,"geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":0.07807,"mean_force":0.04683,"phase_index":2.0,"phase_name":"grasp_1","phase_type":"grasp","tcp_position_centroid":[0.5162,0.02953,0.04391]}],"total_contact_groups":11},"final_pose_error":0.01444,"key_states":{"actual_goal_position":[0.60153,0.17858,0.10809],"final_object_position":[0.58209,0.17977,0.02623],"final_tcp_position":[0.59241,0.16868,0.10286],"realised_goal_position":[0.60153,0.17858,0.10809],"realised_object_initial_position":[0.5305,0.03079,0.03]},"peak_contact_force":0.82331,"phases":[{"contact_detected":true,"contact_event_count":4.0,"n_steps":547.0,"n_steps_budget":1000.0,"object_pos_end":[0.5305,0.03079,0.02602],"object_pos_start":[0.5305,0.03079,0.03],"object_to_goal_dist_end":0.18336,"object_to_goal_dist_start":0.18162,"object_z_max":0.03,"peak_contact_force":0.12263,"phase_name":"approach_1","phase_peak_obstacle_force":0.0,"phase_type":"approach","raw_contact_event_count":2184.0,"raw_peak_contact_force":0.13845,"tcp_end":[0.5241,0.02821,0.13696],"tcp_start":[0.49977,-0.0,0.30085],"tcp_to_object_dist_end":0.11115,"terminated_normally":true,"termination_reason":"step_budget"},{"contact_detected":true,"contact_event_count":4.0,"n_steps":256.0,"n_steps_budget":1000.0,"object_pos_end":[0.5305,0.03079,0.02602],"object_pos_start":[0.5305,0.03079,0.02602],"object_to_goal_dist_end":0.18336,"object_to_goal_dist_start":0.18336,"object_z_max":0.02602,"peak_contact_force":0.12263,"phase_name":"descend_1","phase_peak_obstacle_force":0.0,"phase_type":"descend","raw_contact_event_count":1024.0,"raw_peak_contact_force":0.12263,"tcp_end":[0.52476,0.03009,0.0539],"tcp_start":[0.5241,0.02821,0.13696],"tcp_to_object_dist_end":0.02848,"terminated_normally":true,"termination_reason":"step_budget"},{"contact_detected":true,"contact_event_count":47.0,"n_steps":50.0,"n_steps_budget":50.0,"object_pos_end":[0.53048,0.03026,0.0256],"object_pos_start":[0.5305,0.03079,0.02602],"object_to_goal_dist_end":0.18399,"object_to_goal_dist_start":0.18336,"object_z_max":0.02602,"peak_contact_force":0.15142,"phase_name":"grasp_1","phase_peak_obstacle_force":0.0,"phase_type":"grasp","raw_contact_event_count":12280.0,"raw_peak_contact_force":0.20405,"tcp_end":[0.51617,0.02953,0.04387],"tcp_start":[0.52476,0.03009,0.0539],"tcp_to_object_dist_end":0.02322,"terminated_normally":true,"termination_reason":"step_budget"},{"contact_detected":true,"contact_event_count":38.0,"n_steps":1000.0,"n_steps_budget":1000.0,"object_pos_end":[0.5279,0.03035,0.12781],"object_pos_start":[0.53048,0.03026,0.0256],"object_to_goal_dist_end":0.16668,"object_to_goal_dist_start":0.18399,"object_z_max":0.12769,"peak_contact_force":0.08055,"phase_name":"lift_1","phase_peak_obstacle_force":0.0,"phase_type":"lift","raw_contact_event_count":40540.0,"raw_peak_contact_force":0.42925,"tcp_end":[0.52113,0.02973,0.15245],"tcp_start":[0.51617,0.02953,0.04387],"tcp_to_object_dist_end":0.02556,"terminated_normally":false,"termination_reason":"step_budget"},{"contact_detected":true,"contact_event_count":4.0,"n_steps":1000.0,"n_steps_budget":1000.0,"object_pos_end":[0.58209,0.17977,0.02623],"object_pos_start":[0.5279,0.03035,0.12781],"object_to_goal_dist_end":0.08414,"object_to_goal_dist_start":0.16668,"object_z_max":0.12785,"peak_contact_force":0.13517,"phase_name":"release_1","phase_peak_obstacle_force":0.0,"phase_type":"release","raw_contact_event_count":32409.0,"raw_peak_contact_force":0.82331,"tcp_end":[0.58862,0.16759,0.12911],"tcp_start":[0.52113,0.02973,0.15245],"tcp_to_object_dist_end":0.10381,"terminated_normally":true,"termination_reason":"time_limit"}],"success":true}]}
+```
+
+### Configuration 3 of 3
+
+Configuration SHA-256: `a1798e4fdcacfe8740623adfe3f78d2bc74e0d14c8233e64f02c40cf2a534ecc`; realized-scene SHA-256: `584133b5261cffac0dd4282704ff39e97bf4d452e60b02507679bbdea5a4de22`.
+
+<!-- skill-synthesis:realized-scene:v1 -->
+
+Realized scene facts (concise typed schema):
+
+```json
+{"anchors":[{"name":"object","value":[0.50382,-0.01567,0.03]},{"name":"goal","value":[0.58691,0.18745,0.24812]}],"axes":[],"fixture_states":[],"fixtures":[],"limits":[{"name":"goal_tolerance_m","value":0.02},{"name":"force_limit_n","value":20.0},{"name":"force_scale_n","value":5.0}],"object_starts":[{"name":"grasp_target","orientation":[1.0,0.0,0.0,0.0],"position":[0.50382,-0.01567,0.03]}],"obstacles":[],"targets":[{"name":"place_target","orientation":[1.0,0.0,0.0,0.0],"position":[0.58691,0.18745,0.24812]}],"task_name":"grasp_place"}
+```
+
+Aligned optimization and replay/contact feedback:
+
+```json
+{"averaged_ik_statistics":{"available":true,"average_failure_count":0.0,"average_failure_rate":0.0,"average_mean_iterations":3.60403,"average_solve_count":149.0,"average_success_count":149.0,"replay_count":1},"omitted_parameter_count":0,"optimized_parameters":{"approach_1.speed":0.0642,"descend_1.depth":0.03458,"grasp_1.grip_force":17.95756,"lift_1.speed":0.06358},"optimized_scores":{"best_composite_score":0.27683,"best_fitness_score":0.56683,"best_task_score":0.20684},"replay_outcomes":[{"contacts":{"omitted_contact_groups":0,"reported_contact_groups":[{"body_a":"world","body_b":"grasp_target","contact_count":175.0,"contact_point_centroid":[0.54419,0.1319,-0.00783],"force_p95":1.27544,"geom_a":"table","geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":1.81717,"mean_force":0.41969,"phase_index":4.0,"phase_name":"release_1","phase_type":"release","tcp_position_centroid":[0.55058,0.11968,0.22826]},{"body_a":"world","body_b":"grasp_target","contact_count":170.0,"contact_point_centroid":[0.50056,-0.0152,-0.00113],"force_p95":0.27092,"geom_a":"table","geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":0.40629,"mean_force":0.07348,"phase_index":3.0,"phase_name":"lift_1","phase_type":"lift","tcp_position_centroid":[0.48875,-0.01536,0.04698]},{"body_a":"right_finger","body_b":"grasp_target","contact_count":20716.0,"contact_point_centroid":[0.49115,0.00371,0.09662],"force_p95":0.07398,"geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":0.26542,"mean_force":0.04917,"phase_index":3.0,"phase_name":"lift_1","phase_type":"lift","tcp_position_centroid":[0.49002,-0.01541,0.09521]},{"body_a":"left_finger","body_b":"grasp_target","contact_count":19915.0,"contact_point_centroid":[0.49057,-0.03459,0.09836],"force_p95":0.0726,"geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":0.25778,"mean_force":0.05047,"phase_index":3.0,"phase_name":"lift_1","phase_type":"lift","tcp_position_centroid":[0.49009,-0.01541,0.09596]},{"body_a":"right_finger","body_b":"grasp_target","contact_count":17537.0,"contact_point_centroid":[0.51876,0.06691,0.17491],"force_p95":0.09525,"geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":0.21744,"mean_force":0.05645,"phase_index":4.0,"phase_name":"release_1","phase_type":"release","tcp_position_centroid":[0.51995,0.04804,0.17502]},{"body_a":"left_finger","body_b":"grasp_target","contact_count":17407.0,"contact_point_centroid":[0.52214,0.02898,0.17488],"force_p95":0.09978,"geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":0.19222,"mean_force":0.0565,"phase_index":4.0,"phase_name":"release_1","phase_type":"release","tcp_position_centroid":[0.51982,0.04776,0.17489]},{"body_a":"world","body_b":"grasp_target","contact_count":1800.0,"contact_point_centroid":[0.50382,-0.01574,-0.00203],"force_p95":0.13439,"geom_a":"table","geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":0.16291,"mean_force":0.12564,"phase_index":2.0,"phase_name":"grasp_1","phase_type":"grasp","tcp_position_centroid":[0.49136,-0.01538,0.04663]},{"body_a":"world","body_b":"grasp_target","contact_count":2076.0,"contact_point_centroid":[0.50382,-0.01567,-0.00193],"force_p95":0.1323,"geom_a":"table","geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":0.13845,"mean_force":0.12286,"phase_index":0.0,"phase_name":"approach_1","phase_type":"approach","tcp_position_centroid":[0.49867,-0.00697,0.21971]},{"body_a":"world","body_b":"grasp_target","contact_count":1056.0,"contact_point_centroid":[0.50382,-0.01567,-0.00199],"force_p95":0.12263,"geom_a":"table","geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":false,"involves_task_object":true,"max_force":0.12263,"mean_force":0.12263,"phase_index":1.0,"phase_name":"descend_1","phase_type":"descend","tcp_position_centroid":[0.49779,-0.01485,0.09636]},{"body_a":"right_finger","body_b":"grasp_target","contact_count":5562.0,"contact_point_centroid":[0.49091,0.00386,0.04741],"force_p95":0.0642,"geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":0.08939,"mean_force":0.0399,"phase_index":2.0,"phase_name":"grasp_1","phase_type":"grasp","tcp_position_centroid":[0.49016,-0.01537,0.04533]},{"body_a":"left_finger","body_b":"grasp_target","contact_count":5123.0,"contact_point_centroid":[0.49016,-0.03464,0.0488],"force_p95":0.06791,"geom_b":"grasp_target_geom","involves_obstacle":false,"involves_robot_link":true,"involves_task_object":true,"max_force":0.08191,"mean_force":0.04272,"phase_index":2.0,"phase_name":"grasp_1","phase_type":"grasp","tcp_position_centroid":[0.49016,-0.01537,0.04534]}],"total_contact_groups":11},"final_pose_error":0.08472,"key_states":{"actual_goal_position":[0.58691,0.18745,0.24812],"final_object_position":[0.55402,0.12775,0.02179],"final_tcp_position":[0.55319,0.12027,0.20904],"realised_goal_position":[0.58691,0.18745,0.24812],"realised_object_initial_position":[0.50382,-0.01567,0.03]},"peak_contact_force":1.81717,"phases":[{"contact_detected":true,"contact_event_count":4.0,"n_steps":520.0,"n_steps_budget":1000.0,"object_pos_end":[0.50382,-0.01567,0.02602],"object_pos_start":[0.50382,-0.01567,0.03],"object_to_goal_dist_end":0.31223,"object_to_goal_dist_start":0.30942,"object_z_max":0.03,"peak_contact_force":0.12263,"phase_name":"approach_1","phase_peak_obstacle_force":0.0,"phase_type":"approach","raw_contact_event_count":2076.0,"raw_peak_contact_force":0.13845,"tcp_end":[0.4995,-0.0143,0.1389],"tcp_start":[0.49977,-0.0,0.30085],"tcp_to_object_dist_end":0.11297,"terminated_normally":true,"termination_reason":"step_budget"},{"contact_detected":true,"contact_event_count":4.0,"n_steps":264.0,"n_steps_budget":1000.0,"object_pos_end":[0.50382,-0.01567,0.02602],"object_pos_start":[0.50382,-0.01567,0.02602],"object_to_goal_dist_end":0.31223,"object_to_goal_dist_start":0.31223,"object_z_max":0.02602,"peak_contact_force":0.12263,"phase_name":"descend_1","phase_peak_obstacle_force":0.0,"phase_type":"descend","raw_contact_event_count":1056.0,"raw_peak_contact_force":0.12263,"tcp_end":[0.49852,-0.01543,0.05449],"tcp_start":[0.4995,-0.0143,0.1389],"tcp_to_object_dist_end":0.02896,"terminated_normally":true,"termination_reason":"step_budget"},{"contact_detected":true,"contact_event_count":48.0,"n_steps":50.0,"n_steps_budget":50.0,"object_pos_end":[0.50374,-0.01566,0.02585],"object_pos_start":[0.50382,-0.01567,0.02602],"object_to_goal_dist_end":0.31237,"object_to_goal_dist_start":0.31223,"object_z_max":0.02602,"peak_contact_force":0.13461,"phase_name":"grasp_1","phase_peak_obstacle_force":0.0,"phase_type":"grasp","raw_contact_event_count":12485.0,"raw_peak_contact_force":0.16291,"tcp_end":[0.49013,-0.01537,0.0453],"tcp_start":[0.49852,-0.01543,0.05449],"tcp_to_object_dist_end":0.02374,"terminated_normally":true,"termination_reason":"step_budget"},{"contact_detected":true,"contact_event_count":38.0,"n_steps":1000.0,"n_steps_budget":1000.0,"object_pos_end":[0.5006,-0.01592,0.12419],"object_pos_start":[0.50374,-0.01566,0.02585],"object_to_goal_dist_end":0.2533,"object_to_goal_dist_start":0.31237,"object_z_max":0.12407,"peak_contact_force":0.07886,"phase_name":"lift_1","phase_peak_obstacle_force":0.0,"phase_type":"lift","raw_contact_event_count":40801.0,"raw_peak_contact_force":0.40629,"tcp_end":[0.49437,-0.0155,0.14991],"tcp_start":[0.49013,-0.01537,0.0453],"tcp_to_object_dist_end":0.02646,"terminated_normally":false,"termination_reason":"step_budget"},{"contact_detected":true,"contact_event_count":3.0,"n_steps":1000.0,"n_steps_budget":1000.0,"object_pos_end":[0.55402,0.12775,0.02179],"object_pos_start":[0.5006,-0.01592,0.12419],"object_to_goal_dist_end":0.23637,"object_to_goal_dist_start":0.2533,"object_z_max":0.17736,"peak_contact_force":0.31955,"phase_name":"release_1","phase_peak_obstacle_force":0.0,"phase_type":"release","raw_contact_event_count":35119.0,"raw_peak_contact_force":1.81717,"tcp_end":[0.55052,0.11965,0.23615],"tcp_start":[0.49437,-0.0155,0.14991],"tcp_to_object_dist_end":0.21455,"terminated_normally":true,"termination_reason":"time_limit"}],"success":true}]}
+```

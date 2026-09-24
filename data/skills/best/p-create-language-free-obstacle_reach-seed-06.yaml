@@ -1,0 +1,191 @@
+skill: obstacle_reach
+dsl_version: 2
+subtasks:
+- id: reach_clear
+  anchor: fixture
+  offset:
+  - 0.0
+  - -0.284
+  - 0.17
+  weight: 0.3
+- id: reach_goal
+  weight: 0.7
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - -0.204
+    - 0.0
+    - 0.17
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_1_speed:
+      type: scalar
+      range:
+      - 0.2
+      - 0.5
+      default: 0.35
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    lateral_clearance:
+      type: scalar
+      range:
+      - -0.35
+      - -0.2
+      default: -0.284
+      binds_to:
+      - path: target.offset.y
+        mode: replace
+  guards:
+  - id: force_guard_1
+    when: during_phase
+    predicate: force_below
+    threshold: 5.0
+    on_failure: abort
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - -0.03
+    - 0.0
+  subtask_id: reach_clear
+- id: approach_2
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.0
+    - 0.17
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_2_speed:
+      type: scalar
+      range:
+      - 0.2
+      - 0.5
+      default: 0.4
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    approach_2_z_offset:
+      type: scalar
+      range:
+      - 0.12
+      - 0.22
+      default: 0.17
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+  guards:
+  - id: force_guard_2
+    when: during_phase
+    predicate: force_below
+    threshold: 5.0
+    on_failure: abort
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - -0.03
+    - 0.0
+  subtask_id: reach_goal
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.25
+      - 0.5
+      default: 0.4
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: force_guard_3
+    when: during_phase
+    predicate: force_below
+    threshold: 5.0
+    on_failure: abort
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - -0.01
+  subtask_id: reach_goal
+- id: descend_fine
+  type: descend
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.015
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_fine_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: force_guard_4
+    when: during_phase
+    predicate: force_below
+    threshold: 5.0
+    on_failure: abort
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - -0.005
+  subtask_id: reach_goal

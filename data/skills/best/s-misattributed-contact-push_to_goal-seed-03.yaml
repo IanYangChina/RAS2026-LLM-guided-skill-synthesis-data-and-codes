@@ -1,0 +1,109 @@
+skill: push_to_goal
+dsl_version: 2
+subtasks:
+- id: reach_behind
+  anchor: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  weight: 0.3
+- id: push_to_goal
+  target_entity: object
+  metric: goal_progress
+  weight: 0.7
+phases:
+- id: approach_behind
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    offset_along_axis:
+      distance: 0.08
+      axis: task_goal_direction
+      mode: add_to_offset
+      sign: negative
+    tolerance: 0.02
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.1
+      - 0.5
+      default: 0.3
+      binds_to:
+      - path: generator.speed
+        mode: add
+  subtask_id: reach_behind
+- id: descend_contact
+  type: descend
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.1
+      axis: world_z
+      mode: add_to_offset
+      sign: negative
+  parameters:
+    descend_force_threshold:
+      type: scalar
+      range:
+      - 2.0
+      - 10.0
+      default: 5.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+  subtask_id: reach_behind
+- id: push_to_goal
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+  parameters:
+    push_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.12
+      binds_to:
+      - path: generator.speed
+        mode: add
+  guards:
+  - id: contact_ok
+    when: during_phase
+    predicate: contact_detected
+    threshold: 1.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.005
+    - 0.0
+  subtask_id: push_to_goal

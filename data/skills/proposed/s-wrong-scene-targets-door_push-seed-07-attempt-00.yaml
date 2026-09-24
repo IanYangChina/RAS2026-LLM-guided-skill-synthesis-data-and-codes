@@ -1,0 +1,124 @@
+dsl_version: 2
+phases:
+- control: force_threshold_switch
+  generator: linear_cartesian
+  guards:
+  - id: max_force
+    on_failure: abort
+    predicate: force_below
+    threshold: 30.0
+    when: during_phase
+  id: approach_handle
+  orientation:
+    mode: keep_current
+  parameters:
+    contact_force_thresh:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 12.0
+      range:
+      - 5.0
+      - 25.0
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  retries:
+    max_attempts: 1
+    strategy: reduce_speed
+  subtask_id: reach_door
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    source: yaml
+  termination: force_exceeded
+  type: approach
+- control: admittance_control
+  generator: linear_cartesian
+  guards:
+  - id: push_force_limit
+    on_failure: abort
+    predicate: force_below
+    threshold: 30.0
+    when: during_phase
+  - id: progress_check
+    on_failure: retry
+    predicate: hinge_delta_reached
+    threshold: 0.8
+    when: after_phase
+  id: push_door_close
+  orientation:
+    mode: keep_current
+  parameters:
+    force_limit:
+      binds_to:
+      - mode: replace
+        path: guards.push_force_limit.threshold
+      default: 30.0
+      range:
+      - 10.0
+      - 35.0
+      type: scalar
+    lateral_offset:
+      binds_to:
+      - mode: add
+        path: retry.offset
+      default:
+      - 0.0
+      - 0.0
+      - 0.0
+      range:
+      - -0.02 - 0.02
+      - -0.02 - 0.02
+      - -0.01 - 0.01
+      type: vector
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.15
+      range:
+      - 0.05
+      - 0.3
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    strategy: offset_target
+  subtask_id: close_door
+  target:
+    anchor: current_tcp
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.15
+      mode: add_to_offset
+      sign: positive
+    source: yaml
+  termination: pose_tolerance
+  type: push
+skill: door_push
+skill_type: arm
+subtasks:
+- anchor: goal
+  id: reach_door
+  metric: distance
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: close_door
+  metric: hinge_angle
+  target_entity: hinge
+  weight: 0.7

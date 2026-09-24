@@ -1,0 +1,45 @@
+skill: peg_insert
+skill_type: arm_gripper
+phases:
+- id: pull_1
+  type: pull
+  generator: arc_cartesian
+  control: impedance_control
+  termination: time_limit
+- id: push_1
+  type: push
+  generator: impedance_motion
+  control: position_control
+  termination: contact_detected
+  parameters:
+    push_depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+    push_distance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+- id: pull_2
+  type: pull
+  generator: linear_cartesian
+  control: position_control
+  termination: force_exceeded
+- id: descend_2
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: contact_detected
+- id: grasp_1
+  type: grasp
+  control: position_control
+  termination: contact_lost
+  end_effector_action: force_grasp
+  parameters:
+    grip_force:
+      type: scalar
+      range:
+      - 5.0
+      - 30.0

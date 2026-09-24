@@ -1,0 +1,50 @@
+skill: obstacle_reach
+dsl_version: 2
+phases:
+- id: approach_via
+  type: approach
+  generator: impedance_motion
+  control: position_control
+  termination: grasp_success
+  target:
+    source: yaml
+    anchor: world
+    offset:
+    - 0.5
+    - 0.0
+    - 0.4
+    tolerance: 0.05
+    orientation:
+      mode: keep_current
+- id: approach_goal
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    tolerance: 0.05
+    orientation:
+      mode: keep_current
+- id: descend_goal
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: goal_marker
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.02
+    orientation:
+      mode: keep_current

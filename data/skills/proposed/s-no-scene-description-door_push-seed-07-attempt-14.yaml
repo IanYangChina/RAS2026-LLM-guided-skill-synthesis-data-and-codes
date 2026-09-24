@@ -1,0 +1,137 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_door
+  parameters:
+    app_duration:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 1000
+      range:
+      - 500.0
+      - 2000.0
+      type: scalar
+    app_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.01
+      - 0.2
+      type: scalar
+    app_y:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: -0.2
+      range:
+      - -0.35
+      - -0.05
+      type: scalar
+  subtask_id: reach_door
+  target:
+    anchor: task_object
+    entity: door_panel
+    offset:
+    - 0.0
+    - -0.2
+    - 0.15
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.05
+  termination: time_limit
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: contact_door
+  parameters:
+    contact_force:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 6.0
+      range:
+      - 3.0
+      - 10.0
+      type: scalar
+  subtask_id: reach_door
+  target:
+    anchor: task_object
+    entity: door_panel
+    offset:
+    - 0.0
+    - -0.08
+    - 0.05
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.01
+  termination: force_exceeded
+  type: contact
+- control: impedance_control
+  generator: linear_cartesian
+  id: push_door
+  parameters:
+    push_dist:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.3
+      range:
+      - 0.05
+      - 0.5
+      type: scalar
+    push_duration:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 2000
+      range:
+      - 1000.0
+      - 3000.0
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.08
+      range:
+      - 0.01
+      - 0.2
+      type: scalar
+  subtask_id: push_open
+  target:
+    anchor: task_object
+    entity: door_panel
+    offset:
+    - 0.0
+    - -0.08
+    - 0.05
+    offset_along_axis:
+      axis: world_x
+      distance: 0.3
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.03
+  termination: time_limit
+  type: push
+skill: door_push
+skill_type: arm_gripper
+subtasks:
+- anchor: object
+  id: reach_door
+  offset:
+  - 0.0
+  - -0.2
+  - 0.15
+  weight: 0.3
+- id: push_open
+  metric: goal_progress
+  weight: 0.7

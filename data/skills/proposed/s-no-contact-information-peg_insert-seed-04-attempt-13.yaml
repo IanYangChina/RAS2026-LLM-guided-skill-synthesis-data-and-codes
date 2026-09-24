@@ -1,0 +1,58 @@
+dsl_version: 2
+phases:
+- control: impedance_control
+  generator: impedance_motion
+  id: push_1
+  parameters:
+    push_distance:
+      range:
+      - 0.02
+      - 0.2
+      type: scalar
+    push_speed:
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  termination: time_limit
+  type: push
+- control: position_control
+  generator: linear_cartesian
+  id: align_1
+  parameters:
+    lateral_offset_x:
+      range:
+      - -0.01
+      - 0.01
+      type: scalar
+    lateral_offset_y:
+      range:
+      - -0.01
+      - 0.01
+      type: scalar
+  termination: pose_tolerance
+  type: align
+- control: admittance_control
+  end_effector_action: open
+  generator: linear_cartesian
+  id: release_1
+  termination: pose_tolerance
+  type: release
+- control: impedance_control
+  generator: impedance_motion
+  id: insert_1
+  parameters:
+    insertion_depth:
+      range:
+      - 0.01
+      - 0.15
+      type: scalar
+    insertion_force:
+      range:
+      - 1.0
+      - 20.0
+      type: scalar
+  termination: force_exceeded
+  type: insert
+skill: peg_insert
+skill_type: arm_gripper

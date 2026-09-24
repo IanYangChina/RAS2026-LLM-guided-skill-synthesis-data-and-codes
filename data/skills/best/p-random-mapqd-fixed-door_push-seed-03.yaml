@@ -1,0 +1,39 @@
+skill: door_push
+phases:
+- id: rotate_1
+  type: rotate
+  generator: joint_interpolation
+  control: impedance_control
+  termination: pose_tolerance
+- id: retract_1
+  type: retract
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    retract_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+- id: insert_1
+  type: insert
+  generator: linear_cartesian
+  control: position_control
+  termination: contact_detected
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: admittance_control
+  termination: pose_tolerance
+  parameters:
+    depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+    param_0:
+      type: scalar
+      range:
+      - 0.7078849768453603
+      - 0.9796120298431625

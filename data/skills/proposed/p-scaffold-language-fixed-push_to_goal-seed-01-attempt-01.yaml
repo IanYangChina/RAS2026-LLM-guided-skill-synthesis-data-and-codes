@@ -1,0 +1,117 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_1
+  orientation:
+    mode: keep_current
+  parameters:
+    approach_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.03
+      range:
+      - 0.025
+      - 0.05
+      type: scalar
+  target:
+    anchor: task_object
+    offset:
+    - 0
+    - 0.08
+    - 0.03
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: force_threshold_switch
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: contact_achieved
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 1
+    when: after_phase
+  id: contact_1
+  orientation:
+    mode: keep_current
+  parameters:
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 0.5
+      range:
+      - 0.1
+      - 3.0
+      type: scalar
+    speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0
+    - -0.005
+    - 0
+    strategy: offset_target
+  target:
+    anchor: task_object
+    offset:
+    - 0
+    - 0.025
+    - 0
+    source: yaml
+  termination: force_exceeded
+  type: contact
+- control: position_control
+  generator: linear_cartesian
+  id: push_1
+  orientation:
+    mode: keep_current
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.15
+      range:
+      - 0.05
+      - 0.25
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.04
+      range:
+      - 0.01
+      - 0.08
+      type: scalar
+    push_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.005
+      - 0.03
+      type: scalar
+  target:
+    anchor: current_tcp
+    offset_along_axis:
+      axis: world_negative_y
+      distance: 0.15
+      mode: add_to_offset
+    source: yaml
+  termination: pose_tolerance
+  type: push
+skill: push_to_goal
+skill_type: arm

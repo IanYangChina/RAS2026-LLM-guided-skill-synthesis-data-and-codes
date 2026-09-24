@@ -1,0 +1,109 @@
+skill: peg_insert
+dsl_version: 2
+subtasks:
+- id: approach_socket
+  anchor: fixture
+  offset:
+  - 0.0
+  - 0.0
+  - 0.15
+  weight: 0.3
+- id: insert_peg
+  anchor: fixture
+  target_entity: object
+  weight: 0.7
+phases:
+- id: approach_socket
+  type: approach
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    tolerance: 0.01
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      align_with: insertion_axis
+      tolerance: 0.1
+  parameters:
+    approach_height:
+      type: scalar
+      range:
+      - 0.1
+      - 0.25
+      default: 0.15
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    approach_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: approach_socket
+- id: insert_peg
+  type: insert
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: peg_socket
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.008
+    orientation:
+      mode: keep_current
+  parameters:
+    insertion_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.04
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    retry_lateral_x:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+      default: 0.005
+      binds_to:
+      - path: retry.offset.x
+        mode: replace
+    retry_lateral_y:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+      default: 0.005
+      binds_to:
+      - path: retry.offset.y
+        mode: replace
+  retries:
+    max_attempts: 3
+    strategy: offset_target
+    offset:
+    - 0.005
+    - 0.005
+    - 0.0
+  subtask_id: insert_peg

@@ -1,0 +1,103 @@
+skill: door_push
+dsl_version: 2
+phases:
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.02
+    - 0.0
+    tolerance: 0.01
+    orientation:
+      mode: align_axis
+      axis:
+      - 1.0
+      - 0.0
+      - 0.0
+      align_with: world_y
+      tolerance: 0.1
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: add
+- id: push_1
+  type: push
+  generator: impedance_motion
+  control: impedance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: site
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.2
+      axis: world_y
+      mode: replace_offset_projection
+      sign: negative
+    tolerance: 0.05
+    orientation:
+      mode: align_axis
+      axis:
+      - 1.0
+      - 0.0
+      - 0.0
+      align_with: world_y
+      tolerance: 0.1
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.05
+      - 0.4
+      default: 0.2
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: add
+    push_duration:
+      type: scalar
+      range:
+      - 50.0
+      - 500.0
+      default: 200
+      binds_to:
+      - path: duration.max_time
+        mode: add
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: add
+  guards:
+  - id: contact_check
+    when: during_phase
+    predicate: contact_detected
+    threshold: 1.0
+    on_failure: abort
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.02
+    - 0.0

@@ -1,0 +1,165 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  guards: null
+  id: approach_socket
+  parameters:
+    approach_height_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  retries: null
+  subtask_id: st_reach
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.02
+    offset_along_axis: null
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  guards: null
+  id: align_socket
+  parameters:
+    lateral_offset_x:
+      binds_to:
+      - mode: add
+        path: target.offset.x
+      default: 0.0
+      range:
+      - -0.02
+      - 0.02
+      type: scalar
+    lateral_offset_y:
+      binds_to:
+      - mode: add
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.02
+      - 0.02
+      type: scalar
+  retries: null
+  subtask_id: st_reach
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.005
+    offset_along_axis: null
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.1
+    source: yaml
+    tolerance: 0.003
+  termination: pose_tolerance
+  type: align
+- control: impedance_control
+  end_effector_action: null
+  generator: impedance_motion
+  guards:
+  - args: {}
+    id: contact_insert
+    on_failure: retry
+    predicate: contact_detected
+    threshold: 1
+    when: during_phase
+  id: insert_peg
+  parameters:
+    insertion_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.05
+      range:
+      - 0.02
+      - 0.06
+      type: scalar
+  retries:
+    max_attempts: 2
+    offset:
+    - 0.005
+    - 0.005
+    - 0.0
+    strategy: offset_target
+  subtask_id: st_insert
+  target:
+    anchor: fixture
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: channel_axis
+      distance: 0.05
+      mode: add_to_offset
+      sign: negative
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+      tolerance: 0.1
+    source: yaml
+    tolerance: 0.005
+  termination: force_exceeded
+  type: insert
+- control: position_control
+  generator: linear_cartesian
+  guards: null
+  id: retract_after_insert
+  parameters: {}
+  retries: null
+  subtask_id: st_insert
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.05
+    offset_along_axis: null
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.005
+  termination: pose_tolerance
+  type: retract
+skill: peg_insert
+subtasks:
+- anchor: goal
+  id: st_reach
+  offset:
+  - 0.0
+  - 0.0
+  - 0.05
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: st_insert
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.7

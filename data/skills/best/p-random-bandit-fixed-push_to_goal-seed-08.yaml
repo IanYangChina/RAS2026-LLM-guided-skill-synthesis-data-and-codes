@@ -1,0 +1,34 @@
+skill: push_to_goal
+phases:
+- id: pull_1
+  type: pull
+  generator: joint_interpolation
+  control: impedance_control
+  termination: time_limit
+  parameters:
+    pull_angle:
+      type: angle
+      range:
+      - 0.1
+      - 1.2
+- id: contact_2
+  type: contact
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: descend_1
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: contact_detected
+- id: contact_1
+  type: contact
+  generator: linear_cartesian
+  control: force_control
+  termination: time_limit
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05

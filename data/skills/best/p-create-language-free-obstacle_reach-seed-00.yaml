@@ -1,0 +1,113 @@
+skill: obstacle_reach
+dsl_version: 2
+subtasks:
+- id: reach_pre_contact
+  offset:
+  - 0.0
+  - 0.0
+  - 0.2
+  weight: 0.2
+- id: reach_goal
+  weight: 0.8
+phases:
+- id: approach_1
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_height:
+      type: scalar
+      range:
+      - 0.1
+      - 0.3
+      default: 0.2
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    approach_speed:
+      type: scalar
+      range:
+      - 0.1
+      - 0.5
+      default: 0.2
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    arc_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.25
+      default: 0.15
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+  subtask_id: reach_pre_contact
+- id: descend_final
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.015
+    orientation:
+      mode: keep_current
+  parameters:
+    descend_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    guard_tolerance:
+      type: scalar
+      range:
+      - 0.001
+      - 0.01
+      default: 0.005
+      binds_to:
+      - path: guards.tol_check.threshold
+        mode: replace
+    retry_z_offset:
+      type: scalar
+      range:
+      - -0.01
+      - 0.0
+      default: -0.005
+      binds_to:
+      - path: retry.offset.z
+        mode: replace
+  guards:
+  - id: tol_check
+    when: after_phase
+    predicate: pose_within_tolerance
+    threshold: 0.005
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - -0.005
+  subtask_id: reach_goal

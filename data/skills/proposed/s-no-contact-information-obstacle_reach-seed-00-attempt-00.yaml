@@ -1,0 +1,153 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_above_obstacle
+  parameters:
+    approach_x_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.x
+      default: 0.1
+      range:
+      - 0.05
+      - 0.15
+      type: scalar
+    approach_y_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.05
+      - 0.05
+      type: scalar
+    approach_z_height:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.35
+      range:
+      - 0.3
+      - 0.4
+      type: scalar
+  retries:
+    max_attempts: 0
+  subtask_id: reach_above_obstacle
+  target:
+    anchor: body
+    entity: obstacle_block
+    offset:
+    - 0.1
+    - 0.0
+    - 0.35
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: descend_to_goal_z
+  parameters:
+    approach_x_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.x
+      default: 0.1
+      range:
+      - 0.05
+      - 0.15
+      type: scalar
+    approach_y_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.0
+      range:
+      - -0.05
+      - 0.05
+      type: scalar
+    descend_z_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.0
+      range:
+      - -0.03
+      - 0.03
+      type: scalar
+  retries:
+    max_attempts: 0
+  subtask_id: reach_descent_point
+  target:
+    anchor: body
+    entity: obstacle_block
+    offset:
+    - 0.1
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: descend
+- control: position_control
+  generator: linear_cartesian
+  id: push_to_goal
+  parameters:
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+  retries:
+    max_attempts: 0
+  subtask_id: reach_goal
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: push
+skill: obstacle_reach
+subtasks:
+- anchor: body
+  id: reach_above_obstacle
+  metric: distance
+  offset:
+  - 0.1
+  - 0.0
+  - 0.35
+  target_entity: tcp
+  weight: 0.2
+- anchor: body
+  id: reach_descent_point
+  metric: distance
+  offset:
+  - 0.1
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: reach_goal
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.5

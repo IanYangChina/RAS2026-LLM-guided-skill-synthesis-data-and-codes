@@ -1,0 +1,153 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  id: approach_high
+  parameters:
+    approach_tol:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.03
+      range:
+      - 0.015
+      - 0.06
+      type: scalar
+    approach_y_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.15
+      range:
+      - 0.1
+      - 0.2
+      type: scalar
+    approach_z_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.z
+      default: 0.1
+      range:
+      - 0.08
+      - 0.15
+      type: scalar
+  subtask_id: pre_push
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.15
+    - 0.1
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  generator: linear_cartesian
+  id: lateral_align
+  parameters:
+    lateral_tol:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+    lateral_y_offset:
+      binds_to:
+      - mode: replace
+        path: target.offset.y
+      default: 0.04
+      range:
+      - 0.0
+      - 0.08
+      type: scalar
+  subtask_id: pre_push
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.04
+    - 0.1
+    source: yaml
+  termination: pose_tolerance
+  type: align
+- control: position_control
+  generator: linear_cartesian
+  id: vertical_descend
+  parameters:
+    descend_tol:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.015
+      range:
+      - 0.005
+      - 0.04
+      type: scalar
+  subtask_id: pre_push
+  target:
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.04
+    - 0.0
+    source: yaml
+  termination: pose_tolerance
+  type: align
+- control: impedance_control
+  generator: linear_cartesian
+  id: push_through_channel
+  parameters:
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+    push_time_limit:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 1.5
+      range:
+      - 0.8
+      - 3.0
+      type: scalar
+  subtask_id: final_push
+  target:
+    anchor: task_goal
+    entity: channel_exit
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 1.0
+      - 0.0
+      - 0.0
+      mode: align_axis
+      tolerance: 0.15
+    source: yaml
+  termination: time_limit
+  type: push
+skill: peg_channel
+subtasks:
+- anchor: object
+  id: pre_push
+  offset:
+  - 0.0
+  - 0.15
+  - 0.1
+  weight: 0.3
+- id: final_push
+  weight: 0.7

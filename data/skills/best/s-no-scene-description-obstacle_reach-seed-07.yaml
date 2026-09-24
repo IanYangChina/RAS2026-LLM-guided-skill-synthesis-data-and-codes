@@ -1,0 +1,207 @@
+skill: obstacle_reach
+dsl_version: 2
+skill_type: arm_gripper
+subtasks:
+- id: waypoint_above
+  offset:
+  - 0.0
+  - 0.0
+  - 0.2
+  weight: 0.3
+- id: near_goal
+  offset:
+  - 0.0
+  - 0.0
+  - 0.03
+  weight: 0.2
+- id: final_goal
+  weight: 0.5
+phases:
+- id: approach_over_obstacle
+  type: approach
+  generator: arc_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    arc_height:
+      type: scalar
+      range:
+      - 0.1
+      - 0.4
+      default: 0.2
+      binds_to:
+      - path: generator.arc_height
+        mode: replace
+    pose_tolerance:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.2
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: obstacle_contact_guard
+    when: during_phase
+    predicate: force_below
+    threshold: 5.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.1
+    - 0.1
+  subtask_id: waypoint_above
+- id: align_above_goal
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.2
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    pose_tolerance:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.15
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: waypoint_above
+- id: descend_to_near_goal
+  type: descend
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.03
+    tolerance: 0.015
+    orientation:
+      mode: keep_current
+  parameters:
+    pose_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.02
+      default: 0.015
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.1
+      - 0.4
+      default: 0.3
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: force_guard_near
+    when: during_phase
+    predicate: force_below
+    threshold: 5.0
+    on_failure: abort
+  retries:
+    max_attempts: 1
+    strategy: reduce_speed
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  subtask_id: near_goal
+- id: fine_final_approach
+  type: descend
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    pose_tolerance:
+      type: scalar
+      range:
+      - 0.005
+      - 0.015
+      default: 0.01
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.15
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: force_guard_fine
+    when: during_phase
+    predicate: force_below
+    threshold: 5.0
+    on_failure: abort
+  retries:
+    max_attempts: 1
+    strategy: reduce_speed
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  subtask_id: final_goal

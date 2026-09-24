@@ -1,0 +1,136 @@
+skill: obstacle_reach
+dsl_version: 2
+skill_type: arm_gripper
+subtasks:
+- id: reach_high
+  offset:
+  - 0.0
+  - 0.0
+  - 0.23
+  weight: 0.2
+- id: reach_goal
+  weight: 0.8
+phases:
+- id: lift
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.23
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    lift_height:
+      type: scalar
+      range:
+      - 0.15
+      - 0.35
+      default: 0.23
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    max_time:
+      type: scalar
+      range:
+      - 0.5
+      - 5.0
+      default: 2.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.5
+      default: 0.2
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_high
+- id: forward
+  type: push
+  generator: linear_cartesian
+  control: position_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.23
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    lift_height:
+      type: scalar
+      range:
+      - 0.15
+      - 0.35
+      default: 0.23
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+    max_time:
+      type: scalar
+      range:
+      - 0.5
+      - 5.0
+      default: 2.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.5
+      default: 0.2
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_high
+- id: descend
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    max_time:
+      type: scalar
+      range:
+      - 0.5
+      - 5.0
+      default: 2.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.5
+      default: 0.2
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_goal

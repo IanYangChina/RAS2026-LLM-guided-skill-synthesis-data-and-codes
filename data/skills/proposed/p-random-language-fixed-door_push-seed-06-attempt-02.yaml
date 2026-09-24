@@ -1,0 +1,100 @@
+dsl_version: 2
+phases:
+- control: force_threshold_switch
+  generator: linear_cartesian
+  id: approach_handle
+  orientation:
+    align_with: world_y
+    axis:
+    - 1
+    - 0
+    - 0
+    mode: align_axis
+    tolerance: 0.1
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.04
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 10.0
+      range:
+      - 5.0
+      - 25.0
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - -0.01
+    - 0.0
+    strategy: offset_target
+  target:
+    anchor: body
+    entity: door_handle
+    offset:
+    - 0.0
+    - 0.0
+    - 0.02
+    source: yaml
+    tolerance: 0.02
+  termination: force_exceeded
+  type: approach
+- control: admittance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: contact_lost
+    on_failure: retry
+    predicate: force_below
+    threshold: 5.0
+    when: during_phase
+  id: push_door
+  orientation:
+    mode: keep_current
+  parameters:
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.2
+      range:
+      - 0.1
+      - 0.4
+      type: scalar
+    push_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.01
+      - 0.05
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - -0.01
+    - 0.0
+    strategy: offset_target
+  target:
+    anchor: current_tcp
+    offset_along_axis:
+      axis: world_y
+      distance: 0.2
+      mode: add_to_offset
+      sign: positive
+    source: yaml
+  termination: pose_tolerance
+  type: push
+skill: door_push
+skill_type: arm_gripper

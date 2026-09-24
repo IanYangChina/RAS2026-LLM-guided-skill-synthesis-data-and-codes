@@ -1,0 +1,132 @@
+skill: door_push
+dsl_version: 2
+subtasks:
+- id: reach_handle
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  weight: 0.3
+- id: push_door
+  anchor: fixture
+  target_entity: hinge
+  metric: goal_progress
+  weight: 0.7
+phases:
+- id: approach_handle
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    max_time:
+      type: scalar
+      range:
+      - 2.0
+      - 8.0
+      default: 5.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.4
+      default: 0.2
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: reach_handle
+- id: contact_handle
+  type: descend
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    force_threshold:
+      type: scalar
+      range:
+      - 3.0
+      - 15.0
+      default: 10.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+      default: 0.06
+      binds_to:
+      - path: generator.speed
+        mode: replace
+- id: push_door
+  type: push
+  generator: linear_cartesian
+  control: admittance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.4
+      axis: world_y
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      mode: keep_current
+  parameters:
+    max_time:
+      type: scalar
+      range:
+      - 2.0
+      - 8.0
+      default: 5.0
+      binds_to:
+      - path: duration.max_time
+        mode: replace
+    push_distance:
+      type: scalar
+      range:
+      - 0.2
+      - 0.5
+      default: 0.4
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.2
+      default: 0.12
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: push_door

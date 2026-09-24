@@ -1,0 +1,22 @@
+skill: peg_insert
+phases:
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: align_2
+  type: align
+  generator: impedance_motion
+  control: position_control
+  termination: pose_tolerance
+- id: pull_1
+  type: pull
+  generator: bezier_curve
+  control: impedance_control
+  termination: force_exceeded
+- id: contact_1
+  type: contact
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance

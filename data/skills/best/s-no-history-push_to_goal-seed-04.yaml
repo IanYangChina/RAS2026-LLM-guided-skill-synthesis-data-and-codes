@@ -1,0 +1,141 @@
+skill: push_to_goal
+dsl_version: 2
+subtasks:
+- id: approach_object
+  anchor: object
+  offset:
+  - 0.0
+  - 0.0
+  - 0.025
+  weight: 0.3
+- id: push_to_goal
+  target_entity: object
+  metric: goal_progress
+  weight: 0.7
+phases:
+- id: approach_behind_object
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    offset:
+    - 0.0
+    - 0.0
+    - 0.025
+    offset_along_axis:
+      distance: 0.05
+      axis: task_goal_direction
+      mode: add_to_offset
+      sign: negative
+    tolerance: 0.02
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_behind:
+      type: scalar
+      range:
+      - 0.02
+      - 0.3
+      default: 0.08
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    approach_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+      default: 0.08
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    approach_tolerance:
+      type: scalar
+      range:
+      - 0.01
+      - 0.05
+      default: 0.025
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  retries:
+    max_attempts: 0
+    strategy: repeat
+  subtask_id: approach_object
+- id: push_object_to_goal
+  type: push
+  generator: impedance_motion
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.025
+    offset_along_axis:
+      distance: 0.05
+      axis: task_goal_direction
+      mode: add_to_offset
+      sign: positive
+    tolerance: 0.04
+    orientation:
+      mode: keep_current
+  parameters:
+    push_overshoot:
+      type: scalar
+      range:
+      - 0.0
+      - 0.15
+      default: 0.05
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    push_retry_x:
+      type: scalar
+      range:
+      - -0.05
+      - 0.05
+      default: 0.0
+      binds_to:
+      - path: retry.offset.x
+        mode: replace
+    push_retry_y:
+      type: scalar
+      range:
+      - -0.05
+      - 0.05
+      default: 0.0
+      binds_to:
+      - path: retry.offset.y
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.3
+      default: 0.12
+      binds_to:
+      - path: generator.speed
+        mode: replace
+    push_tolerance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.08
+      default: 0.04
+      binds_to:
+      - path: termination.pose_tolerance
+        mode: replace
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+  subtask_id: push_to_goal

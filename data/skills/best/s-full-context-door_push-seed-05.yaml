@@ -1,0 +1,105 @@
+skill: door_push
+dsl_version: 2
+subtasks:
+- id: door_opening
+  anchor: fixture
+  target_entity: hinge
+  metric: hinge_angle
+- id: pre_contact
+  anchor: fixture
+  offset:
+  - -0.4
+  - 0.0
+  - 0.35
+  weight: 0.3
+phases:
+- id: approach_door
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: fixture
+    entity: door_panel
+    offset:
+    - -0.4
+    - 0.0
+    - 0.35
+    tolerance: 0.01
+    orientation:
+      mode: keep_current
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.05
+      - 0.5
+      default: 0.2
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: approach_tolerance
+    when: after_phase
+    predicate: pose_within_tolerance
+    args:
+      target: task_goal
+    threshold: 0.02
+    on_failure: abort
+  subtask_id: pre_contact
+- id: push_door
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: current_tcp
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      distance: 0.15
+      axis: world_y
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      mode: keep_current
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+      default: 0.15
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    push_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: contact_check
+    when: during_phase
+    predicate: contact_detected
+    args:
+      body_a: link7
+      body_b: door_panel
+    threshold: 1.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.0
+    - -0.01
+    - 0.0
+  subtask_id: door_opening

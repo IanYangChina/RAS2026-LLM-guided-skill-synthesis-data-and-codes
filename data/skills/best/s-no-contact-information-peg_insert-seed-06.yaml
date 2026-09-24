@@ -1,0 +1,170 @@
+skill: peg_insert
+dsl_version: 2
+subtasks:
+- id: approach_socket
+  anchor: fixture
+  offset:
+  - 0.0
+  - 0.0
+  - 0.1
+  weight: 0.3
+- id: insert_peg
+  target_entity: object
+  metric: goal_progress
+  weight: 0.7
+phases:
+- id: approach_above_socket
+  type: approach
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    tolerance: 0.005
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - -1.0
+      align_with: channel_axis
+      tolerance: 0.05
+  parameters:
+    approach_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.1
+      default: 0.05
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  guards:
+  - id: approach_contact_guard
+    when: during_phase
+    predicate: force_below
+    threshold: 40.0
+    on_failure: retry
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.005
+    - 0.005
+    - 0.005
+  subtask_id: approach_socket
+- id: align_lateral
+  type: align
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    tolerance: 0.002
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - -1.0
+      align_with: channel_axis
+      tolerance: 0.02
+  parameters:
+    lateral_x_offset:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+      default: 0.0
+      binds_to:
+      - path: target.offset.x
+        mode: add
+    lateral_y_offset:
+      type: scalar
+      range:
+      - -0.01
+      - 0.01
+      default: 0.0
+      binds_to:
+      - path: target.offset.y
+        mode: add
+  retries:
+    max_attempts: 1
+    strategy: offset_target
+    offset:
+    - 0.005
+    - 0.005
+    - 0.0
+  subtask_id: approach_socket
+- id: insert_into_hole
+  type: insert
+  generator: linear_cartesian
+  control: impedance_control
+  termination: force_exceeded
+  target:
+    source: yaml
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.1
+    offset_along_axis:
+      distance: 0.055
+      axis: channel_axis
+      mode: add_to_offset
+      sign: positive
+    tolerance: 0.01
+    orientation:
+      mode: align_axis
+      axis:
+      - 0.0
+      - 0.0
+      - -1.0
+      align_with: channel_axis
+      tolerance: 0.02
+  parameters:
+    force_threshold:
+      type: scalar
+      range:
+      - 10.0
+      - 40.0
+      default: 25.0
+      binds_to:
+      - path: termination.force_threshold
+        mode: replace
+    insert_depth:
+      type: scalar
+      range:
+      - 0.03
+      - 0.07
+      default: 0.055
+      binds_to:
+      - path: target.offset_along_axis.distance
+        mode: replace
+    insert_speed:
+      type: scalar
+      range:
+      - 0.005
+      - 0.05
+      default: 0.02
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  retries:
+    max_attempts: 2
+    strategy: offset_target
+    offset:
+    - 0.003
+    - 0.003
+    - 0.0
+  subtask_id: insert_peg

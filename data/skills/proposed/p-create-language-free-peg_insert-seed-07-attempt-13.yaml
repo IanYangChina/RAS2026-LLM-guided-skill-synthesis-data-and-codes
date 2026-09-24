@@ -1,0 +1,153 @@
+dsl_version: 2
+phases:
+- control: position_control
+  end_effector_action: null
+  generator: linear_cartesian
+  id: approach_1
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.1
+      type: scalar
+    approach_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.01
+      range:
+      - 0.005
+      - 0.02
+      type: scalar
+  subtask_id: approach_target
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.04
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: pose_tolerance
+  type: approach
+- control: impedance_control
+  end_effector_action: null
+  generator: impedance_motion
+  guards:
+  - args: {}
+    id: guard_force
+    on_failure: abort
+    predicate: force_below
+    threshold: 45.0
+    when: during_phase
+  id: insert_1
+  parameters:
+    force_threshold:
+      binds_to:
+      - mode: replace
+        path: termination.force_threshold
+      default: 40.0
+      range:
+      - 25.0
+      - 50.0
+      type: scalar
+    insertion_depth:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.07
+      range:
+      - 0.05
+      - 0.09
+      type: scalar
+    insertion_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.02
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+  subtask_id: insertion_target
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    offset_along_axis:
+      axis: channel_axis
+      distance: 0.07
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      align_with: channel_axis
+      axis:
+      - 0.0
+      - 0.0
+      - 1.0
+      mode: align_axis
+    source: yaml
+  termination: force_exceeded
+  type: insert
+- control: position_control
+  end_effector_action: null
+  generator: linear_cartesian
+  id: retract_1
+  parameters:
+    retract_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.07
+      range:
+      - 0.02
+      - 0.15
+      type: scalar
+    retract_timeout:
+      binds_to:
+      - mode: replace
+        path: duration.max_time
+      default: 10.0
+      range:
+      - 5.0
+      - 20.0
+      type: scalar
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.15
+    orientation:
+      mode: keep_current
+    source: yaml
+  termination: time_limit
+  type: retract
+skill: peg_insert
+skill_type: arm
+subtasks:
+- anchor: object
+  id: approach_target
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - 0.04
+  target_entity: tcp
+  weight: 0.3
+- anchor: fixture
+  id: insertion_target
+  metric: distance
+  offset:
+  - 0.0
+  - 0.0
+  - -0.02
+  target_entity: tcp
+  weight: 0.7

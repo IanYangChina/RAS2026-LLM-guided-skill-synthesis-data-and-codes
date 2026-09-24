@@ -1,0 +1,140 @@
+dsl_version: 2
+phases:
+- control: position_control
+  generator: linear_cartesian
+  guards: []
+  id: approach_to_object
+  parameters:
+    approach_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.2
+      range:
+      - 0.05
+      - 0.5
+      type: scalar
+  retries:
+    max_attempts: 0
+  subtask_id: prereach
+  target:
+    anchor: task_object
+    offset:
+    - 0
+    - 0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.05
+      mode: replace_offset_projection
+      sign: negative
+    orientation:
+      align_with: task_goal_direction
+      axis:
+      - 0
+      - 0
+      - 1
+      mode: align_axis
+      tolerance: 0.1
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: impedance_control
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: force_limit_guard
+    on_failure: abort
+    predicate: force_below
+    threshold: 25.0
+    when: during_phase
+  id: push_to_goal
+  parameters:
+    force_limit:
+      binds_to:
+      - mode: replace
+        path: guards.force_limit_guard.threshold
+      default: 25.0
+      range:
+      - 15.0
+      - 30.0
+      type: scalar
+    push_distance:
+      binds_to:
+      - mode: replace
+        path: target.offset_along_axis.distance
+      default: 0.18
+      range:
+      - 0.1
+      - 0.25
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - -0.01
+    - 0.0
+    strategy: offset_target
+  subtask_id: push_success
+  target:
+    anchor: task_goal
+    offset:
+    - 0
+    - 0
+    - 0.0
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.18
+      mode: replace_offset_projection
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: push
+- control: position_control
+  generator: linear_cartesian
+  guards: []
+  id: retract_from_goal
+  parameters: {}
+  retries:
+    max_attempts: 0
+  target:
+    anchor: task_goal
+    offset:
+    - 0
+    - 0
+    - 0.05
+    offset_along_axis:
+      axis: task_goal_direction
+      distance: 0.05
+      mode: add_to_offset
+      sign: positive
+    orientation:
+      mode: keep_current
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: retract
+skill: push_to_goal
+subtasks:
+- anchor: object
+  id: prereach
+  metric: distance
+  offset:
+  - 0
+  - 0
+  - 0
+  target_entity: tcp
+  weight: 0.2
+- anchor: goal
+  id: push_success
+  metric: goal_progress
+  offset:
+  - 0
+  - 0
+  - 0
+  target_entity: object
+  weight: 0.8

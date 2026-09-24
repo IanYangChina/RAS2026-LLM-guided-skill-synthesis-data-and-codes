@@ -1,0 +1,61 @@
+{
+  "automatic_arm": "create-language-fixed",
+  "cases": [
+    {
+      "absolute_distance_to_median": 0.0012734718196774075,
+      "arm": "create-language-fixed",
+      "initial": {
+        "canonical_task_score": 0.8786800936243967,
+        "composite_score": 0.8286800936243967,
+        "evaluated_skill_yaml": "skill: obstacle_reach\ndsl_version: 2\nphases:\n- id: approach_1\n  type: approach\n  generator: linear_cartesian\n  control: position_control\n  termination: pose_tolerance\n  target:\n    source: yaml\n    anchor: task_goal\n    offset:\n    - 0.0\n    - 0.0\n    - 0.17\n    tolerance: 0.02\n    orientation:\n      mode: keep_current\n  parameters:\n    approach_height:\n      type: scalar\n      range:\n      - 0.1\n      - 0.25\n      default: 0.17\n      binds_to:\n      - path: target.offset.z\n        mode: replace\n- id: descend_1\n  type: descend\n  generator: linear_cartesian\n  control: position_control\n  termination: pose_tolerance\n  target:\n    source: yaml\n    anchor: task_goal\n    offset:\n    - 0.0\n    - 0.0\n    - 0.0\n    tolerance: 0.02\n    orientation:\n      mode: keep_current\n",
+        "evaluated_skill_yaml_sha256": "4b3b80717630f6fcdbb46a6285fba12989b2df6e0036e90b1ca8ffb36d1c54ef",
+        "iteration": 0,
+        "run_log_index": 0
+      },
+      "run_log_path": "<source-record-removed>",
+      "run_log_sha256": "3ae990780fbe396997efdf40e7b7076b0464307bd4a736b70c3b0a6734f756e8",
+      "selected_final_score": 0.9638249913355974,
+      "selected_seed": 4,
+      "selection_rule": "minimum absolute distance from the ten-seed final-score median; lowest seed breaks exact ties",
+      "task": "obstacle_reach",
+      "task_final_score_median": 0.9650984631552748,
+      "winner": {
+        "canonical_task_score": 0.9638249913355974,
+        "composite_score": 0.7638249913355974,
+        "evaluated_skill_yaml": "skill: obstacle_reach\ndsl_version: 2\nphases:\n- id: approach_1\n  type: approach\n  generator: linear_cartesian\n  control: position_control\n  termination: pose_tolerance\n  target:\n    source: yaml\n    anchor: task_goal\n    offset:\n    - 0.0\n    - 0.0\n    - 0.17\n    tolerance: 0.02\n    orientation:\n      mode: keep_current\n  parameters:\n    approach_height:\n      type: scalar\n      range:\n      - 0.1\n      - 0.25\n      default: 0.17\n      binds_to:\n      - path: target.offset.z\n        mode: replace\n    approach_speed:\n      type: scalar\n      range:\n      - 0.1\n      - 0.8\n      default: 0.4\n      binds_to:\n      - path: generator.speed\n        mode: replace\n- id: descend_1\n  type: descend\n  generator: linear_cartesian\n  control: position_control\n  termination: pose_tolerance\n  target:\n    source: yaml\n    anchor: task_goal\n    offset:\n    - 0.0\n    - 0.0\n    - -0.01\n    tolerance: 0.02\n    orientation:\n      mode: keep_current\n  parameters:\n    descend_speed:\n      type: scalar\n      range:\n      - 0.1\n      - 0.8\n      default: 0.4\n      binds_to:\n      - path: generator.speed\n        mode: replace\n    descend_z_offset:\n      type: scalar\n      range:\n      - -0.03\n      - 0.01\n      default: -0.01\n      binds_to:\n      - path: target.offset.z\n        mode: replace\n",
+        "evaluated_skill_yaml_sha256": "b166df6b923ea728c2f231872b3da049c8a3b639c2772d960db05846f7fffebd",
+        "iteration": 9,
+        "run_log_index": 9
+      }
+    },
+    {
+      "absolute_distance_to_median": 0.004019974767377865,
+      "arm": "create-language-fixed",
+      "initial": {
+        "canonical_task_score": 0.34324856582912383,
+        "composite_score": 0.340548385688392,
+        "evaluated_skill_yaml": "skill: grasp_place\ndsl_version: 2\nskill_type: arm_gripper\nsubtasks:\n- id: approach_1\n  anchor: object\n- id: descend_1\n  anchor: object\n  offset:\n  - 0.0\n  - 0.0\n  - 0.02\n- id: grasp_1\n  anchor: object\n  metric: contact\n  offset:\n  - 0.0\n  - 0.0\n  - 0.02\n- id: transport_arc\n- id: release_1\nphases:\n- id: approach_1\n  type: approach\n  generator: linear_cartesian\n  control: position_control\n  termination: pose_tolerance\n  target:\n    source: yaml\n    anchor: task_object\n    entity: grasp_target\n    offset:\n    - 0.0\n    - 0.0\n    - 0.0\n    offset_along_axis:\n      distance: 0.05\n      axis: world_z\n      mode: add_to_offset\n      sign: positive\n    tolerance: 0.02\n    orientation:\n      mode: keep_current\n  parameters:\n    approach_height:\n      type: scalar\n      range:\n      - 0.05\n      - 0.3\n      default: 0.05\n      binds_to:\n      - path: target.offset_along_axis.distance\n        mode: replace\n  subtask_id: approach_1\n- id: descend_1\n  type: descend\n  generator: linear_cartesian\n  control: position_control\n  termination: pose_tolerance\n  target:\n    source: yaml\n    anchor: task_object\n    entity: grasp_target\n    offset:\n    - 0.0\n    - 0.0\n    - 0.02\n    tolerance: 0.005\n    orientation:\n      mode: keep_current\n  subtask_id: descend_1\n- id: grasp_1\n  type: grasp\n  control: position_control\n  termination: grasp_success\n  end_effector_action: force_grasp\n  target:\n    source: yaml\n    anchor: current_tcp\n    offset:\n    - 0.0\n    - 0.0\n    - 0.0\n    orientation:\n      mode: keep_current\n  subtask_id: grasp_1\n- id: transport_arc\n  type: approach\n  generator: linear_cartesian\n  control: position_control\n  termination: pose_tolerance\n  target:\n    source: yaml\n    anchor: task_goal\n    entity: placement_surface\n    offset:\n    - 0.0\n    - 0.0\n    - 0.0\n    tolerance: 0.02\n    orientation:\n      mode: keep_current\n  subtask_id: transport_arc\n- id: release_1\n  type: release\n  control: position_control\n  termination: time_limit\n  end_effector_action: open\n  target:\n    source: yaml\n    anchor: current_tcp\n    offset:\n    - 0.0\n    - 0.0\n    - 0.0\n    orientation:\n      mode: keep_current\n  subtask_id: release_1\n",
+        "evaluated_skill_yaml_sha256": "3a93dafd72b9edfe4a0f9a4133b258ae23baf9c088bdd80b06cb1e706bd913da",
+        "iteration": 0,
+        "run_log_index": 0
+      },
+      "run_log_path": "<source-record-removed>",
+      "run_log_sha256": "2f75771b02500bc2945ed99fcc873978748a5f202cc500c6c8d9d93d53c69926",
+      "selected_final_score": 0.3441094763647053,
+      "selected_seed": 4,
+      "selection_rule": "minimum absolute distance from the ten-seed final-score median; lowest seed breaks exact ties",
+      "task": "grasp_place",
+      "task_final_score_median": 0.34812945113208316,
+      "winner": {
+        "canonical_task_score": 0.3441094763647053,
+        "composite_score": 0.3399685611255981,
+        "evaluated_skill_yaml": "skill: grasp_place\ndsl_version: 2\nskill_type: arm_gripper\nsubtasks:\n- id: approach_1\n  anchor: object\n- id: descend_1\n  anchor: object\n  offset:\n  - 0.0\n  - 0.0\n  - 0.02\n- id: grasp_1\n  anchor: object\n  metric: contact\n  offset:\n  - 0.0\n  - 0.0\n  - 0.02\n- id: transport_arc\n- id: release_1\nphases:\n- id: approach_1\n  type: approach\n  generator: linear_cartesian\n  control: position_control\n  termination: pose_tolerance\n  target:\n    source: yaml\n    anchor: task_object\n    entity: grasp_target\n    offset:\n    - 0.0\n    - 0.0\n    - 0.0\n    offset_along_axis:\n      distance: 0.05\n      axis: world_z\n      mode: add_to_offset\n      sign: positive\n    tolerance: 0.02\n    orientation:\n      mode: keep_current\n  parameters:\n    approach_height:\n      type: scalar\n      range:\n      - 0.05\n      - 0.3\n      default: 0.05\n      binds_to:\n      - path: target.offset_along_axis.distance\n        mode: replace\n  subtask_id: approach_1\n- id: descend_1\n  type: descend\n  generator: linear_cartesian\n  control: position_control\n  termination: pose_tolerance\n  target:\n    source: yaml\n    anchor: task_object\n    entity: grasp_target\n    offset:\n    - 0.0\n    - 0.0\n    - 0.02\n    tolerance: 0.005\n    orientation:\n      mode: keep_current\n  subtask_id: descend_1\n- id: grasp_1\n  type: grasp\n  control: position_control\n  termination: grasp_success\n  end_effector_action: force_grasp\n  target:\n    source: yaml\n    anchor: current_tcp\n    offset:\n    - 0.0\n    - 0.0\n    - 0.0\n    orientation:\n      mode: keep_current\n  subtask_id: grasp_1\n- id: transport_arc\n  type: approach\n  generator: linear_cartesian\n  control: position_control\n  termination: pose_tolerance\n  target:\n    source: yaml\n    anchor: task_goal\n    entity: placement_surface\n    offset:\n    - 0.0\n    - 0.0\n    - 0.0\n    tolerance: 0.02\n    orientation:\n      mode: keep_current\n  subtask_id: transport_arc\n- id: release_1\n  type: release\n  control: position_control\n  termination: time_limit\n  end_effector_action: open\n  target:\n    source: yaml\n    anchor: current_tcp\n    offset:\n    - 0.0\n    - 0.0\n    - 0.0\n    orientation:\n      mode: keep_current\n  subtask_id: release_1\n",
+        "evaluated_skill_yaml_sha256": "3a93dafd72b9edfe4a0f9a4133b258ae23baf9c088bdd80b06cb1e706bd913da",
+        "iteration": 10,
+        "run_log_index": 10
+      }
+    }
+  ],
+  "param_only_substitution": false,
+  "schema_version": "paper-release"
+}

@@ -1,0 +1,28 @@
+skill: peg_channel
+phases:
+- id: rotate_1
+  type: rotate
+  generator: impedance_motion
+  control: impedance_control
+  termination: time_limit
+- id: align_1
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: push_1
+  type: push
+  generator: impedance_motion
+  control: impedance_control
+  termination: pose_tolerance
+  parameters:
+    param_0:
+      type: scalar
+      range:
+      - -0.10922561189039715
+      - 0.44308006468156513
+    push_distance:
+      type: scalar
+      range:
+      - 0.03799999999999999
+      - 0.182

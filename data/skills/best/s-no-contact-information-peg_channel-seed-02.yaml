@@ -1,0 +1,116 @@
+skill: peg_channel
+dsl_version: 2
+subtasks:
+- id: pre_push
+  anchor: object
+  offset:
+  - 0.0
+  - 0.15
+  - 0.1
+  weight: 0.3
+- id: final_push
+  weight: 0.7
+phases:
+- id: approach_high
+  type: approach
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.15
+    - 0.1
+  parameters:
+    approach_y_offset:
+      type: scalar
+      range:
+      - 0.1
+      - 0.2
+      default: 0.15
+      binds_to:
+      - path: target.offset.y
+        mode: replace
+    approach_z_offset:
+      type: scalar
+      range:
+      - 0.08
+      - 0.15
+      default: 0.1
+      binds_to:
+      - path: target.offset.z
+        mode: replace
+  subtask_id: pre_push
+- id: lateral_align
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.04
+    - 0.1
+  parameters:
+    lateral_y_offset:
+      type: scalar
+      range:
+      - 0.0
+      - 0.08
+      default: 0.04
+      binds_to:
+      - path: target.offset.y
+        mode: replace
+  subtask_id: pre_push
+- id: vertical_descend
+  type: align
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  target:
+    source: yaml
+    anchor: task_object
+    entity: peg
+    offset:
+    - 0.0
+    - 0.04
+    - 0.0
+  subtask_id: pre_push
+- id: push_through_channel
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: time_limit
+  target:
+    source: yaml
+    anchor: task_goal
+    entity: channel_exit
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: align_axis
+      axis:
+      - 1.0
+      - 0.0
+      - 0.0
+      align_with: channel_axis
+      tolerance: 0.15
+  parameters:
+    push_speed:
+      type: scalar
+      range:
+      - 0.02
+      - 0.15
+      default: 0.1
+      binds_to:
+      - path: generator.speed
+        mode: replace
+  subtask_id: final_push

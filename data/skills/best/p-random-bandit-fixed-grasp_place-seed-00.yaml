@@ -1,0 +1,82 @@
+skill: grasp_place
+phases:
+- id: insert_1
+  type: insert
+  generator: linear_cartesian
+  control: impedance_control
+  termination: pose_tolerance
+- id: approach_1
+  type: approach
+  generator: linear_cartesian
+  control: force_threshold_switch
+  termination: pose_tolerance
+  parameters:
+    approach_height:
+      type: scalar
+      range:
+      - 0.05
+      - 0.3
+- id: push_1
+  type: push
+  generator: impedance_motion
+  control: position_control
+  termination: time_limit
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+    push_speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: retract_1
+  type: retract
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+  parameters:
+    speed:
+      type: scalar
+      range:
+      - 0.01
+      - 0.1
+- id: lift_1
+  type: lift
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance
+- id: insert_2
+  type: insert
+  generator: impedance_motion
+  control: impedance_control
+  termination: force_exceeded
+  parameters:
+    insertion_depth:
+      type: scalar
+      range:
+      - 0.01
+      - 0.15
+    insertion_force:
+      type: scalar
+      range:
+      - 1.0
+      - 20.0
+- id: push_2
+  type: push
+  generator: linear_cartesian
+  control: impedance_control
+  termination: time_limit
+  parameters:
+    push_distance:
+      type: scalar
+      range:
+      - 0.02
+      - 0.2
+- id: release_1
+  type: release
+  generator: linear_cartesian
+  control: position_control
+  termination: pose_tolerance

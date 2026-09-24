@@ -1,0 +1,160 @@
+dsl_version: 2
+phases:
+- control: position_control
+  end_effector_action: null
+  generator: linear_cartesian
+  guards:
+  - args: {}
+    id: force_limit
+    on_failure: retry
+    predicate: force_below
+    threshold: 4.0
+    when: during_phase
+  id: clear_obstacle_approach
+  parameters:
+    clearance_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.01
+      - 0.2
+      type: scalar
+    clearance_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+    contact_force_threshold:
+      binds_to:
+      - mode: replace
+        path: guards.force_limit.threshold
+      default: 4.0
+      range:
+      - 0.5
+      - 5.0
+      type: scalar
+  retries:
+    max_attempts: 1
+    offset:
+    - 0.0
+    - 0.1
+    - 0.0
+    strategy: offset_target
+  subtask_id: clear_obstacle
+  target:
+    anchor: body
+    entity: obstacle_block
+    offset:
+    - 0.0
+    - 0.3
+    - 0.5
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  end_effector_action: null
+  generator: linear_cartesian
+  id: pre_approach_goal
+  parameters:
+    align_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.1
+      range:
+      - 0.01
+      - 0.2
+      type: scalar
+    align_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.02
+      range:
+      - 0.005
+      - 0.05
+      type: scalar
+  subtask_id: pre_goal_approach
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.5
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: approach
+- control: position_control
+  end_effector_action: null
+  generator: linear_cartesian
+  id: descend_to_goal
+  parameters:
+    descend_speed:
+      binds_to:
+      - mode: replace
+        path: generator.speed
+      default: 0.05
+      range:
+      - 0.01
+      - 0.2
+      type: scalar
+    descend_tolerance:
+      binds_to:
+      - mode: replace
+        path: termination.pose_tolerance
+      default: 0.01
+      range:
+      - 0.005
+      - 0.02
+      type: scalar
+  subtask_id: final_reach
+  target:
+    anchor: task_goal
+    offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    orientation:
+      mode: none
+    source: yaml
+    tolerance: 0.02
+  termination: pose_tolerance
+  type: descend
+skill: obstacle_reach
+subtasks:
+- anchor: fixture
+  id: clear_obstacle
+  offset:
+  - 0.0
+  - 0.3
+  - 0.5
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: pre_goal_approach
+  offset:
+  - 0.0
+  - 0.0
+  - 0.5
+  target_entity: tcp
+  weight: 0.3
+- anchor: goal
+  id: final_reach
+  offset:
+  - 0.0
+  - 0.0
+  - 0.0
+  target_entity: tcp
+  weight: 0.4
