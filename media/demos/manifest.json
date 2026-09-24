@@ -1,0 +1,227 @@
+{
+  "schema": "featured-demonstrations",
+  "description": "Deterministically selected winning trajectories from the primary automatic comparison matrix.",
+  "selection_scope": {
+    "study": "primary",
+    "excluded_studies": [
+      "expert",
+      "semantic"
+    ],
+    "records_per_task": 150,
+    "scene_index": 0
+  },
+  "render_spec": {
+    "format": "GIF",
+    "width": 640,
+    "height": 480,
+    "fps": 15,
+    "max_size_bytes": 10485760,
+    "loop": 0
+  },
+  "demos": [
+    {
+      "task": "door_push",
+      "task_label": "Door push",
+      "record_id": "p-random-language-fixed-door_push-seed-03",
+      "arm": "Random-LLMRefine-FixedST",
+      "display_name": "Random-LLMRefine-FixedST",
+      "seed": 3,
+      "canonical_task_score": 1.0,
+      "composite_score": 1.75,
+      "skill_path": "data/skills/best/p-random-language-fixed-door_push-seed-03.yaml",
+      "parameters_path": "data/parameters/p-random-language-fixed-door_push-seed-03.json",
+      "scene_bank_path": "data/scenes/p-random-language-fixed-door_push-seed-03.json",
+      "scene_index": 0,
+      "hashes": {
+        "skill_sha256": "95c64e583d59d94688923a4b7f0f6d946d7974adab43875fdf89060f4dc2fd9e",
+        "parameters_sha256": "a38c56ac2e6802c366da603bc324bbc118c524195a87117ad248185bec11fe69",
+        "scene_bank_sha256": "99691dd4ee2204855b90a5f2ed9007400992fb83001d3c426ba32ec60aae5009",
+        "gif_sha256": "7da896cc9b4f62a80f953dadfb85e5406abd867e54a6fb5eaa062e45587fe21f"
+      },
+      "gif": {
+        "path": "media/demos/gifs/door-push.gif",
+        "width": 640,
+        "height": 480,
+        "fps": 15,
+        "frame_count": 36,
+        "duration_seconds": 2.4,
+        "size_bytes": 1237216,
+        "max_size_bytes": 10485760,
+        "loop": 0
+      },
+      "selection_rule": "study=primary; maximize canonical task score, then composite score; minimize record_id lexicographically",
+      "reproduction_command": "MUJOCO_GL=osmesa python scripts/render_skill.py --record-id p-random-language-fixed-door_push-seed-03 --output media/demos/gifs/door-push.gif --fps 15 --width 640 --height 480",
+      "cell_record_path": "data/records/primary/p-random-language-fixed-door_push-seed-03.json"
+    },
+    {
+      "task": "push_to_goal",
+      "task_label": "Push to goal",
+      "record_id": "p-random-language-fixed-push_to_goal-seed-02",
+      "arm": "Random-LLMRefine-FixedST",
+      "display_name": "Random-LLMRefine-FixedST",
+      "seed": 2,
+      "canonical_task_score": 0.9763058014250211,
+      "composite_score": 0.502736978472931,
+      "skill_path": "data/skills/best/p-random-language-fixed-push_to_goal-seed-02.yaml",
+      "parameters_path": "data/parameters/p-random-language-fixed-push_to_goal-seed-02.json",
+      "scene_bank_path": "data/scenes/p-random-language-fixed-push_to_goal-seed-02.json",
+      "scene_index": 0,
+      "hashes": {
+        "skill_sha256": "10820a9404499b37a2565173608f4de5d3834affd09a46a4bd85a1efb86d7ce0",
+        "parameters_sha256": "f18752affe95053cd69f9b1c5cc0f83889340ad78d851a14353f2caa5cdad7c8",
+        "scene_bank_sha256": "1c5b1b919f11dc101f7f811fa3475d94e0e00e0c4bd012a10d3ba3003743af98",
+        "gif_sha256": "15cd6bffbd016774496bb21803038711fd8ad8d02116348ef98ac11c068413d3"
+      },
+      "gif": {
+        "path": "media/demos/gifs/push-to-goal.gif",
+        "width": 640,
+        "height": 480,
+        "fps": 15,
+        "frame_count": 74,
+        "duration_seconds": 4.93,
+        "size_bytes": 2605682,
+        "max_size_bytes": 10485760,
+        "loop": 0
+      },
+      "selection_rule": "study=primary; maximize canonical task score, then composite score; minimize record_id lexicographically",
+      "reproduction_command": "MUJOCO_GL=osmesa python scripts/render_skill.py --record-id p-random-language-fixed-push_to_goal-seed-02 --output media/demos/gifs/push-to-goal.gif --fps 15 --width 640 --height 480",
+      "cell_record_path": "data/records/primary/p-random-language-fixed-push_to_goal-seed-02.json"
+    },
+    {
+      "task": "peg_insert",
+      "task_label": "Peg insertion",
+      "record_id": "p-random-language-fixed-peg_insert-seed-04",
+      "arm": "Random-LLMRefine-FixedST",
+      "display_name": "Random-LLMRefine-FixedST",
+      "seed": 4,
+      "canonical_task_score": 0.9994188290392629,
+      "composite_score": 0.20719501475057345,
+      "skill_path": "data/skills/best/p-random-language-fixed-peg_insert-seed-04.yaml",
+      "parameters_path": "data/parameters/p-random-language-fixed-peg_insert-seed-04.json",
+      "scene_bank_path": "data/scenes/p-random-language-fixed-peg_insert-seed-04.json",
+      "scene_index": 0,
+      "hashes": {
+        "skill_sha256": "96d44fcc3382c33b920e7bcccdacb797033704f2b1e47eefd1ca87d0edfead25",
+        "parameters_sha256": "b06ee67700135cd2f009e978230a2f775dc2dbeb2c55a4df895c6bfc974b1e03",
+        "scene_bank_sha256": "930f497db060ddbefd946fe216e08dc8d663f4e090708c6aad73c0478d2fd70b",
+        "gif_sha256": "49383a17782d1c14d4c75408c72b62a11636a6b32b64cb6ea12e3afa4c26c87e"
+      },
+      "gif": {
+        "path": "media/demos/gifs/peg-insertion.gif",
+        "width": 640,
+        "height": 480,
+        "fps": 15,
+        "frame_count": 31,
+        "duration_seconds": 2.07,
+        "size_bytes": 1095496,
+        "max_size_bytes": 10485760,
+        "loop": 0
+      },
+      "selection_rule": "study=primary; maximize canonical task score, then composite score; minimize record_id lexicographically",
+      "reproduction_command": "MUJOCO_GL=osmesa python scripts/render_skill.py --record-id p-random-language-fixed-peg_insert-seed-04 --output media/demos/gifs/peg-insertion.gif --fps 15 --width 640 --height 480",
+      "cell_record_path": "data/records/primary/p-random-language-fixed-peg_insert-seed-04.json"
+    },
+    {
+      "task": "peg_channel",
+      "task_label": "Peg channel",
+      "record_id": "p-random-language-fixed-peg_channel-seed-05",
+      "arm": "Random-LLMRefine-FixedST",
+      "display_name": "Random-LLMRefine-FixedST",
+      "seed": 5,
+      "canonical_task_score": 0.9897629477164379,
+      "composite_score": 0.6042390485311068,
+      "skill_path": "data/skills/best/p-random-language-fixed-peg_channel-seed-05.yaml",
+      "parameters_path": "data/parameters/p-random-language-fixed-peg_channel-seed-05.json",
+      "scene_bank_path": "data/scenes/p-random-language-fixed-peg_channel-seed-05.json",
+      "scene_index": 0,
+      "hashes": {
+        "skill_sha256": "2cada1aa3e10ec9f6bf9bf8a1e538f71ed320ee2c3680d238d9ca10f2ff25895",
+        "parameters_sha256": "28a6eae470f932bdfaad27f947259bf4204bc9e9bcd6e0079429280151774bcd",
+        "scene_bank_sha256": "de61a8e11a98145754c111a414490f23ae2ae86e8cbf75bcaeac360fbfa26790",
+        "gif_sha256": "8c09c1b68066cacde90ea4fab5cc0eee6a403bc36efd5b3f3467305ae45e5aa7"
+      },
+      "gif": {
+        "path": "media/demos/gifs/peg-channel.gif",
+        "width": 640,
+        "height": 480,
+        "fps": 15,
+        "frame_count": 46,
+        "duration_seconds": 3.07,
+        "size_bytes": 1594737,
+        "max_size_bytes": 10485760,
+        "loop": 0
+      },
+      "selection_rule": "study=primary; maximize canonical task score, then composite score; minimize record_id lexicographically",
+      "reproduction_command": "MUJOCO_GL=osmesa python scripts/render_skill.py --record-id p-random-language-fixed-peg_channel-seed-05 --output media/demos/gifs/peg-channel.gif --fps 15 --width 640 --height 480",
+      "cell_record_path": "data/records/primary/p-random-language-fixed-peg_channel-seed-05.json"
+    },
+    {
+      "task": "grasp_place",
+      "task_label": "Grasp and place",
+      "record_id": "p-create-language-free-grasp_place-seed-06",
+      "arm": "Create-LLMRefine-FreeST",
+      "display_name": "Create-LLMRefine-FreeST",
+      "seed": 6,
+      "canonical_task_score": 1.0,
+      "composite_score": 0.6586755349546736,
+      "skill_path": "data/skills/best/p-create-language-free-grasp_place-seed-06.yaml",
+      "parameters_path": "data/parameters/p-create-language-free-grasp_place-seed-06.json",
+      "scene_bank_path": "data/scenes/p-create-language-free-grasp_place-seed-06.json",
+      "scene_index": 0,
+      "hashes": {
+        "skill_sha256": "83885839be155a477cb42d04a5dabdf2d9f8e80e4e6f7ea9c960604696a355bf",
+        "parameters_sha256": "ecf2552c553187712dd3c03f287b7ee4c5a13257860ba38d9924fef312ff40a3",
+        "scene_bank_sha256": "0d955677ed1830f8e537365d18b59e43bca30004fdb8897ac1384f907d815771",
+        "gif_sha256": "424a7dca99f82907aa0938337a3486530e825fb2b32487e2cdb0cf9ff5256227"
+      },
+      "gif": {
+        "path": "media/demos/gifs/grasp-place.gif",
+        "width": 640,
+        "height": 480,
+        "fps": 15,
+        "frame_count": 62,
+        "duration_seconds": 4.13,
+        "size_bytes": 2206489,
+        "max_size_bytes": 10485760,
+        "loop": 0
+      },
+      "selection_rule": "study=primary; maximize canonical task score, then composite score; minimize record_id lexicographically",
+      "reproduction_command": "MUJOCO_GL=osmesa python scripts/render_skill.py --record-id p-create-language-free-grasp_place-seed-06 --output media/demos/gifs/grasp-place.gif --fps 15 --width 640 --height 480",
+      "cell_record_path": "data/records/primary/p-create-language-free-grasp_place-seed-06.json"
+    },
+    {
+      "task": "obstacle_reach",
+      "task_label": "Obstacle reach",
+      "record_id": "p-create-language-free-obstacle_reach-seed-07",
+      "arm": "Create-LLMRefine-FreeST",
+      "display_name": "Create-LLMRefine-FreeST",
+      "seed": 7,
+      "canonical_task_score": 0.9975981371600594,
+      "composite_score": 0.6975981371600594,
+      "skill_path": "data/skills/best/p-create-language-free-obstacle_reach-seed-07.yaml",
+      "parameters_path": "data/parameters/p-create-language-free-obstacle_reach-seed-07.json",
+      "scene_bank_path": "data/scenes/p-create-language-free-obstacle_reach-seed-07.json",
+      "scene_index": 0,
+      "hashes": {
+        "skill_sha256": "f8faadfc44beebbf3c6ff3c176e7160db90c73ce2c12f583e86cfcade00cc2ce",
+        "parameters_sha256": "87038635054776c1fc813699c88fa824b715fae7cb2913f5a5d2eb7c0a7ca1df",
+        "scene_bank_sha256": "07b91fd8659fef6e6e7fa7ace5e57496b4b015ae91e67a631caffa8fb6e8b604",
+        "gif_sha256": "07f0d79d448c216829b2dfcb5322ff5a877c30c455a1553177db467e523915da"
+      },
+      "gif": {
+        "path": "media/demos/gifs/obstacle-reach.gif",
+        "width": 640,
+        "height": 480,
+        "fps": 15,
+        "frame_count": 23,
+        "duration_seconds": 1.53,
+        "size_bytes": 796938,
+        "max_size_bytes": 10485760,
+        "loop": 0
+      },
+      "selection_rule": "study=primary; maximize canonical task score, then composite score; minimize record_id lexicographically",
+      "reproduction_command": "MUJOCO_GL=osmesa python scripts/render_skill.py --record-id p-create-language-free-obstacle_reach-seed-07 --output media/demos/gifs/obstacle-reach.gif --fps 15 --width 640 --height 480",
+      "cell_record_path": "data/records/primary/p-create-language-free-obstacle_reach-seed-07.json"
+    }
+  ]
+}

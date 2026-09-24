@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools==82.0.0", "wheel==0.46.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "robot-skill-synthesis"
+version = "1.0.0"
+description = "Reproducible robot skill-program synthesis experiments"
+readme = "README.md"
+requires-python = ">=3.10,<3.11"
+license = {text = "MIT"}
+authors = [{name = "Research authors"}]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+]
+dependencies = [
+    "numpy==2.2.6",
+    "scipy==1.15.2",
+    "PyYAML==6.0.3",
+    "attrs==25.4.0",
+    "mujoco==3.5.0",
+    "cma==4.4.4",
+    "openai==2.30.0",
+    "matplotlib==3.10.8",
+    "Pillow==12.1.1",
+    "imageio==2.37.2",
+    "imageio-ffmpeg==0.6.0",
+    "pandas==2.3.3",
+    "openpyxl==3.1.5",
+]
+
+[project.optional-dependencies]
+test = ["pytest==9.0.2"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["compiler*", "dsl*", "evaluation*", "mutation*", "primitives*", "search*", "simulation*"]
+exclude = ["tests*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+markers = [
+    "integration: end-to-end tests that run MuJoCo simulation",
+    "slow: tests that make real network/API calls and may be slow",
+]

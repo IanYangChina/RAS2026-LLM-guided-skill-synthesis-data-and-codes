@@ -1,0 +1,55 @@
+skill: grasp_place
+skill_type: arm_gripper
+
+
+phases:
+
+  - id: approach_1
+    type: approach
+    generator: linear_cartesian
+    control: position_control
+    termination: pose_tolerance
+    end_effector_action: open
+    parameters:
+      approach_height:
+        type: scalar
+        range: [0.10, 0.16]
+        init: 0.12
+
+  - id: descend_1
+    type: descend
+    generator: linear_cartesian
+    control: position_control
+    termination: pose_tolerance
+    end_effector_action: open
+    parameters:
+      grasp_z_offset:
+        type: scalar
+        range: [-0.025, 0.010]
+        init: -0.010
+
+  - id: grasp_1
+    type: grasp
+    generator: null
+    control: position_control
+    termination: time_limit
+    end_effector_action: force_grasp
+
+  - id: transport_arc
+    type: retract
+    generator: arc_cartesian
+    control: position_control
+    termination: pose_tolerance
+    parameters:
+      arc_height:
+        type: scalar
+        range: [0.10, 0.25]
+        init: 0.15
+
+  - id: release_1
+    type: release
+    generator: linear_cartesian
+    control: position_control
+    termination: time_limit
+    end_effector_action: open
+

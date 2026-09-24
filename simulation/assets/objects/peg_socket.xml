@@ -1,0 +1,31 @@
+<mujoco model="peg_socket">
+  <!-- peg_socket.xml — static socket fixture for the peg_insert task.
+       The socket base sits on the table (z=0).  The hole-entry site is at world
+       z ≈ 0.025 (base half-height) + 0.055 (site offset) = 0.08 m above the table,
+       so the minimal physically valid peg_insert target is the entry/alignment
+       pose (0.5, 0.0, 0.08), not a point inside the solid base. -->
+  <worldbody>
+    <body name="peg_socket" pos="0.5 0 0.025">
+      <!-- Outer base block -->
+      <geom name="socket_base" type="box" size="0.06 0.06 0.025"
+            mass="0.5" rgba="0.5 0.5 0.8 1" condim="4" friction="1 0.1 0.1"/>
+      <!-- Raised collar around the hole (approximated with 4 surrounding boxes) -->
+      <geom name="socket_collar_x1" type="box" size="0.015 0.06 0.015" pos=" 0.045 0 0.04"
+            mass="0.05" rgba="0.5 0.5 0.8 1"/>
+      <geom name="socket_collar_x2" type="box" size="0.015 0.06 0.015" pos="-0.045 0 0.04"
+            mass="0.05" rgba="0.5 0.5 0.8 1"/>
+      <geom name="socket_collar_y1" type="box" size="0.03 0.015 0.015" pos="0  0.045 0.04"
+            mass="0.05" rgba="0.5 0.5 0.8 1"/>
+      <geom name="socket_collar_y2" type="box" size="0.03 0.015 0.015" pos="0 -0.045 0.04"
+            mass="0.05" rgba="0.5 0.5 0.8 1"/>
+      <!-- Hole marker site: where the peg TCP should reach -->
+      <site name="socket_hole" pos="0 0 0.055" size="0.01" rgba="1 0 0 0.8"/>
+    </body>
+    <!-- Multi-angle cameras for peg_insert -->
+    <camera name="overview" pos="0.0 -1.2 1.4" euler="55 0 0"/>
+    <camera name="side" pos="-1.4 0.0 0.8" euler="0 -75 0"/>
+    <camera name="top_down" pos="0.0 0.0 2.2" euler="90 0 0"/>
+    <!-- Wrist camera approximates TCP view (static until MJCF body-attachment upgrade). -->
+    <camera name="wrist" mode="fixed" pos="0.5 0.0 0.35" euler="90 0 180"/>
+  </worldbody>
+</mujoco>

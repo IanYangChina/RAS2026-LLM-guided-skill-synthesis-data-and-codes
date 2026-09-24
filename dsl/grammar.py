@@ -1,0 +1,37 @@
+from __future__ import annotations
+from dsl.nodes import ControlMode, EndEffectorAction, GeneratorType, ParameterType, PhaseType, SkillType, TerminationCond
+ALLOWED_GENERATORS: frozenset[GeneratorType] = frozenset(GeneratorType)
+ALLOWED_CONTROLS: frozenset[ControlMode] = frozenset(ControlMode)
+ALLOWED_TERMINATIONS: frozenset[TerminationCond] = frozenset(TerminationCond)
+ALLOWED_PARAMETER_TYPES: frozenset[ParameterType] = frozenset(ParameterType)
+ALLOWED_EE_ACTIONS: frozenset[EndEffectorAction] = frozenset(EndEffectorAction)
+ALLOWED_PHASE_TYPES: frozenset[PhaseType] = frozenset(PhaseType)
+ALLOWED_PHASE_NAMES: frozenset[str] = frozenset((pt.value for pt in PhaseType))
+MAX_PARAMS_PER_PHASE: int = 10
+MAX_PARAMETERS: int = MAX_PARAMS_PER_PHASE
+MIN_PHASES: int = 1
+MAX_PHASES: int = 8
+ALLOWED_ANCHORS: frozenset[str] = frozenset({'world', 'object', 'goal', 'fixture'})
+ALLOWED_ENTITIES: frozenset[str] = frozenset({'tcp', 'object', 'hinge'})
+ALLOWED_METRICS: frozenset[str] = frozenset({'distance', 'goal_progress', 'contact', 'hinge_angle'})
+DSL_V1: int = 1
+DSL_V2: int = 2
+V2_TARGET_SOURCES: frozenset[str] = frozenset({'yaml'})
+V2_MIGRATION_TARGET_SOURCES: frozenset[str] = frozenset({'task_default'})
+V2_TARGET_ANCHORS: frozenset[str] = frozenset({'world', 'task_goal', 'task_object', 'fixture', 'body', 'site', 'joint', 'current_tcp'})
+V2_ENTITY_FORBIDDEN_ANCHORS: frozenset[str] = frozenset({'world', 'current_tcp'})
+V2_ENTITY_REQUIRED_ANCHORS: frozenset[str] = frozenset({'fixture', 'body', 'site', 'joint'})
+V2_XYZ_TARGET_FORBIDDEN_ANCHORS: frozenset[str] = frozenset({'joint'})
+V2_AXIS_NAMES: frozenset[str] = frozenset({'task_goal_direction', 'channel_axis', 'world_x', 'world_y', 'world_z'})
+V2_ALIGN_WITH_NAMES: frozenset[str] = frozenset({'world_x', 'world_y', 'world_z', 'channel_axis', 'insertion_axis'})
+V2_OFFSET_AXIS_MODES: frozenset[str] = frozenset({'add_to_offset', 'replace_offset_projection'})
+V2_AXIS_SIGNS: frozenset[str] = frozenset({'positive', 'negative'})
+V2_ORIENTATION_MODES: frozenset[str] = frozenset({'none', 'keep_current', 'quat', 'align_axis'})
+V2_BINDING_MODES: frozenset[str] = frozenset({'add', 'replace', 'scale'})
+V2_BINDING_FRAMES: frozenset[str] = frozenset({'world', 'anchor', 'local'})
+V2_SUPPORTED_BINDING_PATHS: frozenset[str] = frozenset({'target.offset.x', 'target.offset.y', 'target.offset.z', 'target.offset_along_axis.distance', 'generator.speed', 'generator.arc_height', 'termination.pose_tolerance', 'termination.force_threshold', 'duration.max_time', 'retry.offset.x', 'retry.offset.y', 'retry.offset.z'})
+V2_REJECTED_BINDING_PATHS: frozenset[str] = frozenset({'target.orientation.roll', 'target.orientation.pitch', 'target.orientation.yaw', 'target.orientation.angle', 'generator.arc_angle', 'generator.direction.x', 'generator.direction.y', 'generator.direction.z', 'control.stiffness', 'control.damping', 'guard.threshold', 'generator.depth', 'control.force_limit', 'end_effector.grip_width'})
+V2_GUARD_WHENS: frozenset[str] = frozenset({'before_phase', 'during_phase', 'after_phase'})
+V2_GUARD_PREDICATES: frozenset[str] = frozenset({'pose_within_tolerance', 'contact_detected', 'force_below', 'bilateral_grasp', 'object_lifted', 'hinge_delta_reached'})
+V2_GUARD_FAILURE_ACTIONS: frozenset[str] = frozenset({'retry', 'continue', 'abort'})
+V2_RETRY_STRATEGIES: frozenset[str] = frozenset({'repeat', 'offset_target', 'reduce_speed'})

@@ -1,0 +1,16 @@
+<mujoco>
+  <worldbody>
+    <body name="push_box" pos="0.5 0.0 0.025">
+      <freejoint/>
+      <geom name="push_box_geom" type="box" size="0.025 0.025 0.025"
+            mass="0.1" friction="0.5 0.005 0.0001"
+            rgba="0.8 0.2 0.2 1"/>
+    </body>
+    <!-- Multi-angle cameras shared by planar_push/push_to_goal -->
+    <camera name="overview" pos="0.0 -1.2 1.4" euler="55 0 0"/>
+    <camera name="side" pos="-1.4 0.0 0.8" euler="0 -75 0"/>
+    <camera name="top_down" pos="0.0 0.0 2.2" euler="90 0 0"/>
+    <!-- Wrist camera approximates TCP view (static until MJCF body-attachment upgrade). -->
+    <camera name="wrist" mode="fixed" pos="0.5 0.0 0.35" euler="90 0 180"/>
+  </worldbody>
+</mujoco>

@@ -1,0 +1,62 @@
+<mujoco model="door">
+  <!-- door.xml — hinged door panel for the door_pull task.
+       The door frame is fixed to the world.  The door panel is attached via a
+       hinge joint along the Z-axis at one edge (x=0.5, y=0.2, z=0).
+       Initial door angle: 0° (closed).  Target: ~30° open (π/6 ≈ 0.524 rad).
+
+       The door handle site is at the pull point (far edge of panel, mid height)
+       where the robot TCP grabs.  With the door closed the handle is at
+       approximately (0.5, 0.0, 0.35) in world coordinates.
+
+       arm_initial_tcp_position should be set to (0.5, 0.35, 0.3) — outside
+       the door arc — so the arm approaches from the outside face.
+
+       Contact exclusion: door_frame and door_panel must not collide with each
+       other.  At qpos=0 the hinge-post geom and panel geom overlap by ~25 mm
+       (they share the hinge-side edge); without the exclusion MuJoCo generates
+       a ~140 N·m constraint impulse that blasts the door open on step 1. -->
+
+  <!-- Exclude self-collision between the door frame and door panel bodies.
+       They are joined by the hinge and must not push each other. -->
+  <contact>
+    <exclude body1="door_frame" body2="door_panel"/>
+  </contact>
+
+  <worldbody>
+    <!-- Fixed door frame (static geometry, no joint) -->
+    <body name="door_frame" pos="0.5 0.2 0.4">
+      <!-- Vertical hinge-side post -->
+      <geom name="door_frame_hinge_post" type="box" size="0.025 0.025 0.4"
+            pos="0.0 0.0 0.0"
+            mass="5.0" rgba="0.55 0.40 0.25 1" condim="1" friction="0.5 0.005 0.0001"/>
+      <!-- Top horizontal beam -->
+      <geom name="door_frame_top_beam" type="box" size="0.2 0.025 0.025"
+            pos="-0.2 0.0 0.375"
+            mass="1.0" rgba="0.55 0.40 0.25 1" condim="1" friction="0.5 0.005 0.0001"/>
+    </body>
+
+    <!-- Door panel body — attached to the world at the hinge position -->
+    <body name="door_panel" pos="0.5 0.2 0.0">
+      <!-- Hinge joint: rotation about Z-axis.  Positive angle opens the door
+           (panel swings toward the robot, i.e. increasing y). -->
+      <joint name="door_hinge" type="hinge" axis="0 0 1"
+             pos="0 0 0.35"
+             range="-0.1 1.57"
+             stiffness="1.0" damping="2.0" frictionloss="2.5"/>
+      <!-- Door panel geom: extends from hinge edge (y=0.2) outward in -y direction -->
+      <geom name="door_panel_geom" type="box" size="0.2 0.01 0.35"
+            pos="-0.2 -0.01 0.35"
+            mass="0.8" rgba="0.70 0.55 0.35 1"
+            condim="4" friction="0.5 0.005 0.0001"/>
+      <!-- Door handle site: at the free edge of the panel, mid-height.
+           In body frame: x=-0.4 (far from hinge), y=-0.02 (panel face), z=0.35 (mid). -->
+      <site name="door_handle" pos="-0.4 -0.02 0.35" size="0.015" rgba="0.8 0.2 0.2 0.9"/>
+    </body>
+    <!-- Multi-angle cameras for door_pull -->
+    <camera name="overview" pos="0.0 -1.4 1.5" euler="55 0 0"/>
+    <camera name="side" pos="-1.5 0.2 0.9" euler="0 -70 0"/>
+    <camera name="top_down" pos="0.0 0.1 2.2" euler="90 0 0"/>
+    <!-- Wrist camera approximates TCP view (static until MJCF body-attachment upgrade). -->
+    <camera name="wrist" mode="fixed" pos="0.45 0.2 0.45" euler="90 0 180"/>
+  </worldbody>
+</mujoco>

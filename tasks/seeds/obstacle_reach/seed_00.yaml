@@ -1,0 +1,23 @@
+skill: obstacle_reach
+skill_type: arm
+phases:
+  - id: approach_1
+    type: approach
+    generator: arc_cartesian
+    control: position_control
+    termination: time_limit
+    parameters:
+      arc_height:
+        type: scalar
+        range: [0.32, 0.50]
+      approach_distance:
+        type: scalar
+        range: [0.10, 0.30]
+      reach_speed:
+        type: scalar
+        range: [0.01, 0.1]
+  - id: descend_1
+    type: descend
+    generator: linear_cartesian
+    control: position_control
+    termination: pose_tolerance

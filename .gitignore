@@ -1,0 +1,18 @@
+# Local credentials: retain the blank, documented template only.
+.env
+.env.*
+!.env.example
+
+# Python and test by-products.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# Reviewer-created runs and render outputs.
+runs/
+outputs/
+renders/
+reproduced_results/

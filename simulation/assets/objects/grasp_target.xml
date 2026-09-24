@@ -1,0 +1,16 @@
+<mujoco model="grasp_target">
+  <worldbody>
+    <body name="grasp_target" pos="0.5 0.0 0.03">
+      <freejoint name="grasp_target_joint"/>
+      <geom name="grasp_target_geom" type="cylinder" size="0.02 0.03"
+            rgba="0.2 0.6 0.9 1" mass="0.05" contype="1" conaffinity="1"
+            friction="3.5 0.1 0.01"/>
+    </body>
+    <!-- Multi-angle cameras for grasp_place -->
+    <camera name="overview" pos="0.0 -1.2 1.4" euler="55 0 0"/>
+    <camera name="side" pos="-1.4 0.0 0.8" euler="0 -75 0"/>
+    <camera name="top_down" pos="0.0 0.0 2.2" euler="90 0 0"/>
+    <!-- Wrist camera approximates TCP view (static until MJCF body-attachment upgrade). -->
+    <camera name="wrist" mode="fixed" pos="0.5 0.0 0.4" euler="90 0 180"/>
+  </worldbody>
+</mujoco>
